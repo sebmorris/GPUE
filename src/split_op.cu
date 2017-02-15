@@ -116,7 +116,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
 ** Moire super-lattice project.
 **/
 void optLatSetup(const struct Vtx::Vortex &centre, const double* V,
-                 std::vector<struct Vtx::Vortex> &vArray, int num_vortices, double theta_opt,
+                 std::vector<struct Vtx::Vortex> &vArray, double theta_opt,
                  double intensity, double* v_opt, const double *x, const double *y,
                  Grid &par, Op &opr){
     std::string data_dir = par.sval("data_dir");
@@ -127,7 +127,7 @@ void optLatSetup(const struct Vtx::Vortex &centre, const double* V,
     double dt = par.dval("dt");
     cufftDoubleComplex *EV_opt = opr.cufftDoubleComplexval("EV_opt");
     int i,j;
-    double sepMin = Tracker::vortSepAvg(vArray,centre,num_vortices);
+    double sepMin = Tracker::vortSepAvg(vArray,centre);
     sepMin = sepMin*(1 + sepMinEpsilon);
     par.store("Vort_sep",(double)sepMin);
 

@@ -72,7 +72,6 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
 * @param	centre Central vortex in condensate
 * @param	V Trapping potential for condensate
 * @param	vArray Vortex location array
-* @param	num_vortices Number of tracked vortices
 * @param	theta_opt Offset angle for optical lattice relative to vortex lattice
 * @param	intensity Optical lattice amplitude
 * @param	v_opt Optical lattice memory address location
@@ -80,7 +79,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
 * @param	y Y grid array
 */
 void optLatSetup(const struct Vtx::Vortex &centre, const double* V,
-                 std::vector<struct Vtx::Vortex> &vArray, int num_vortices, double theta_opt,
+                 std::vector<struct Vtx::Vortex> &vArray, double theta_opt,
                  double intensity, double* v_opt, const double *x, const double *y,
                  Grid &par, Op &opr);
 
