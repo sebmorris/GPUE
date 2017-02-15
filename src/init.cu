@@ -60,7 +60,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     cufftDoubleComplex *EK;
     cufftDoubleComplex *EpAy;
     cufftDoubleComplex *EpAx;
-    cufftDoubleComplex *EappliedField; 
+    cufftDoubleComplex *EappliedField;
     cufftDoubleComplex *wfc_gpu;
     cufftDoubleComplex *K_gpu;
     cufftDoubleComplex *par_sum;
@@ -89,7 +89,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
         xD = 1;
         yD = yDim;
         zD = 1;
-    } 
+    }
     else{
         int count = 0;
         int dim_tmp = xDim;
@@ -111,19 +111,19 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     std::cout << "threads in x are: " << threads.x << '\n';
     std::cout << "dimensions are: " << xD << '\t' << yD << '\t' << zD << '\n';
 
-    grid.x=xD; 
-    grid.y=yD; 
-    grid.z=zD; 
+    grid.x=xD;
+    grid.y=yD;
+    grid.z=zD;
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
+
     int i,j; //Used in for-loops for indexing
-    
+
 /*
     double xOffset, yOffset;
     xOffset=0.0;//5.0e-6;
     yOffset=0.0;//5.0e-6;
 */
-    
+
     double mass = 1.4431607e-25; //Rb 87 mass, kg
     par.store("mass",mass);
     double a_s = 4.76e-9;
@@ -139,7 +139,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //std::cout << "a0x and y are: " << a0x << '\t' << a0y << '\n';
 
     //std::cout << N << '\t' << a_s << '\t' << mass << '\t' << omegaZ << '\n';
-    
+
     // Let's go ahead and define the gDensConst here
     // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
     double gDenConst = N*4*HBAR*HBAR*PI*(4.67e-9/mass)
@@ -148,7 +148,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     Rxy = pow(15,0.2)*pow(N*a_s*sqrt(mass*omegaZ/HBAR),0.2);
     par.store("Rxy",Rxy);
-    double bec_length = sqrt( HBAR/(mass*sqrt( omegaX*omegaX * 
+    double bec_length = sqrt( HBAR/(mass*sqrt( omegaX*omegaX *
                                                ( 1 - omega*omega) ) ));
 
     //std::cout << "Rxy is: " << Rxy << '\n';
@@ -162,13 +162,13 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     pyMax = (PI/yMax)*(yDim>>1);
     par.store("pyMax",pyMax);
     par.store("pxMax",pxMax);
-    
+
     double dx = xMax/(xDim>>1);
     double dy = yMax/(yDim>>1);
     par.store("dx",dx);
     par.store("dy",dy);
     par.store("dz",0.0);
-    
+
     double dpx, dpy;
     dpx = PI/(xMax);
     dpy = PI/(yMax);
@@ -179,7 +179,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     par.store("dpy",dpy);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
+
     //double *x,*y,*xp,*yp;
     x = (double *) malloc(sizeof(double) * xDim);
     y = (double *) malloc(sizeof(double) * yDim);
@@ -194,17 +194,17 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     // creating x,y,xp,yp
     for(i=0; i<xDim/2; ++i){
-        x[i] = -xMax + i*dx;        
+        x[i] = -xMax + i*dx;
         x[i + (xDim/2)] = i*dx;
-        
+
         xp[i] = i*dpx;
         xp[i + (xDim/2)] = -pxMax + i*dpx;
-        
+
     }
     for(i=0; i<yDim/2; ++i){
-        y[i] = -yMax + i*dy;        
+        y[i] = -yMax + i*dy;
         y[i + (yDim/2)] = i*dy;
-        
+
         yp[i] = i*dpy;
         yp[i + (yDim/2)] = -pyMax + i*dpy;
 
@@ -214,11 +214,11 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     par.store("y", y);
     par.store("xp", xp);
     par.store("yp", yp);
-    
+
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
-    /* Initialise wavefunction, momentum, position, angular momentum, 
+
+    /* Initialise wavefunction, momentum, position, angular momentum,
        imaginary and real-time evolution operators . */
     Energy = (double*) malloc(sizeof(double) * gSize);
     r = (double *) malloc(sizeof(double) * gSize);
@@ -226,7 +226,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     if (par.bval("read_wfc") == false){
         wfc = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
     }
-    wfc_backup = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * 
+    wfc_backup = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
                                                (gSize/threads.x));
     K = (double *) malloc(sizeof(double) * gSize);
     V = (double *) malloc(sizeof(double) * gSize);
@@ -245,9 +245,9 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     Bz = (double *) malloc(sizeof(double) * gSize);
     EpAy = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
     EpAx = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * 
+    EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
                                                          gSize);
-    
+
     /* Initialise wfc, EKp, and EVr buffers on GPU */
     cudaMalloc((void**) &Energy_gpu, sizeof(double) * gSize);
     cudaMalloc((void**) &wfc_gpu, sizeof(cufftDoubleComplex) * gSize);
@@ -283,40 +283,40 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     for( i=0; i < xDim; i++ ){
         for( j=0; j < yDim; j++ ){
             Phi[(i*yDim + j)] = fmod(l*atan2(y[j], x[i]),2*PI);
-            
+
             if (par.bval("unit_test")){
-                wfc[(i*yDim + j)].x =  (1/sqrt(2))*pow(1/PI,0.5) 
+                wfc[(i*yDim + j)].x =  (1/sqrt(2))*pow(1/PI,0.5)
                     * exp( -0.5*( x[i]*x[i] + y[j]*y[j] ) )*(1+2*x[i]/sqrt(2));
                 wfc[(i*yDim + j)].y = 0;
             }
             else if (par.bval("dimensionless")){
-                wfc[(i*yDim + j)].x = exp(-( pow((x[i]),2) + 
+                wfc[(i*yDim + j)].x = exp(-( pow((x[i]),2) +
                                              pow((y[j]),2) ) ) *
                                       cos(Phi[(i*yDim + j)]);
-                wfc[(i*yDim + j)].y = -exp(-( pow((x[i]),2) + 
+                wfc[(i*yDim + j)].y = -exp(-( pow((x[i]),2) +
                                               pow((y[j]),2) ) ) *
                                           sin(Phi[(i*yDim + j)]);
             }
             else if (par.bval("read_wfc") == true){
-                wfc[(i*yDim + j)].x *= cos(Phi[(i*yDim + j)]); 
+                wfc[(i*yDim + j)].x *= cos(Phi[(i*yDim + j)]);
                 wfc[(i*yDim + j)].y *= sin(Phi[(i*yDim + j)]);
             }
             else{
-                wfc[(i*yDim + j)] = wave.Wfc_fn(par.Wfcfn)(par, 
-                                                           Phi[(i*yDim + j)], 
+                wfc[(i*yDim + j)] = wave.Wfc_fn(par.Wfcfn)(par,
+                                                           Phi[(i*yDim + j)],
                                                            i, j, 0);
 /*
-                wfc[(i*yDim + j)].x = exp(-( pow((x[i])/(Rxy*a0x),2) + 
+                wfc[(i*yDim + j)].x = exp(-( pow((x[i])/(Rxy*a0x),2) +
                                              pow((y[j])/(Rxy*a0y),2) ) ) *
                                       cos(Phi[(i*yDim + j)]);
-                wfc[(i*yDim + j)].y = -exp(-( pow((x[i])/(Rxy*a0x),2) + 
+                wfc[(i*yDim + j)].y = -exp(-( pow((x[i])/(Rxy*a0x),2) +
                                               pow((y[j])/(Rxy*a0y),2) ) ) *
                                           sin(Phi[(i*yDim + j)]);
 */
-                sum+=sqrt(wfc[(i*xDim + j)].x*wfc[(i*yDim + j)].x + 
+                sum+=sqrt(wfc[(i*xDim + j)].x*wfc[(i*yDim + j)].x +
                           wfc[(i*xDim + j)].y*wfc[(i*yDim + j)].y);
             }
-                
+
             V[(i*yDim + j)] = opr.V_fn(par.Vfn)(par, opr, i, j, 0);
             K[(i*yDim + j)] = opr.K_fn(par.Kfn)(par, opr, i, j, 0);
 
@@ -331,7 +331,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 Ax[(i*yDim + j)] = opr.Ax_fn(par.Afn)(par, opr, i, j, 0);
                 Ay[(i*yDim + j)] = opr.Ay_fn(par.Afn)(par, opr, i, j, 0);
             }
-            
+
             //pAy[(i*yDim + j)] = x[i]*yp[j];
             pAy[(i*yDim + j)] = opr.pAy_fn("rotation")(par, opr, i, j, 0);
             //pAx[(i*yDim + j)] = -y[j]*xp[i];
@@ -341,17 +341,17 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
             GpAx[(i*yDim + j)].y = 0;
             GpAy[(i*yDim + j)].x = exp(-pAy[(i*yDim + j)]*gdt);
             GpAy[(i*yDim + j)].y = 0;
-            
+
             EV[(i*yDim + j)].x=cos( -V[(i*yDim + j)]*(dt/(2*HBAR)));
             EV[(i*yDim + j)].y=sin( -V[(i*yDim + j)]*(dt/(2*HBAR)));
             EK[(i*yDim + j)].x=cos( -K[(i*yDim + j)]*(dt/HBAR));
             EK[(i*yDim + j)].y=sin( -K[(i*yDim + j)]*(dt/HBAR));
-            
+
             EpAy[(i*yDim + j)].x=cos(-omega*omegaX*pAy[(i*yDim + j)]*dt);
             EpAy[(i*yDim + j)].y=sin(-omega*omegaX*pAy[(i*yDim + j)]*dt);
             EpAx[(i*yDim + j)].x=cos(-omega*omegaX*pAx[(i*yDim + j)]*dt);
             EpAx[(i*yDim + j)].y=sin(-omega*omegaX*pAx[(i*yDim + j)]*dt);
-    
+
         }
     }
 
@@ -389,7 +389,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     //std::cout << "wrote initial variables" << '\n';
 
-    //free(V); 
+    //free(V);
     free(K); free(r); free(Phi);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
@@ -404,10 +404,10 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
             }
         }
     }
-    
+
     //std::cout << "modified wfc" << '\n';
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
+
     //std::cout << "xDim is: " << xDim << '\t' << "yDim is: " << yDim << '\n';
     //std::cout << "plan_2d is: " << plan_2d << '\n';
     result = cufftPlan2d(&plan_2d, xDim, yDim, CUFFT_Z2Z);
@@ -419,19 +419,19 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
         return -1;
     }
 
-    plan_other2d = generate_plan_other2d(par); 
+    plan_other2d = generate_plan_other2d(par);
 
     result = cufftPlan1d(&plan_1d, xDim, CUFFT_Z2Z, yDim);
     if(result != CUFFT_SUCCESS){
         printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan1d(%s ,%d ,%d ).\n", 
+        printf("Error: Could not execute cufftPlan1d(%s ,%d ,%d ).\n",
                "plan_1d", (unsigned int)xDim, (unsigned int)yDim);
         return -1;
     }
-    
+
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
-    //std::cout << GV[0].x << '\t' << GK[0].x << '\t' 
+    //std::cout << GV[0].x << '\t' << GK[0].x << '\t'
     //          << pAy[0] << '\t' << pAx[0] << '\n';
 
     //std::cout << "storing variables..." << '\n';
@@ -567,7 +567,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     cufftDoubleComplex *EpAy;
     cufftDoubleComplex *EpAx;
     cufftDoubleComplex *EpAz;
-    cufftDoubleComplex *EappliedField; 
+    cufftDoubleComplex *EappliedField;
     cufftDoubleComplex *wfc_gpu;
     cufftDoubleComplex *K_gpu;
     cufftDoubleComplex *par_sum;
@@ -597,7 +597,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
         xD = 1;
         yD = yDim;
         zD = zDim;
-    } 
+    }
     else{
         int count = 0;
         int dim_tmp = xDim;
@@ -619,20 +619,20 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     std::cout << "threads in x are: " << threads.x << '\n';
     std::cout << "dimensions are: " << xD << '\t' << yD << '\t' << zD << '\n';
 
-    grid.x=xD; 
-    grid.y=yD; 
-    grid.z=zD; 
+    grid.x=xD;
+    grid.y=yD;
+    grid.z=zD;
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
+
     int i, j, k; //Used in for-loops for indexing
-    
+
 /*
     double xOffset, yOffset;
     xOffset=0.0;//5.0e-6;
     yOffset=0.0;//5.0e-6;
 */
-    
+
     double mass = 1.4431607e-25; //Rb 87 mass, kg
     par.store("mass",mass);
     double a_s = 4.76e-9;
@@ -656,10 +656,10 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //std::cout << "a0x and y are: " << a0x << '\t' << a0y << '\n';
 
     //std::cout << N << '\t' << a_s << '\t' << mass << '\t' << omegaZ << '\n';
-    
+
     Rxy = pow(15,0.2)*pow(N*a_s*sqrt(mass*omegaZ/HBAR),0.2);
     par.store("Rxy",Rxy);
-    double bec_length = sqrt( HBAR/(mass*sqrt( omegaX*omegaX * 
+    double bec_length = sqrt( HBAR/(mass*sqrt( omegaX*omegaX *
                                                ( 1 - omega*omega) ) ));
 
     //std::cout << "Rxy is: " << Rxy << '\n';
@@ -668,7 +668,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     double zMax = box_size;
 /*
     double xMax = 10*bec_length;//6*Rxy*a0x; //6*Rxy*a0x;
-    double yMax = 10*bec_length;//6*Rxy*a0y; 
+    double yMax = 10*bec_length;//6*Rxy*a0y;
     double zMax = 10*bec_length;//6*Rxy*a0z;
 */
     par.store("xMax",xMax);
@@ -682,14 +682,14 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     par.store("pyMax",pyMax);
     par.store("pxMax",pxMax);
     par.store("pzMax",pzMax);
-    
+
     double dx = xMax/(xDim>>1);
     double dy = yMax/(yDim>>1);
     double dz = zMax/(zDim>>1);
     par.store("dx",dx);
     par.store("dy",dy);
     par.store("dz",dz);
-    
+
     double dpx, dpy, dpz;
     dpx = PI/(xMax);
     dpy = PI/(yMax);
@@ -702,7 +702,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     par.store("dpz",dpz);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
+
     //double *x,*y,*xp,*yp;
     x = (double *) malloc(sizeof(double) * xDim);
     y = (double *) malloc(sizeof(double) * yDim);
@@ -718,25 +718,25 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //std::cout << dx << '\t' << dy << '\n';
     // creating x,y,z,xp,yp,zp
     for(i=0; i<xDim/2; ++i){
-        x[i] = -xMax + i*dx;        
+        x[i] = -xMax + i*dx;
         x[i + (xDim/2)] = i*dx;
-        
+
         xp[i] = i*dpx;
         xp[i + (xDim/2)] = -pxMax + i*dpx;
-        
+
     }
     for(i=0; i<yDim/2; ++i){
-        y[i] = -yMax + i*dy;        
+        y[i] = -yMax + i*dy;
         y[i + (yDim/2)] = i*dy;
-        
+
         yp[i] = i*dpy;
         yp[i + (yDim/2)] = -pyMax + i*dpy;
 
     }
     for(i=0; i<zDim/2; ++i){
-        z[i] = -zMax + i*dz;        
+        z[i] = -zMax + i*dz;
         z[i + (zDim/2)] = i*dz;
-        
+
         zp[i] = i*dpz;
         zp[i + (zDim/2)] = -pzMax + i*dpz;
 
@@ -750,8 +750,8 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     par.store("zp", zp);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
-    /* Initialise wavefunction, momentum, position, angular momentum, 
+
+    /* Initialise wavefunction, momentum, position, angular momentum,
        imaginary and real-time evolution operators . */
     Energy = (double*) malloc(sizeof(double) * gSize);
     r = (double *) malloc(sizeof(double) * gSize);
@@ -759,7 +759,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     if (par.bval("read_wfc") == false){
         wfc = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
     }
-    wfc_backup = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * 
+    wfc_backup = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
                                                (gSize/threads.x));
     K = (double *) malloc(sizeof(double) * gSize);
     V = (double *) malloc(sizeof(double) * gSize);
@@ -781,9 +781,9 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     EpAy = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
     EpAx = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
     EpAz = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * 
+    EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
                                                          gSize);
-    
+
     /* Initialise wfc, EKp, and EVr buffers on GPU */
     cudaMalloc((void**) &Energy_gpu, sizeof(double) * gSize);
     cudaMalloc((void**) &wfc_gpu, sizeof(cufftDoubleComplex) * gSize);
@@ -835,27 +835,27 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 else{
                     wfc[index] = wave.Wfc_fn(par.Wfcfn)(par, Phi[index],i,j,k);
 /*
-                    wfc[index].x = exp(-( pow((x[i])/(Rxy*a0x),2) + 
+                    wfc[index].x = exp(-( pow((x[i])/(Rxy*a0x),2) +
                                           pow((y[j])/(Rxy*a0y),2) +
                                           pow((z[k])/(Rxy*a0z),2))) *
                                           cos(Phi[index]);
-                    wfc[index].y = -exp(-( pow((x[i])/(Rxy*a0x),2) + 
+                    wfc[index].y = -exp(-( pow((x[i])/(Rxy*a0x),2) +
                                            pow((y[j])/(Rxy*a0y),2) +
                                            pow((z[k])/(Rxy*a0z),2))) *
                                            sin(Phi[index]);
 */
-                    sum+=sqrt(wfc[index].x*wfc[index].x + 
+                    sum+=sqrt(wfc[index].x*wfc[index].x +
                               wfc[index].y*wfc[index].y);
                 }
-                
+
                 V[index] = opr.V_fn(par.Vfn)(par, opr, i, j, k);
                 K[index] = opr.K_fn(par.Kfn)(par, opr, i, j, k);
-    
+
                 GV[index].x = exp( -V[index]*(gdt/(2*HBAR)));
                 GK[index].x = exp( -K[index]*(gdt/HBAR));
                 GV[index].y = 0.0;
                 GK[index].y = 0.0;
-    
+
                 // Ax and Ay will be calculated here but are used only for
                 // debugging. They may be needed later for magnetic field calc
                 if (par.Afn != "file"){
@@ -863,30 +863,30 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                     Ay[index] = opr.Ay_fn(par.Afn)(par, opr, i, j, k);
                     Az[index] = opr.Az_fn(par.Afn)(par, opr, i, j, k);
                 }
-                
+
                 pAy[index] = opr.pAy_fn("rotation")(par, opr, i, j, k);
                 pAx[index] = opr.pAx_fn("rotation")(par, opr, i, j, k);
                 pAz[index] = opr.pAz_fn("rotation")(par, opr, i, j, k);
-    
+
                 GpAx[index].x = exp(-pAx[index]*gdt);
                 GpAx[index].y = 0;
                 GpAy[index].x = exp(-pAy[index]*gdt);
                 GpAy[index].y = 0;
                 GpAz[index].x = exp(-pAz[index]*gdt);
                 GpAz[index].y = 0;
-                
+
                 EV[index].x=cos( -V[index]*(dt/(2*HBAR)));
                 EV[index].y=sin( -V[index]*(dt/(2*HBAR)));
                 EK[index].x=cos( -K[index]*(dt/HBAR));
                 EK[index].y=sin( -K[index]*(dt/HBAR));
-                
+
                 EpAy[index].x=cos(-omega*omegaX*pAy[index]*dt);
                 EpAy[index].y=sin(-omega*omegaX*pAy[index]*dt);
                 EpAx[index].x=cos(-omega*omegaX*pAx[index]*dt);
                 EpAx[index].y=sin(-omega*omegaX*pAx[index]*dt);
                 EpAz[index].x=cos(-omega*omegaX*pAz[index]*dt);
                 EpAz[index].y=sin(-omega*omegaX*pAz[index]*dt);
-        
+
             }
         }
     }
@@ -928,7 +928,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     //std::cout << "wrote initial variables" << '\n';
 
-    //free(V); 
+    //free(V);
     free(K); free(r); free(Phi);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
@@ -946,16 +946,16 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
             }
         }
     }
-    
+
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-    
+
     //std::cout << "xDim is: " << xDim << '\t' << "yDim is: " << yDim << '\n';
     //std::cout << "plan_2d is: " << plan_2d << '\n';
     result = cufftPlan3d(&plan_3d, xDim, yDim, zDim, CUFFT_Z2Z);
     //std::cout << "found result" << '\n';
     if(result != CUFFT_SUCCESS){
         printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan3d(%s ,%d, %d, %d).\n", 
+        printf("Error: Could not execute cufftPlan3d(%s ,%d, %d, %d).\n",
                 "plan_3d",
                 (unsigned int)xDim, (unsigned int)yDim, (unsigned int) zDim);
         return -1;
@@ -969,16 +969,16 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     result = cufftPlan1d(&plan_1d, xDim, CUFFT_Z2Z, yDim);
     if(result != CUFFT_SUCCESS){
         printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan1d(%s ,%d ,%d , %d).\n", 
+        printf("Error: Could not execute cufftPlan1d(%s ,%d ,%d , %d).\n",
                "plan_1d", (unsigned int)xDim, (unsigned int)yDim,
                           (unsigned int)zDim);
         return -1;
     }
 */
-    
+
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
-    //std::cout << GV[0].x << '\t' << GK[0].x << '\t' 
+    //std::cout << GV[0].x << '\t' << GK[0].x << '\t'
     //          << pAy[0] << '\t' << pAx[0] << '\n';
 
     //std::cout << "storing variables..." << '\n';
@@ -1107,7 +1107,7 @@ int main(int argc, char **argv){
     //std::cout << "initialized" << '\n';
 
     // Re-establishing variables from parsed Grid class
-    // Note that 3d variables are set to nullptr's unless needed 
+    // Note that 3d variables are set to nullptr's unless needed
     //      This might need to be fixed later
     std::string data_dir = par.sval("data_dir");
     double dx = par.dval("dx");
@@ -1197,7 +1197,7 @@ int main(int argc, char **argv){
         if(err!=cudaSuccess){
             std::cout << "ERROR: Could not copy wfc_gpu to device" << '\n';
             exit(1);
-        } 
+        }
         opr.store("pAx", pAx);
         opr.store("pAy", pAy);
         opr.store("GK", GK);
@@ -1219,9 +1219,9 @@ int main(int argc, char **argv){
             if(err!=cudaSuccess){
                 std::cout << "ERROR: Could not copy pAz_gpu to device" << '\n';
                 exit(1);
-            } 
+            }
             opr.store("pAz_gpu", pAz_gpu);
-        
+
             evolve_3d(wave, opr, par_sum,
                       gsteps, cupar, 0, par, buffer);
         }
@@ -1231,11 +1231,11 @@ int main(int argc, char **argv){
         }
         wfc = wave.cufftDoubleComplexval("wfc");
         wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
-        cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*gsize, 
+        cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*gsize,
                    cudaMemcpyDeviceToHost);
     }
 
-    std::cout << GV[0].x << '\t' << GK[0].x << '\t' 
+    std::cout << GV[0].x << '\t' << GK[0].x << '\t'
               << pAy[0] << '\t' << pAx[0] << '\n';
 
     //free(GV); free(GK); free(pAy); free(pAx);
@@ -1294,9 +1294,7 @@ int main(int argc, char **argv){
         wave.store("wfc_gpu", wfc_gpu);
         opr.store("pAy_gpu", pAy_gpu);
         opr.store("pAx_gpu", pAx_gpu);
-
         FileIO::writeOutDouble(buffer, data_dir + "V_opt",V_opt,gsize,0);
-
         // Special variables / instructions for 3d case
         if (dimnum == 3){
             pAz_gpu = opr.dsval("pAz_gpu");
@@ -1306,7 +1304,7 @@ int main(int argc, char **argv){
             if(err!=cudaSuccess){
                 std::cout << "ERROR: Could not copy pAz_gpu to device" << '\n';
                 exit(1);
-            } 
+            }
             opr.store("pAz_gpu", pAz_gpu);
             evolve_3d(wave, opr, par_sum,
                       esteps, cupar, 1, par, buffer);
@@ -1315,20 +1313,18 @@ int main(int argc, char **argv){
             evolve_2d(wave, opr, par_sum,
                       esteps, cupar, 1, par, buffer);
         }
-    
         wfc = wave.cufftDoubleComplexval("wfc");
         wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
     }
-
     std::cout << "done evolving" << '\n';
     free(EV); free(EK); free(EpAy); free(EpAx);
     free(x);free(y);
-    cudaFree(wfc_gpu); cudaFree(K_gpu); cudaFree(V_gpu); cudaFree(pAx_gpu); 
+    cudaFree(wfc_gpu); cudaFree(K_gpu); cudaFree(V_gpu); cudaFree(pAx_gpu);
     cudaFree(pAy_gpu); cudaFree(par_sum);
-
     time(&fin);
     printf("Finish: %s\n", ctime(&fin));
     printf("Total time: %ld seconds\n ",(long)fin-start);
     std::cout << '\n';
     return 0;
 }
+

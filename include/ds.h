@@ -63,7 +63,7 @@ class Grid{
 
         // placing grid parameters in public for now
         double *x, *y, *z, *xp, *yp, *zp;
-
+	
         // Function to store integer into param_int
         void store(std::string id, int iparam);
 
@@ -153,6 +153,7 @@ class Op{
     private:
         typedef double (*functionPtr)(Grid&, Op&, int, int, int);
         std::unordered_map<std::string, double*> Op_dstar;
+        std::unordered_map<std::string, const double*> Op_cdstar;
         std::unordered_map<std::string, cufftDoubleComplex*> Op_cdc;
         std::unordered_map<std::string, functionPtr> Op_K_fns;
         std::unordered_map<std::string, functionPtr> Op_V_fns;
@@ -167,9 +168,10 @@ class Op{
         // double *V, *V_opt, *K, *xPy, *yPx, *xPy_gpu, *yPx_gpu;
         //cufftDoubleComplex *GK,*GV_half,*GV,*EK,*EV,*EV_opt,*GxPy,*GyPx,
         //                   *ExPy,*EyPx,*EappliedField,*K_gpu,*V_gpu;
-    public:
 
+    public:
         // Functions to store data
+        void store(std::string id, const double *data);
         void store(std::string id, double *data);
         void store(std::string id, cufftDoubleComplex *data);
 

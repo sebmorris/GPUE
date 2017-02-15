@@ -10,7 +10,7 @@ namespace FileIO{
     /*
      * Reads datafile into memory.
      */
-    double2* readIn(std::string fileR, std::string fileI, 
+    double2* readIn(std::string fileR, std::string fileI,
                         int gSize){
         FILE *f;
         f = fopen(fileR.c_str(),"r");
@@ -53,7 +53,7 @@ namespace FileIO{
     /*
      * Writes out double2 complex data files.
      */
-    void writeOut(std::string buffer, std::string file, double2 *data, 
+    void writeOut(std::string buffer, std::string file, double2 *data,
                       int length, int step){
         FILE *f;
         sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);
@@ -88,7 +88,7 @@ namespace FileIO{
     /*
      * Writes out int type data files.
      */
-    void writeOutInt(std::string buffer, std::string file, int *data, 
+    void writeOutInt(std::string buffer, std::string file, int *data,
                          int length, int step){
         FILE *f;
         sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);
@@ -102,7 +102,7 @@ namespace FileIO{
     /*
      * Writes out int2 data type.
      */
-    void writeOutInt2(std::string buffer, std::string file, int2 *data, 
+    void writeOutInt2(std::string buffer, std::string file, int2 *data,
                           int length, int step){
         FILE *f;
         sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);
@@ -116,8 +116,8 @@ namespace FileIO{
     /*
      * Writes out tracked vortex data.
      */
-    void writeOutVortex(std::string buffer, std::string file, 
-                            struct Vtx::Vortex *data, int length, int step){
+    void writeOutVortex(std::string buffer, std::string file,
+                            std::vector<struct Vtx::Vortex> &data, int length, int step){
         FILE *f;
         sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);
         f = fopen (buffer.c_str(),"w");
@@ -167,7 +167,7 @@ namespace FileIO{
         fprintf (f, "}\n");
         fclose(f);
     }
-    void writeOutAdjMat(std::string buffer, std::string file, double *mat, 
+    void writeOutAdjMat(std::string buffer, std::string file, double *mat,
                         unsigned int *uids, int dim, int step){
         FILE *f;
         sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);

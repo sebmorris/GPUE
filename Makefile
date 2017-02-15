@@ -1,18 +1,18 @@
-CUDA_HOME = /work/scratch/schloss/cuda_8.0/
+CUDA_HOME = /usr/local/cuda/#/home/l/loriordan/builds
 #CUTT_DIR = cutt/lib
 GPU_ARCH	= sm_60
 OS:=	$(shell uname)
 ifeq ($(OS),Darwin)
 CUDA_LIB	= $(CUDA_HOME)/lib
 CUDA_HEADER	= $(CUDA_HOME)/include
-CC		= $(CUDA_HOME)/bin/nvcc -ccbin /usr/bin/clang --ptxas-options=-v#-save-temps
-CFLAGS		= -g -std=c++11
+CC		= $(CUDA_HOME)/bin/nvcc #-ccbin /usr/bin/clang --ptxas-options=-v#-save-temps
+CFLAGS		= -g -std=c++11 
 else
 CUDA_LIB	= $(CUDA_HOME)/lib64
 CUDA_HEADER	= $(CUDA_HOME)/include
 CC		= $(CUDA_HOME)/bin/nvcc --ptxas-options=-v --compiler-options -Wall #-save-temps
 CHOSTFLAGS	= #-fopenmp
-CFLAGS		= -g -std=c++11 -Xcompiler '-std=c++11' -Xcompiler '-fopenmp' #-L$(CUTT_DIR) -l:libcutt.a
+CFLAGS		= -g -O0 -std=c++11 -Xcompiler '-std=c++11' -Xcompiler '-fopenmp' #-L$(CUTT_DIR) -l:libcutt.a
 endif
 
 CLINKER		= $(CC) 

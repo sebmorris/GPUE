@@ -353,7 +353,12 @@ dim3 Cuda::dim3val(std::string id){
 * OP
 *-----------------------------------------------------------------------------*/
 
+
 // Functions to store data in the Op class
+void Op::store(std::string id, const double *paramCD){
+    Op_cdstar[id] = paramCD;
+}
+
 void Op::store(std::string id, double *data){
     Op_dstar[id] = data;
 }

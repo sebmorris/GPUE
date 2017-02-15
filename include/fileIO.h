@@ -59,7 +59,7 @@ namespace FileIO {
     * @param	length Overall length of the file to write out
     * @param	step Index for the filename. file_step
     */
-    void writeOutDouble(std::string buffer, std::string file, double *data, 
+    void writeOutDouble(std::string buffer, std::string file, double *data,
                         int length, int step);
 
 	/**
@@ -72,7 +72,7 @@ namespace FileIO {
     * @param	length Overall length of the file to write out
     * @param	step Index for the filename. file_step
     */
-    void writeOutInt(std::string buffer, std::string file, int *data, 
+    void writeOutInt(std::string buffer, std::string file, int *data,
                      int length, int step);
 
 	/**
@@ -85,7 +85,7 @@ namespace FileIO {
     * @param	length Overall length of the file to write out
     * @param	step Index for the filename. file_step
     */
-    void writeOutInt2(std::string buffer, std::string file, int2 *data, 
+    void writeOutInt2(std::string buffer, std::string file, int2 *data,
                       int length, int step);
 
 	/**
@@ -98,8 +98,8 @@ namespace FileIO {
     * @param	length Overall length of the file to write out
     * @param	step Index for the filename. file_step
     */
-    void writeOutVortex(std::string buffer, std::string file, 
-                        struct Vtx::Vortex *data, int length, int step);
+    void writeOutVortex(std::string buffer, std::string file,
+                        std::vector<struct Vtx::Vortex> &data, int length, int step);
 
 	/**
     * @brief	Writes the parameter file
@@ -142,7 +142,7 @@ namespace FileIO {
 	* @param	dim Dimension/length of the grid (xDim*yDim)
 	* @param	step Index for the filename.
     */
-    void writeOutAdjMat(std::string buffer, std::string file, double *mat, 
+    void writeOutAdjMat(std::string buffer, std::string file, double *mat,
                         unsigned int *uids, int dim, int step);
 }
 #endif

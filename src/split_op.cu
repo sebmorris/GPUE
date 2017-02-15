@@ -47,8 +47,8 @@ int isError(int result, char* c){
 /*
  * Used to perform parallel summation on WFC for normalisation.
  */
-void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par, 
-            Cuda &cupar){ 
+void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
+            Cuda &cupar){
     // May need to add double l
     int dimnum = par.ival("dimnum");
     double dx = par.dval("dx");
@@ -83,7 +83,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
     while((double)grid_tmp.x/threads.x > 1.0){
         if(grid_tmp.x == gsize){
             multipass<<<block,threads,threads.x*sizeof(double2)>>>(&gpuWfc[0],
-                &gpuParSum[0],pass); 
+                &gpuParSum[0],pass);
         }
         else{
             multipass<<<block,thread_tmp,thread_tmp.x*sizeof(double2)>>>(
@@ -112,12 +112,12 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
 }
 
 /**
-** Matches the optical lattice to the vortex lattice. 
+** Matches the optical lattice to the vortex lattice.
 ** Moire super-lattice project.
 **/
-void optLatSetup(struct Vtx::Vortex centre, double* V, 
-                 struct Vtx::Vortex *vArray, int num_vortices, double theta_opt,
-                 double intensity, double* v_opt, double *x, double *y,
+void optLatSetup(const struct Vtx::Vortex &centre, const double* V,
+                 std::vector<struct Vtx::Vortex> &vArray, int num_vortices, double theta_opt,
+                 double intensity, double* v_opt, const double *x, const double *y,
                  Grid &par, Op &opr){
     std::string data_dir = par.sval("data_dir");
     int xDim = par.ival("xDim");
@@ -130,9 +130,9 @@ void optLatSetup(struct Vtx::Vortex centre, double* V,
     double sepMin = Tracker::vortSepAvg(vArray,centre,num_vortices);
     sepMin = sepMin*(1 + sepMinEpsilon);
     par.store("Vort_sep",(double)sepMin);
-    
+
     // Defining the necessary k vectors for the optical lattice
-    
+
 
     // Additional /2 as a result of lambda/2 period
     double k_mag = ((2*PI/(sepMin*dx))/2)*(2/sqrt(3));
@@ -144,7 +144,7 @@ void optLatSetup(struct Vtx::Vortex centre, double* V,
     k[1].y = k_mag * sin(2*PI/3 + theta_opt);
     k[2].x = k_mag * cos(4*PI/3 + theta_opt);
     k[2].y = k_mag * sin(4*PI/3 + theta_opt);
-    
+
     double2 *r_opt = (double2*) malloc(sizeof(double2)*xDim);
 
     //FileIO::writeOut(buffer,data_dir + "r_opt",r_opt,xDim,0);
@@ -167,16 +167,16 @@ void optLatSetup(struct Vtx::Vortex centre, double* V,
     for ( j=0; j<yDim; ++j ){
         for ( i=0; i<xDim; ++i ){
             v_opt[j*xDim + i] = intensity*(
-                                pow( ( cos( k[0].x*( x[i] + x_shift ) + 
+                                pow( ( cos( k[0].x*( x[i] + x_shift ) +
                                        k[0].y*( y[j] + y_shift ) ) ), 2) +
-                                pow( ( cos( k[1].x*( x[i] + x_shift ) + 
+                                pow( ( cos( k[1].x*( x[i] + x_shift ) +
                                        k[1].y*( y[j] + y_shift ) ) ), 2) +
-                                pow( ( cos( k[2].x*( x[i] + x_shift ) + 
+                                pow( ( cos( k[2].x*( x[i] + x_shift ) +
                                        k[2].y*( y[j] + y_shift ) ) ), 2)
                                 );
-            EV_opt[(j*xDim + i)].x=cos( -(V[(j*xDim + i)] + 
+            EV_opt[(j*xDim + i)].x=cos( -(V[(j*xDim + i)] +
                                    v_opt[j*xDim + i])*(dt/(2*HBAR)));
-            EV_opt[(j*xDim + i)].y=sin( -(V[(j*xDim + i)] + 
+            EV_opt[(j*xDim + i)].y=sin( -(V[(j*xDim + i)] +
                                    v_opt[j*xDim + i])*(dt/(2*HBAR)));
         }
     }
@@ -188,12 +188,12 @@ void optLatSetup(struct Vtx::Vortex centre, double* V,
 }
 
 /**
-** Calculates energy and angular momentum of current state. 
+** Calculates energy and angular momentum of current state.
 ** Implementation not fully finished.
 **/
 /*
-double energy_angmom(double *Energy, double* Energy_gpu, double2 *V_op, 
-                     double2 *K_op, double2 *gpuWfc, 
+double energy_angmom(double *Energy, double* Energy_gpu, double2 *V_op,
+                     double2 *K_op, double2 *gpuWfc,
                      int gState, Grid &par){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
@@ -205,10 +205,10 @@ double energy_angmom(double *Energy, double* Energy_gpu, double2 *V_op,
     double result=0;
 
     for (int i=0; i < xDim*yDim; ++i){
-        Energy[i] = 0.0; 
+        Energy[i] = 0.0;
     }
     return result*dx*dy;
-    
+
 }
 
 // Creates narrow Gaussian "delta" peaks for vortex kicking
@@ -223,11 +223,11 @@ void delta_define(double *x, double *y, double x0, double y0, double *delta,
 
     for (int i=0; i<xDim; ++i){
         for (int j=0; j<yDim; ++j){
-            delta[j*xDim + i] = 1e6*HBAR*exp( -( pow( x[i] - x0, 2) + 
+            delta[j*xDim + i] = 1e6*HBAR*exp( -( pow( x[i] - x0, 2) +
                                 pow( y[j] - y0, 2) )/(5*dx*dx) );
-            EV_opt[(j*xDim + i)].x = cos( -(V[(j*xDim + i)] + 
+            EV_opt[(j*xDim + i)].x = cos( -(V[(j*xDim + i)] +
                                      delta[j*xDim + i])*(dt/(2*HBAR)));
-            EV_opt[(j*xDim + i)].y = sin( -(V[(j*xDim + i)] + 
+            EV_opt[(j*xDim + i)].y = sin( -(V[(j*xDim + i)] +
                                      delta[j*xDim + i])*(dt/(2*HBAR)));
         }
     }
