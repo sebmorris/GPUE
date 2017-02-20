@@ -95,11 +95,10 @@ namespace FileIO {
     * @param	*buffer Char buffer for use by function internals. char[100] usually
     * @param	*file Name of data file name for saving to
     * @param	*data Vtx::Vortex array to be written out
-    * @param	length Overall length of the file to write out
     * @param	step Index for the filename. file_step
     */
     void writeOutVortex(std::string buffer, std::string file,
-                        std::vector<struct Vtx::Vortex> &data, int length, int step);
+                        std::vector<struct Vtx::Vortex> &data, int step);
 
 	/**
     * @brief	Writes the parameter file

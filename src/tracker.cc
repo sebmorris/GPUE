@@ -217,13 +217,14 @@ namespace Tracker {
     void vortPos(const int *marker, std::vector<struct Vtx::Vortex> &vLocation, int xDim, const double2 *wfc){
         int i,j;
         unsigned int counter=0;
+	Vtx::Vortex vtx = {};
         for(i=0; i<xDim; ++i){
             for(j=0; j<xDim; ++j){
                 if( abs((marker)[i*xDim + j]) >= 1){
-                    (vLocation)[ counter ].coords.x=i;
-                    (vLocation)[ counter ].coords.y=j;
-                    //(vLocation)[ counter ].sign = ( signbit(abs(marker[i*xDim + j])) == 0 ) ? 1 : -1;
-                    (vLocation)[ counter ].wind = (marker[i*xDim + j]);
+			vtx.coords.x = i;
+			vtx.coords.y = j;
+			vtx.wind = (marker[i*xDim + j]);
+                    vLocation.push_back(vtx);
                     ++counter;
                 }
             }
@@ -309,7 +310,7 @@ namespace Tracker {
     /**
      * Performs least squares fitting to get exact vortex core position.
      */
-    void lsFit(std::vector<struct Vtx::Vortex> &vortCoords, const double2 *wfc,  int xDim){
+    void lsFit(std::vector<struct Vtx::Vortex> &vortCoords, const double2 *wfc, int xDim){
         double2 *wfc_grid = (double2*) malloc(sizeof(double2)*4);
         double2 *res = (double2*) malloc(sizeof(double2)*3);
         double2 X;

@@ -49,7 +49,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("fudge", 1.0);
     par.store("kill_idx", -1);
     par.store("DX",0.0);
-    par.store("mask_2d", 1e-4);
+    par.store("mask_2d", 1.5e-4);
     par.store("box_size", 2.5e-5);
     par.Afn = "rotation";
     par.Kfn = "rotation_K";

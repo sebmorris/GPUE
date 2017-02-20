@@ -164,7 +164,6 @@ void evolve_2d(Wave &wave, Op &opr,
                     vortexLocation = (int *) calloc(xDim * yDim, sizeof(int));
                     num_vortices[0] = Tracker::findVortex(vortexLocation, wfc,
                                                           mask_2d, xDim, x, i);
-
                     // If initial step, locate vortices, least-squares to find
                     // exact centre, calculate lattice angle, generate optical
                     // lattice.
@@ -232,6 +231,8 @@ void evolve_2d(Wave &wave, Op &opr,
                         Tracker::vortPos(vortexLocation, vortCoords, xDim, wfc);
                         Tracker::lsFit(vortCoords, wfc, xDim);
                         Tracker::vortArrange(vortCoords, vortCoordsP);
+                    	FileIO::writeOutInt(buffer, data_dir + "vLoc_",
+                                               vortexLocation, xDim * yDim, i);
                     }
 
                     // The following will eventually be modified and moved into a new
@@ -239,7 +240,7 @@ void evolve_2d(Wave &wave, Op &opr,
                     // with vortex positions. Lambda function also defined for vortex
                     // elimination using graph positions and UID numbers.
                     if (graph) {
-                        for (int ii = 0; ii < num_vortices[0]; ++ii) {
+                        for (int ii = 0; ii < vortCoords.size(); ++ii) {
                             std::shared_ptr<LatticeGraph::Node>
                                 n(new LatticeGraph::Node(vortCoords[ii]));
                             lattice.addVortex(std::move(n));
@@ -255,12 +256,10 @@ void evolve_2d(Wave &wave, Op &opr,
                             auto killIt=[&](int idx, int winding,
                                             double delta_x) {
                                 WFC::phaseWinding(Phi, 1, x, y, dx, dy,
-                                    lattice.getVortexUid(idx)->
-                                    getData().coordsD.x
-                                    +cos(angle_sweep + vort_angle)*delta_x,
-                                    lattice.getVortexUid(idx)->
-                                    getData().coordsD.y
-                                    +sin(angle_sweep + vort_angle)*delta_x,
+                                    lattice.getVortexUid(idx)->getData().coordsD.x
+                                    + cos(angle_sweep + vort_angle)*delta_x,
+                                    lattice.getVortexUid(idx)->getData().coordsD.y
+                                    + sin(angle_sweep + vort_angle)*delta_x,
                                     xDim);
                                 cudaMemcpy(Phi_gpu, Phi,
                                            sizeof(double) * xDim * yDim,
@@ -299,8 +298,8 @@ void evolve_2d(Wave &wave, Op &opr,
 
                     //Write out the vortex locations
                     FileIO::writeOutVortex(buffer, data_dir + "vort_arr",
-                                           vortCoords, vortCoords.size(), i);
-                    printf("Located %d vortices\n", num_vortices[0]);
+                                           vortCoords, i);
+                    printf("Located %d vortices\n", vortCoords.size());
 
                     //Free memory block for now.
                     free(vortexLocation);
