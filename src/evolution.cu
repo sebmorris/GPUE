@@ -105,6 +105,11 @@ void evolve_2d(Wave &wave, Op &opr,
     //int* olMaxLocation = (int*) calloc(xDim*yDim,sizeof(int));
 
     struct Vtx::Vortex central_vortex; //vortex closest to the central position
+	central_vortex.coords.x = -1;
+	central_vortex.coords.y = -1;
+	central_vortex.coordsD.x = -1.;
+	central_vortex.coordsD.y = -1.;
+	central_vortex.wind = 0;
 
     // Angle of vortex lattice. Add to optical lattice for alignment.
     double vort_angle;
@@ -169,31 +174,44 @@ void evolve_2d(Wave &wave, Op &opr,
                     // lattice.
                     if (i == 0) {
 
-                        //Reserve enough space for the vortices
-                        vortCoords.reserve(num_vortices[0]);
-                        vortCoordsP.reserve(num_vortices[0]);
+			if(num_vortices[0] > 0){
+                             //Reserve enough space for the vortices
+                             vortCoords.reserve(num_vortices[0]);
+                             vortCoordsP.reserve(num_vortices[0]);
 
                         //Locate the vortex positions to the nearest grid, then perform a least-squares fit to determine the location to sub-grid reolution.
-                        Tracker::vortPos(vortexLocation, vortCoords, xDim, wfc);
-                        Tracker::lsFit(vortCoords, wfc, xDim);
+                             Tracker::vortPos(vortexLocation, vortCoords, xDim, wfc);
+                             Tracker::lsFit(vortCoords, wfc, xDim);
 
                         //Find the centre-most vortex in the lattice
-                        central_vortex = Tracker::vortCentre(vortCoords, xDim);
+                             central_vortex = Tracker::vortCentre(vortCoords, xDim);
                         //Determine the Angle formed by the lattice relative to the x-axis
-                        vort_angle = Tracker::vortAngle(vortCoords, central_vortex);
+                             vort_angle = Tracker::vortAngle(vortCoords, central_vortex);
 
                         //Store the vortex angle in the parameter file
-                        par.store("Vort_angle", vort_angle);
+                             par.store("Vort_angle", vort_angle);
+                             
+
+
+                        //Determine average lattice spacing.
+ 			     sepAvg = Tracker::vortSepAvg(vortCoords, central_vortex);
+
+                             par.store("Central_vort_x",
+                                  (double) central_vortex.coords.x);
+                             par.store("Central_vort_y",
+                                  (double) central_vortex.coords.y);
+                             par.store("Central_vort_winding",
+                                  (double) central_vortex.wind);
+                             par.store("Num_vort", (double) vortCoords.size());
 
                         //Setup the optical lattice to match the spacing and angle+angle_sweep of the vortex lattice. Amplitude matched by setting laser_power parameter switch.
-                        optLatSetup(central_vortex, V, vortCoords,
+                             optLatSetup(central_vortex, V, vortCoords,
                                     vort_angle + PI * angle_sweep / 180.0,
                                     laser_power * HBAR * sqrt(omegaX * omegaY),
                                     V_opt, x, y, par, opr);
 
-                        //Determine average lattice spacing.
-                        sepAvg = Tracker::vortSepAvg(vortCoords, central_vortex);
 
+			}
                         //If kick_it param is 2, perform a single kick of the optical lattice for the first timestep only. This is performed by loading the EV_opt exp(V + V_opt) array into GPU memory for the potential.
                         if (kick_it == 2) {
                             printf("Kicked it 1\n");
@@ -208,14 +226,6 @@ void evolve_2d(Wave &wave, Op &opr,
                                          xDim * yDim, 0);
 
                         //Store necessary parameters to Params.dat file.
-                        par.store("Central_vort_x",
-                                  (double) central_vortex.coords.x);
-                        par.store("Central_vort_y",
-                                  (double) central_vortex.coords.y);
-                        par.store("Central_vort_winding",
-                                  (double) central_vortex.wind);
-                        par.store("Num_vort", (double) vortCoords.size());
-
                         FileIO::writeOutParam(buffer, par,
                                               data_dir + "Params.dat");
                     }
@@ -228,18 +238,20 @@ void evolve_2d(Wave &wave, Op &opr,
                     }
         */          // if num_vortices[1] < num_vortices[0] ... Fewer vortices
                     else {
-                        Tracker::vortPos(vortexLocation, vortCoords, xDim, wfc);
-                        Tracker::lsFit(vortCoords, wfc, xDim);
-                        Tracker::vortArrange(vortCoords, vortCoordsP);
-                    	FileIO::writeOutInt(buffer, data_dir + "vLoc_",
+                         if (num_vortices[0] > 0){
+                        	Tracker::vortPos(vortexLocation, vortCoords, xDim, wfc);
+                        	Tracker::lsFit(vortCoords, wfc, xDim);
+                        	Tracker::vortArrange(vortCoords, vortCoordsP);
+                    		FileIO::writeOutInt(buffer, data_dir + "vLoc_",
                                                vortexLocation, xDim * yDim, i);
+			             }
                     }
 
                     // The following will eventually be modified and moved into a new
                     // library that works closely with GPUE. Used to calculate a graph
                     // with vortex positions. Lambda function also defined for vortex
                     // elimination using graph positions and UID numbers.
-                    if (graph) {
+                    if (graph && num_vortices[0] > 0) {
                         for (int ii = 0; ii < vortCoords.size(); ++ii) {
                             std::shared_ptr<LatticeGraph::Node>
                                 n(new LatticeGraph::Node(vortCoords[ii]));
