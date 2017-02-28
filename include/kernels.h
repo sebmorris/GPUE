@@ -21,7 +21,7 @@
 * @brief	Indexing of threads on grid
 * @ingroup	gpu
 */
-unsigned int getGid3d3d();;
+__device__ unsigned int getGid3d3d();;
 
 /**
 * @brief	Indexing of blocks on device
@@ -83,7 +83,7 @@ __device__ double2 realCompMult(double scalar, double2 comp);
 * @param	in2 Evolution operator input
 * @param	out Pass by reference output for multiplcation result
 */
-__global__ void cMult(cufftDoubleComplex* in1, cufftDoubleComplex* in2, cufftDoubleComplex* out);
+__global__ void cMult(double2* in1, double2* in2, double2* out);
 
 /**
 * @brief	Kernel for multiplcation with real array and complex array
@@ -92,7 +92,7 @@ __global__ void cMult(cufftDoubleComplex* in1, cufftDoubleComplex* in2, cufftDou
 * @param	in2 Evolution operator input
 * @param	out Pass by reference output for multiplcation result
 */
-__global__ void cMultPhi(cufftDoubleComplex* in1, double* in2, cufftDoubleComplex* out);
+__global__ void cMultPhi(double2* in1, double* in2, double2* out);
 
 /**
 * @brief	Kernel for complex multiplication with nonlinear density term
@@ -117,7 +117,7 @@ __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt
 * @param	in2 Evolution operator input
 * @param	out Pass by reference output for multiplcation result
 */
-__global__ void pinVortex(cufftDoubleComplex* in1, cufftDoubleComplex* in2, cufftDoubleComplex* out);
+__global__ void pinVortex(double2* in1, double2* in2, double2* out);
 
 //##############################################################################
 

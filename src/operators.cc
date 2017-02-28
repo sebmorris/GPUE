@@ -140,9 +140,14 @@ double torus_V(Grid &par, Op &opr, int i, int j, int k){
     // to the large torus radius
     //double rMax = sqrt(xMax*xMax + yMax*yMax);
     double rMax = xMax;
+    //double r = sqrt(x[i] * x[i] + y[j] * y[j]);
 
     double rad = sqrt((x[i] - xOffset) * (x[i] - xOffset)
                       + (y[j] - yOffset) * (y[j] - yOffset)) - 0.5*rMax*fudge;
+    //double rad = ((abs(r) - rMax * 0.5 * fudge) 
+                 //* (abs(r) - rMax * 0.5 * fudge));
+    //double rad = ((r - rMax * 0.5 * fudge) 
+                 //* (r - rMax * 0.5 * fudge));
     double omegaR = sqrt(omegaX*omegaX + omegaY*omegaY);
     double V_r = omegaR*rad;
     V_r = V_r*V_r;
@@ -831,7 +836,8 @@ cufftDoubleComplex torus_wfc(Grid &par, double Phi,
     //double a0y = par.dval("a0y");
     double a0z = par.dval("a0z");
 
-    double rMax = sqrt(xMax*xMax + yMax*yMax);
+    //double rMax = sqrt(xMax*xMax + yMax*yMax);
+    double rMax = xMax;
 
     // We will now create a 2d projection and extend it in a torus shape
     double rad = sqrt((x[i] - xOffset) * (x[i] - xOffset) 
