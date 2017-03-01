@@ -659,28 +659,51 @@ void evolve_3d(Wave &wave, Op &opr,
                    ramp, gstate, ramp | (gstate << 1));
             switch (ramp | (gstate << 1)) {
                 case 0: //Groundstate solver, constant Omega value.
+                {
                     std::cout << "we are in case 0" << '\n';
                     fileName = "wfc_0_const";
                     break;
+                }
                 case 1: //Groundstate solver, ramped Omega value.
+                {
                     std::cout << "we are in state 1" << '\n';
                     fileName = "wfc_0_ramp";
                     break;
+                }
                 case 2: //Real-time evolution, constant Omega value.
+                {
                     // Note: In the case of 3d, we need to think about
                     //       vortex tracking in a new way.
                     //       It may be as simple as splitting the problem into
                     //       2D elements and working from there, but let's 
                     //       look into it when we need it in the future.
-                    std::cout << "we are in case 2" << '\n';
+                    std::cout << "commencing 3d vortex tracking" << '\n';
+
+                    // Creating the necessary double* values
+                    double* edges = (double *)malloc(sizeof(double)*gridSize);
+                    double* density = (double *)malloc(sizeof(double)*gridSize);
+
+                    // calling the kernel to find the edges
+                    find_edges<<<grid, threads>>>(wfc, density, edges);
+
+                    // Now we need to output everything
+                    if ( write_it){
+                        FileIO::writeOutDouble(buffer, data_dir + "Edges",
+                                               edges, gridSize, i);
+                    }
+
                     fileName = "wfc_ev";
                     break;
-
+                }
                 case 3:
+                {
                     fileName = "wfc_ev_ramp";
                     break;
+                }
                 default:
+                {
                     break;
+                }
             }
 
             //std::cout << "writing" << '\n';

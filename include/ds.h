@@ -35,6 +35,10 @@
 * CLASSES
 *-----------------------------------------------------------------------------*/
 
+struct pos{
+    double x, y, z;
+};
+
 /**
  * @brief       Class to hold the variable map and grid information
  * @ingroup     data

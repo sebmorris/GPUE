@@ -37,6 +37,7 @@
 #include "lattice.h"
 #include "manip.h"
 #include "unit_test.h"
+#include "vortex_3d.h"
 
 
 /* Function declarations */

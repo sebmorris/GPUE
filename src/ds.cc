@@ -5,6 +5,7 @@
 /*----------------------------------------------------------------------------//
 * AUX
 *-----------------------------------------------------------------------------*/
+
 // I didn't know where to place these functions for now, so the'll be here
 cufftHandle generate_plan_other2d(Grid &par){
     // We need a number of propertied for this fft / transform
