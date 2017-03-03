@@ -13,8 +13,6 @@
 #include <cassert>
 #include <random>
 
-std::size_t Vtx::Vortex::suid = 0;
-
 int main(){
     //########################################################################//
 
@@ -26,15 +24,16 @@ int main(){
 
     //VtxList::VtxList()
     std::shared_ptr<Vtx::VtxList> vl = std::make_shared<Vtx::VtxList>(11);
+    std::shared_ptr<Vtx::VtxList> vlp = std::make_shared<Vtx::VtxList>(11);
 
     //########################################################################//
     // Vortex::Vortex(int2 coords, double2 coordsD, int winding, int isOn, std::size_t timeStep)
     //########################################################################//
 
-    //Create UID 0 vortex, and check values
+    //Create UID -1 vortex, and check values
     std::shared_ptr<Vtx::Vortex> vtx = std::make_shared<Vtx::Vortex>(c,cD, 1, true, 0);
 
-    assert( vtx->getUID() == 0 );
+    assert( vtx->getUID() == -1 );
     assert( vtx->getCoords().x == 1 );
     assert( vtx->getCoordsD().y == 4.2 );
     assert( vtx->getWinding() == 1 );
@@ -76,16 +75,13 @@ int main(){
     //########################################################################//
 
     vl->removeVtx(2);
-    for (int i = 0; i < vl->getVortices().size(); ++i){
-        assert(vl->getVtx_Idx(i)->getUID() != 2);
-    }
     assert(vl->getVortices().size() == 10);
     std::cout << "Passed remove UID 2 check passed"<<std::endl;
 
     //########################################################################//
-    // :uid(suid++)
+    //
     //########################################################################//
-
+    c.x++; c.y++; cD.x += 1.; cD.y += 1.;
     vl->addVtx(std::make_shared<Vtx::Vortex>(c,cD, -1, false, 1000));
     assert(vl->getVtx_Uid(11)->getIsOn() == false);
     assert(vl->getVortices().size() == 11);
@@ -114,6 +110,7 @@ int main(){
     // VtxList::getMax_Uid()
     //########################################################################//
     //Value is post-incremented, so will always be +1 higher than largest UID stored
+
     assert(vl->getMax_Uid() == 12);
     std::cout << "Passed max UID check "<<std::endl;
 
@@ -148,7 +145,29 @@ int main(){
     std::cout << "Passed sortVortices check"<<std::endl;
 
     //########################################################################//
+    // VtxList::arrangeVtx(std::vector<std::shared_ptr<Vtx::Vortex> > &vPrev)
+    //########################################################################//
+    //Vtx::Vortex::resetSUID();
+    for( int i = 0; i < 11; ++i ){
+        c.x = i;
+        c.y = i;
+        cD.x =  i+dist(rng);
+        cD.y =  i+dist(rng);
+        vlp->addVtx(std::make_shared<Vtx::Vortex>(c, cD, 1, true, 0));
+    }
+    vl->arrangeVtx(vlp->getVortices());
 
+    //########################################################################//
+    // VtxList::minDistPair(std::shared_ptr<Vortex> vtx, double minRange)
+    //########################################################################//
+    for (int i=0; i < 11; ++i){
+        auto e = vl->minDistPair(vlp->getVtx_Idx(i), 5);
+        if(e.second != nullptr)
+            std::cout << "UIDc=" << e.second->getUID() << " UIDp=" << i << "\n\n";
+        else
+            1;
+    }
+    std::cout << std::endl;
 //nvcc -g -G ./vort.cc -o vort.o -std=c++11 -c -Wno-deprecated-gpu-targets; nvcc -g -G ./VtxTest.cc -std=c++11 -o VtxTest.o -c -Wno-deprecated-gpu-targets; nvcc vort.o VtxTest.o -Wno-deprecated-gpu-targets; ./a.out
     return 0;
 }

@@ -1,10 +1,11 @@
 #include "../include/vort.h"
 
+
 //@todo Implement this
 namespace Vtx {
 
-    Vortex::Vortex():uid(suid++){ }
-    Vortex::Vortex(int2 coords, double2 coordsD, int winding, int isOn, std::size_t timeStep):uid(suid++){
+    Vortex::Vortex():uid(-1){ }
+    Vortex::Vortex(int2 coords, double2 coordsD, int winding, int isOn, std::size_t timeStep):uid(-1){
         this->coords = coords;
         this->coordsD = coordsD;
         this->winding = winding;
@@ -51,11 +52,13 @@ namespace Vtx {
         return this->timeStep;
     }
 
+
 //######################################################################################################################
 //######################################################################################################################
 
-    VtxList::VtxList() { }
-    VtxList::VtxList(std::size_t reserveSize) {
+    VtxList::VtxList():suid(-1) {
+    }
+    VtxList::VtxList(std::size_t reserveSize):suid(-1) {
         vortices.reserve(reserveSize);
     }
     VtxList::~VtxList() {
@@ -64,10 +67,12 @@ namespace Vtx {
 
     //Add vortex to end of list.
     void VtxList::addVtx(std::shared_ptr<Vtx::Vortex> vtx) {
+        vtx->updateUID(++this->suid);
         this->getVortices().push_back(vtx);
     }
     //Add vortex to list at the given idx
     void VtxList::addVtx(std::shared_ptr<Vtx::Vortex> vtx, std::size_t idx) {
+        vtx->updateUID(++this->suid);
         this->getVortices().insert(this->vortices.begin() + idx, vtx);
     }
 
@@ -112,9 +117,8 @@ namespace Vtx {
         }
     }
 
-    //Decremented by 1 as value is post-incremented, and suid will always be 1 higher than largest stored value
     std::size_t VtxList::getMax_Uid(){
-        return Vtx::Vortex::suid -1;
+        return this->suid;
     }
 
     //Compare the distances between vtx and the vortex list. Used for time-based tracking
@@ -147,13 +151,114 @@ namespace Vtx {
 
 
     void VtxList::sortVtxUID(){
-        sort(this->getVortices().begin(), this->getVortices().end(),
+        std::sort(this->getVortices().begin(), this->getVortices().end(),
              [](std::shared_ptr<Vtx::Vortex> v0, std::shared_ptr<Vtx::Vortex> v1)
                      ->
                      bool{
                  return (v0->getUID() < v1->getUID());
              }
         );
+    }
+
+    void VtxList::setUIDs(std::set<std::shared_ptr<Vtx::Vortex> > &v){
+        for (auto e : this->getVortices()){
+            if(1){
+
+            }
+        }
+    }
+
+
+    void VtxList::arrangeVtx(std::vector<std::shared_ptr<Vtx::Vortex> > &vPrev){
+        std::set<std::shared_ptr<Vtx::Vortex> > sVtx_d01, sVtx_d10, sVtx_inter;
+        //Find the intersection of the UIDs, as well as elements unique to prev or current
+        std::set_intersection(
+                this->getVortices().begin(), this->getVortices().end(),
+                vPrev.begin(), vPrev.end(),
+                std::inserter(sVtx_inter,sVtx_inter.begin()),
+                [](std::shared_ptr<Vtx::Vortex> v0, std::shared_ptr<Vtx::Vortex> v1)
+                        ->
+                        bool{
+                    return (v0->getUID() < v1->getUID());
+                }
+        );
+        std::set_difference(
+                this->getVortices().begin(), this->getVortices().end(),
+                vPrev.begin(), vPrev.end(),
+                std::inserter(sVtx_d01,sVtx_d01.begin()),
+                [](std::shared_ptr<Vtx::Vortex> v0, std::shared_ptr<Vtx::Vortex> v1)
+                        ->
+                        bool{
+                    return (v0->getUID() < v1->getUID());
+                }
+        );
+        std::set_difference(
+                vPrev.begin(), vPrev.end(),
+                this->getVortices().begin(), this->getVortices().end(),
+                std::inserter(sVtx_d10,sVtx_d10.begin()),
+                [](std::shared_ptr<Vtx::Vortex> v0, std::shared_ptr<Vtx::Vortex> v1)
+                        ->
+                        bool{
+                    return (v0->getUID() < v1->getUID());
+                }
+        );
+/*
+        std::cout << "#######\n";
+        for (auto e : sVtx_inter){
+            std::cout << (e)->getUID() << std::endl;
+        }
+        std::cout << "#######\n";
+        for (auto e : sVtx_d01){
+            std::cout << (e)->getUID() << std::endl;
+        }
+        std::cout << "#######\n";
+        for (auto e : sVtx_d10){
+            std::cout << (e)->getUID() << std::endl;
+        }
+        std::cout << "#######\n";
+*/
+
+    }
+
+    /* Generate and return a pairing of the distance and closest vortex to vtx */
+    std::pair<double,std::shared_ptr<Vortex>> VtxList::minDistPair(std::shared_ptr<Vortex> vtx, double minRange){
+        /* Ensure the vortex is turned on in the previous run. If not, cannot find a corresponding vortex */
+        if(!vtx->getIsOn())
+            return {-1.,nullptr};
+
+        /* Vortices are paired with their distance to the respective test candidate vtx */
+        std::vector< std::pair<double, std::shared_ptr<Vortex>> > r_uid;
+        r_uid.reserve(this->getVortices().size());
+
+        /* Lambda for pairing the vortices and distances */
+        auto pairRDist = [&vtx,&r_uid](VtxList *vL) {
+            for (auto v : vL->getVortices()) {
+                r_uid.push_back(
+                        std::make_pair(
+                                pow(v->coordsD.x - vtx->coordsD.x, 2)
+                                +
+                                pow(v->coordsD.y - vtx->coordsD.y, 2),
+                                v
+                        )
+                );
+                //std::cout << "Uc=" << v->getUID() << "\t Xc=" << v->coordsD.x << "\t Yc=" << v->coordsD.x;
+               // std::cout << "\t Up=" << vtx->getUID() <<"\t Xp=" << vtx->coordsD.x << "\tYp=" << vtx->coordsD.x << "\n";
+            }
+        };
+        pairRDist(this);
+
+        /* Lambda for comparison of the vortex distances, to return the vortex with minimum distance */
+        auto compMin = [](  std::pair<double,std::shared_ptr<Vortex> >& p0,
+                            std::pair<double,std::shared_ptr<Vortex> >& p1
+                        ) -> double {
+                                return p0.first < p1.first;
+        };
+
+        /* Need to ensure that the vortex is within the minimal allowed distance for pairing.
+         * Outside of this range, the vortex is considered a different vortex, and so returns
+         * a nullptr, meaning that no vortex is found. */
+        auto pairMin = std::min_element( r_uid.begin(), r_uid.end(), compMin);
+        return {pairMin->first,(pairMin->first <= minRange) ? pairMin->second : nullptr};
     }
 }
 

@@ -14,7 +14,7 @@ namespace Tracker {
     /**
      * Determines the vortex separation at the centre of the lattice.
      */
-    double vortSepAvg(const std::vector<struct Vtx::Vortex> &vArray, const struct Vtx::Vortex &centre){
+    double vortSepAvg(const std::vector<Vtx::Vortex> &vArray, const Vtx::Vortex &centre){
         double min = 0.0;
         double min_tmp = 0.0;
         min = sqrt( pow(centre.coordsD.x - vArray[0].coordsD.x,2) + pow(centre.coordsD.y - vArray[0].coordsD.y,2));
@@ -214,16 +214,16 @@ namespace Tracker {
     /**
      * Accepts matrix of vortex locations as argument, returns array of x,y coordinates of locations and first encountered vortex angle
      */
-    void vortPos(const int *marker, std::vector<struct Vtx::Vortex> &vLocation, int xDim, const double2 *wfc){
+    void vortPos(const int *marker, std::vector<Vtx::Vortex> &vLocation, int xDim, const double2 *wfc){
         int i,j;
         unsigned int counter=0;
-	Vtx::Vortex vtx = {};
+	    Vtx::Vortex vtx = {};
         for(i=0; i<xDim; ++i){
             for(j=0; j<xDim; ++j){
                 if( abs((marker)[i*xDim + j]) >= 1){
-			vtx.coords.x = i;
-			vtx.coords.y = j;
-			vtx.wind = (marker[i*xDim + j]);
+			        vtx.coords.x = i;
+			        vtx.coords.y = j;
+			        vtx.winding = (marker[i*xDim + j]);
                     vLocation.push_back(vtx);
                     ++counter;
                 }
@@ -234,7 +234,7 @@ namespace Tracker {
     /**
      * Ensures the vortices are tracked and arranged in the right order based on minimum distance between previous and current positions
      */
-    void vortArrange(std::vector<struct Vtx::Vortex> &vCoordsC, const std::vector<struct Vtx::Vortex> &vCoordsP){
+    void vortArrange(std::vector<Vtx::Vortex> &vCoordsC, const std::vector<Vtx::Vortex> &vCoordsP){
         int dist, dist_t;
         int i, j, index;
         for ( i = 0; i < vCoordsC.size(); ++i ){
@@ -254,7 +254,7 @@ namespace Tracker {
     /**
      * Determines the coords of the vortex closest to the central position. Useful for centering the optical lattice over v. lattice*
     */
-    struct Vtx::Vortex vortCentre(const std::vector<struct Vtx::Vortex> &cArray, int xDim){
+     Vtx::Vortex vortCentre(const std::vector<Vtx::Vortex> &cArray, int xDim){
         int i, counter=0;
         int valX, valY;
         double valueTest, value = 0.0;
@@ -276,7 +276,7 @@ namespace Tracker {
     /**
      * Determines the angle of the vortex lattice relative to the x-axis
      */
-    double vortAngle(const std::vector<struct Vtx::Vortex> &vortCoords, const struct Vtx::Vortex &central){
+    double vortAngle(const std::vector<Vtx::Vortex> &vortCoords, const Vtx::Vortex &central){
         int location = 0;
         double minVal=1e300;//(pow(central.x - vortCoords[0].x,2) + pow(central.y - vortCoords[0].y,2));
         for (int i=0; i < vortCoords.size(); ++i){//Assuming healing length on the order of 2 um
@@ -297,7 +297,7 @@ namespace Tracker {
      * Sigma of vortex lattice and optical lattice. Deprecated
      */
     [[deprecated]]
-    double sigVOL(const std::vector<struct Vtx::Vortex> &vArr, const int2 *opLatt, const double *x){
+    double sigVOL(const std::vector<Vtx::Vortex> &vArr, const int2 *opLatt, const double *x){
         double sigma = 0.0;
         double dx = abs(x[1]-x[0]);
         for (int i=0; i<vArr.size(); ++i){
@@ -310,7 +310,7 @@ namespace Tracker {
     /**
      * Performs least squares fitting to get exact vortex core position.
      */
-    void lsFit(std::vector<struct Vtx::Vortex> &vortCoords, const double2 *wfc, int xDim){
+    void lsFit(std::vector<Vtx::Vortex> &vortCoords, const double2 *wfc, int xDim){
         double2 *wfc_grid = (double2*) malloc(sizeof(double2)*4);
         double2 *res = (double2*) malloc(sizeof(double2)*3);
         double2 X;

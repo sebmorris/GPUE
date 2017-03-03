@@ -24,6 +24,11 @@
 #include <limits>
 #include <cmath>
 
+#include<iostream>
+#include <algorithm>
+#include <set>
+#include <utility>      // std::pair, std::make_pair
+
 //@todo Convert the GPUE codebase to use the newly implemented Vortex and VtxList classes. Simplify graph codebase
 namespace Vtx {
 
@@ -37,7 +42,6 @@ namespace Vtx {
 	    int2 coords;
 	    double2 coordsD;
 	    int winding;
-        static std::size_t suid; //Static value of max UID. Used to allow for independent UIDs upon creation
 	    bool isOn;
         std::size_t timeStep;
 
@@ -74,6 +78,7 @@ namespace Vtx {
 	class VtxList {
 		private:
 			std::vector< std::shared_ptr<Vtx::Vortex> > vortices;
+            std::size_t suid; //value of max UID. Used to allow for independent UIDs upon creation.
 		public:
             VtxList(); //Initialise suid when creating the list
             VtxList(std::size_t reserveSize);//If size is known in advance, reserve the required num of elements
@@ -163,7 +168,22 @@ namespace Vtx {
             * @param    cArray Vortex
             */
             void sortVtxUID();
-	};
+
+            /**
+            * @brief	Arrange the vortices to have correct UID corresponding across timesteps
+            * @ingroup	vtx
+            * @param    cArray Vortex
+            */
+            void arrangeVtx(std::vector<std::shared_ptr<Vortex> > &vPrev);
+
+
+            void setUIDs(std::set<std::shared_ptr<Vtx::Vortex> > &v);
+
+
+            std::pair<double,std::shared_ptr<Vortex> > minDistPair(std::shared_ptr<Vortex> vtx, double minRange);
+
+
+        };
 };
 //##############################################################################
 #endif //GPUE_1_VORT_H

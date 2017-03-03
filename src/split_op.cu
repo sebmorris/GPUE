@@ -15,10 +15,14 @@
 #include <string>
 #include <iostream>
 
+
+//Declare the static uid values to avoid conflicts. Upper limit of 2^32-1 different instances. Should be reasonable in
+// any simulation of realistic timescales.
 unsigned int LatticeGraph::Edge::suid = 0;
 unsigned int LatticeGraph::Node::suid = 0;
+std::size_t Vtx::Vortex::suid = 0;
 
-char buffer[100];
+char buffer[100]; //Buffer for printing out. Need to replace by a better write-out procedure. Consider binary or HDF.
 int verbose; //Print more info. Not curently implemented.
 int device; //GPU ID choice.
 int kick_it; //Kicking mode: 0 = off, 1 = multiple, 2 = single
