@@ -149,15 +149,12 @@ void evolve_2d(Wave &wave, Op &opr,
                    ramp, gstate, ramp | (gstate << 1));
             switch (ramp | (gstate << 1)) {
                 case 0: //Groundstate solver, constant Omega value.
-                    std::cout << "we are in case 0" << '\n';
                     fileName = "wfc_0_const";
                     break;
                 case 1: //Groundstate solver, ramped Omega value.
-                    std::cout << "we are in state 1" << '\n';
                     fileName = "wfc_0_ramp";
                     break;
                 case 2: //Real-time evolution, constant Omega value.
-                    std::cout << "we are in case 2" << '\n';
                     fileName = "wfc_ev";
                     vortexLocation = (int *) calloc(xDim * yDim, sizeof(int));
                     num_vortices[0] = Tracker::findVortex(vortexLocation, wfc,
@@ -660,13 +657,11 @@ void evolve_3d(Wave &wave, Op &opr,
             switch (ramp | (gstate << 1)) {
                 case 0: //Groundstate solver, constant Omega value.
                 {
-                    std::cout << "we are in case 0" << '\n';
                     fileName = "wfc_0_const";
                     break;
                 }
                 case 1: //Groundstate solver, ramped Omega value.
                 {
-                    std::cout << "we are in state 1" << '\n';
                     fileName = "wfc_0_ramp";
                     break;
                 }

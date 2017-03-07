@@ -17,20 +17,15 @@
 //We will need a few functions to deal with vortex skeletons
 std::vector< std::vector<pos> > find_vortex_skeletons(double* edges);
 
-// Here, we will need 3 different convolution filters: row, col, depth
-// these functions will only be used in this file (for now)
-
-__device__ void convolve_col(double* density, double* edges, double* kernel,
-                             int width, int height, int depth){
-}
-
-__device__ void convolve_depth(double* density, double* edges, double* kernel,
-                               int width, int height, int depth){
-}
-
 // Kernel to transform a wavefunction to a field of edges
 __global__ void find_edges(double2* wfc, double* density, double* edges){
 
+    // for this, we simply need to take our sobel 3d sobel filter,
+    // FFT forward, multiply, FFT back.
+    
+
+    // Method to find edges based on window approach -- more efficient!
+/*
     // first, we need to set the threading
     unsigned int gid = getGid3d3d();
 
@@ -56,6 +51,7 @@ __global__ void find_edges(double2* wfc, double* density, double* edges){
     convolve_row(density, edges, kernel_tri, 256, 256, 256);
     //convolve_col(density, edges, kernel_div, 256, 256, 256);
     //convolve_depth(density, edges, kernel_div, 256, 256, 256);
+*/
 }
 
 __device__ void convolve_row(double* density, double* edges, double* kernel,
@@ -72,7 +68,7 @@ __device__ void convolve_row(double* density, double* edges, double* kernel,
     __shared__ float data[130];
 
     // Defining apron limits with respect to starting row
-    const int tile_start  = blockIdx.x / tile_width;
+    const int tile_start  = blockIdx.x * tile_width;
     const int tile_end    = tile_start + tile_width + 1;
     const int apron_start = tile_start - kernel_radius;
     const int apron_end   = tile_end + kernel_radius;
@@ -113,5 +109,121 @@ __device__ void convolve_row(double* density, double* edges, double* kernel,
         sum += data[smem_pos +1] * kernel[2];
 
         edges[row_start + write_pos] = sum;
+    }
+}
+
+__device__ void convolve_col(double* density, double* edges, double* kernel,
+                             int width, int height, int depth){
+
+    // These definitions are somewhat arbitrary for now.
+    // Kernel is the Sobel filter, so radius 1, right?
+    int kernel_radius = 1;
+    int kernel_radius_aligned = 1;
+    int tile_width = 128;
+
+    // this will need to be updated to compile.
+    // The array size needs to be constant
+    __shared__ float data[130];
+
+    // Defining apron limits with respect to starting row
+    const int tile_start  = blockIdx.x * tile_width;
+    const int tile_end    = tile_start + tile_width + 1;
+    const int apron_start = tile_start - kernel_radius;
+    const int apron_end   = tile_end + kernel_radius;
+
+    // Clamps for limits according to resolution limits
+    // I don't know if I'm allowed to se std functions here...
+    const int tile_end_clamp    = min(tile_end, width - 1);
+    const int apron_start_clamp = min(apron_start, 0);
+    const int apron_end_clamp   = min(apron_end, width - 1);
+
+    const int col_start = blockIdx.y * width;
+
+    const int apron_start_aligned = tile_start - kernel_radius_aligned;
+
+    const int load_pos = apron_start_aligned + threadIdx.x;
+
+    if (load_pos >= apron_start){
+        const int smem_pos = load_pos - apron_start;
+
+        if (load_pos >= apron_start_clamp && load_pos <= apron_end_clamp){
+            data[smem_pos] = density[col_start + load_pos];
+        }
+        else{
+            data[smem_pos] = 0;
+        }
+    }
+
+    __syncthreads();
+
+    const int write_pos = tile_start + threadIdx.x;
+
+    if (write_pos <= tile_end_clamp){
+        const int smem_pos = write_pos - apron_start;
+        float sum = 0;
+
+        sum += data[smem_pos -1] * kernel[0];
+        sum += data[smem_pos] * kernel[1];
+        sum += data[smem_pos +1] * kernel[2];
+
+        edges[col_start + write_pos] = sum;
+    }
+}
+
+__device__ void convolve_depth(double* density, double* edges, double* kernel,
+                               int width, int height, int depth){
+
+    // These definitions are somewhat arbitrary for now.
+    // Kernel is the Sobel filter, so radius 1, right?
+    int kernel_radius = 1;
+    int kernel_radius_aligned = 1;
+    int tile_width = 128;
+
+    // this will need to be updated to compile.
+    // The array size needs to be constant
+    __shared__ float data[130];
+
+    // Defining apron limits with respect to starting depth
+    const int tile_start  = blockIdx.x * tile_width;
+    const int tile_end    = tile_start + tile_width + 1;
+    const int apron_start = tile_start - kernel_radius;
+    const int apron_end   = tile_end + kernel_radius;
+
+    // Clamps for limits according to resolution limits
+    // I don't know if I'm allowed to se std functions here...
+    const int tile_end_clamp    = min(tile_end, width - 1);
+    const int apron_start_clamp = min(apron_start, 0);
+    const int apron_end_clamp   = min(apron_end, width - 1);
+
+    const int depth_start = blockIdx.y * width;
+
+    const int apron_start_aligned = tile_start - kernel_radius_aligned;
+
+    const int load_pos = apron_start_aligned + threadIdx.x;
+
+    if (load_pos >= apron_start){
+        const int smem_pos = load_pos - apron_start;
+
+        if (load_pos >= apron_start_clamp && load_pos <= apron_end_clamp){
+            data[smem_pos] = density[depth_start + load_pos];
+        }
+        else{
+            data[smem_pos] = 0;
+        }
+    }
+
+    __syncthreads();
+
+    const int write_pos = tile_start + threadIdx.x;
+
+    if (write_pos <= tile_end_clamp){
+        const int smem_pos = write_pos - apron_start;
+        float sum = 0;
+
+        sum += data[smem_pos -1] * kernel[0];
+        sum += data[smem_pos] * kernel[1];
+        sum += data[smem_pos +1] * kernel[2];
+
+        edges[depth_start + write_pos] = sum;
     }
 }

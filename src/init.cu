@@ -828,11 +828,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 index = i * yDim * zDim + j * zDim + k;
                 Phi[index] = fmod(l*atan2(y[j], x[i]),2*PI);
 
-                if (par.bval("read_wfc") == true){
-                    wfc[index].x *= cos(Phi[index]);
-                    wfc[index].y *= sin(Phi[index]);
-                }
-                else{
+                if (par.bval("read_wfc") != true){
                     wfc[index] = wave.Wfc_fn(par.Wfcfn)(par, Phi[index],i,j,k);
 /*
                     wfc[index].x = exp(-( pow((x[i])/(Rxy*a0x),2) + 
@@ -1094,6 +1090,8 @@ int main(int argc, char **argv){
         wfc=FileIO::readIn(infile,infilei,gSize);
         wave.store("wfc",wfc);
         printf("Wavefunction loaded.\n");
+        //std::string data_dir = par.sval("data_dir");
+        //FileIO::writeOut(buffer, data_dir + "WFC_CHECK",wfc,gSize,0);
     }
 
     // Initialization split between 2d and 3d

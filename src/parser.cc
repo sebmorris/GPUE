@@ -16,8 +16,8 @@ Grid parseArgs(int argc, char** argv){
     par.store("zDim", 256);
     par.store("omega", 0.0);
     par.store("gammaY", 1.0);
-    par.store("gsteps", 1e4);
-    par.store("esteps", 1000.0);
+    par.store("gsteps", 1);
+    par.store("esteps", 1);
     par.store("gdt", 1e-4);
     par.store("dt", 1e-4);
     par.store("device", 0);
@@ -171,8 +171,9 @@ Grid parseArgs(int argc, char** argv){
             case 'r':
             {
                 printf("Reading wavefunction from file.\n");
-                std::string infile = filecheck("data/wfc_load");
-                std::string infilei = filecheck("data/wfci_load");
+                std::string data_dir = par.sval("data_dir");
+                std::string infile = filecheck(data_dir + "wfc_load");
+                std::string infilei = filecheck(data_dir + "wfci_load");
                 par.store("infile", infile);
                 par.store("infilei", infilei);
                 par.store("read_wfc",true);
@@ -484,7 +485,7 @@ Grid parseArgs(int argc, char** argv){
             case 'D':
             {
                 double DX = atof(optarg);
-                printf("Argument for DX is %d\n",DX);
+                printf("Argument for DX is %lf\n",DX);
                 par.store("DX",DX);
                 break;
             }
