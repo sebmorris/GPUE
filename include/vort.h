@@ -43,27 +43,27 @@ namespace Vtx {
 	    double2 coordsD;
 	    int winding;
 	    bool isOn;
-        std::size_t timeStep;
+	    std::size_t timeStep;
 
     protected:
-        std::size_t uid;
+        int uid;
 
     public:
         Vortex();
-        Vortex(int2 coords, double2 coordsD, int winding, int isOn, std::size_t timeStep);
+        Vortex(int2 coords, double2 coordsD, int winding, bool isOn, std::size_t timeStep);
 
         ~Vortex();
 
-        void updateUID(std::size_t uid);
+        void updateUID(int uid);
         void updateWinding(int winding);
         void updateIsOn(bool isOn);
         void updateCoords(int2 coords);
         void updateCoordsD(double2 coordsD);
         void updateTimeStep(std::size_t timeStep);
 
-        std::size_t getUID();
+        int getUID();
         int getWinding();
-        bool getIsOn();
+	    bool getIsOn();
         int2 getCoords();
         double2 getCoordsD();
         std::size_t getTimeStep();
@@ -111,7 +111,7 @@ namespace Vtx {
 			* @ingroup	vtx
 			* @return	shared_ptr<Vortex> Shared pointer to vortex by index
 			*/
-			std::shared_ptr<Vortex> getVtx_Uid(std::size_t uid);
+			std::shared_ptr<Vortex> getVtx_Uid(int uid);
 
 			/**
 			* @brief	Returns a shared_ptr to the vortex by an index in VtxList
@@ -125,14 +125,14 @@ namespace Vtx {
 			* @ingroup	vtx
 			* @return	unsigned int Vortex index for UID
 			*/
-            std::size_t  getVtxIdx_Uid(std::size_t uid);
+            std::size_t  getVtxIdx_Uid(int uid);
 
 			/**
 			* @brief	Returns the largest UID given
 			* @ingroup	vtx
 			* @return	unsigned int Largest vortex UID
 			*/
-            std::size_t  getMax_Uid();
+            std::size_t&  getMax_Uid();
 
 			/**
 			* @brief	Returns index of vortex with shortest coordinate distance from current vortex

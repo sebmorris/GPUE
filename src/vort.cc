@@ -5,16 +5,16 @@
 namespace Vtx {
 
     Vortex::Vortex():uid(-1){ }
-    Vortex::Vortex(int2 coords, double2 coordsD, int winding, int isOn, std::size_t timeStep):uid(-1){
-        this->coords = coords;
-        this->coordsD = coordsD;
-        this->winding = winding;
-        this->isOn = isOn;
+    Vortex::Vortex(int2 coords, double2 coordsD, int winding, bool isOn, std::size_t timeStep):uid(-1){
+        this->coords = coords; //Coords to the grid
+        this->coordsD = coordsD; //Subgrid coords
+        this->winding = winding; //Charge of vortex
+        this->isOn = isOn; //Whether the vortex still exists, or has died/gone outside boundary
         this->timeStep = timeStep;
     }
     Vortex::~Vortex(){ }
 
-    void Vortex::updateUID(std::size_t uid){
+    void Vortex::updateUID(int uid){
         this->uid = uid;
     }
     void Vortex::updateWinding(int winding){
@@ -33,7 +33,7 @@ namespace Vtx {
         this->timeStep = timeStep;
     }
 
-    std::size_t Vortex::getUID(){
+    int Vortex::getUID(){
         return this->uid;
     }
     int Vortex::getWinding(){
@@ -56,9 +56,9 @@ namespace Vtx {
 //######################################################################################################################
 //######################################################################################################################
 
-    VtxList::VtxList():suid(-1) {
+    VtxList::VtxList():suid(0) {
     }
-    VtxList::VtxList(std::size_t reserveSize):suid(-1) {
+    VtxList::VtxList(std::size_t reserveSize):suid(0) {
         vortices.reserve(reserveSize);
     }
     VtxList::~VtxList() {
@@ -67,7 +67,7 @@ namespace Vtx {
 
     //Add vortex to end of list.
     void VtxList::addVtx(std::shared_ptr<Vtx::Vortex> vtx) {
-        vtx->updateUID(++this->suid);
+        this->suid++;
         this->getVortices().push_back(vtx);
     }
     //Add vortex to list at the given idx
@@ -91,7 +91,7 @@ namespace Vtx {
     }
 
     //Assumes UID exists.
-    std::shared_ptr<Vtx::Vortex> VtxList::getVtx_Uid(std::size_t uid){
+    std::shared_ptr<Vtx::Vortex> VtxList::getVtx_Uid(int uid){
         for(auto a : this->vortices){
             if(a->getUID() != uid){
                 continue;
@@ -107,7 +107,7 @@ namespace Vtx {
     }
 
     //Assumes UID exists
-    std::size_t VtxList::getVtxIdx_Uid(std::size_t uid){
+    std::size_t VtxList::getVtxIdx_Uid(int uid){
         for(std::size_t t = 0; t < this->vortices.size(); ++t){
             if(this->vortices[t]->getUID() != uid){
                 continue;
@@ -117,7 +117,7 @@ namespace Vtx {
         }
     }
 
-    std::size_t VtxList::getMax_Uid(){
+    std::size_t& VtxList::getMax_Uid(){
         return this->suid;
     }
 
@@ -149,7 +149,6 @@ namespace Vtx {
         this->vortices[idx1]->updateUID(uid0);
     }
 
-
     void VtxList::sortVtxUID(){
         std::sort(this->getVortices().begin(), this->getVortices().end(),
              [](std::shared_ptr<Vtx::Vortex> v0, std::shared_ptr<Vtx::Vortex> v1)
@@ -167,7 +166,6 @@ namespace Vtx {
             }
         }
     }
-
 
     void VtxList::arrangeVtx(std::vector<std::shared_ptr<Vtx::Vortex> > &vPrev){
         std::set<std::shared_ptr<Vtx::Vortex> > sVtx_d01, sVtx_d10, sVtx_inter;
@@ -202,21 +200,21 @@ namespace Vtx {
                     return (v0->getUID() < v1->getUID());
                 }
         );
-/*
-        std::cout << "#######\n";
+
+        std::cout << "####Inter####\n";
         for (auto e : sVtx_inter){
             std::cout << (e)->getUID() << std::endl;
         }
-        std::cout << "#######\n";
+        std::cout << "####Diff01####\n";
         for (auto e : sVtx_d01){
             std::cout << (e)->getUID() << std::endl;
         }
-        std::cout << "#######\n";
+        std::cout << "####Diff10####\n";
         for (auto e : sVtx_d10){
             std::cout << (e)->getUID() << std::endl;
         }
         std::cout << "#######\n";
-*/
+
 
     }
 
@@ -241,8 +239,7 @@ namespace Vtx {
                                 v
                         )
                 );
-                //std::cout << "Uc=" << v->getUID() << "\t Xc=" << v->coordsD.x << "\t Yc=" << v->coordsD.x;
-               // std::cout << "\t Up=" << vtx->getUID() <<"\t Xp=" << vtx->coordsD.x << "\tYp=" << vtx->coordsD.x << "\n";
+                //std::cout << "UIDin=" << vtx->getUID() << " UIDout=" << v->getUID() << " R=" << pow(v->coordsD.x - vtx->coordsD.x, 2) + pow(v->coordsD.y - vtx->coordsD.y, 2) << "\n" ;
             }
         };
         pairRDist(this);
@@ -258,7 +255,11 @@ namespace Vtx {
          * Outside of this range, the vortex is considered a different vortex, and so returns
          * a nullptr, meaning that no vortex is found. */
         auto pairMin = std::min_element( r_uid.begin(), r_uid.end(), compMin);
-        return {pairMin->first,(pairMin->first <= minRange) ? pairMin->second : nullptr};
+        return {pairMin->first,(pairMin->first <= minRange && pairMin->second->getWinding() == vtx->getWinding()) ? pairMin->second : nullptr};
     }
+
+
+    /*void VtxList::increaseList(){
+    }*/
 }
 
