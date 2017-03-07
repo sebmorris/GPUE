@@ -235,6 +235,9 @@ test:
         }
     }
     //vl->arrangeVtx(vlp->getVortices());
+    std::sort(vl->getVortices().begin(), vl->getVortices().end(), [](std::shared_ptr<Vtx::Vortex> a, std::shared_ptr<Vtx::Vortex> a) {
+        return b->getUID() < a->getUID();
+    });
     vlp->getVortices().swap(vl->getVortices());
     loop++;
     goto test;
