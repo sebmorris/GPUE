@@ -1,4 +1,4 @@
-CUDA_HOME = /home/l/loriordan/builds
+CUDA_HOME = /usr/local/cuda/#/home/l/loriordan/builds
 #CUTT_DIR = cutt/lib
 GPU_ARCH	= sm_60
 OS:=	$(shell uname)

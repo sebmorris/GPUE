@@ -122,9 +122,9 @@ namespace FileIO{
         sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);
         f = fopen (buffer.c_str(),"w");
         int i;
-        fprintf (f, "#X,Y,WINDING\n");
+        fprintf (f, "#UID,X,Xd,Y,Yd,WINDING,isOn\n");
         for (i = 0; i < data.size(); i++)
-            fprintf (f, "%d,%e,%d,%e,%d\n",data[i].coords.x,data[i].coordsD.x,data[i].coords.y,data[i].coordsD.y,data[i].wind);
+            fprintf (f, "%d,%d,%e,%d,%e,%d\n",data[i].getUID(),data[i].getCoordsD().x,data[i].getCoordsD().x,data[i].getCoords().y,data[i].getCoordsD().y,data[i].getWinding());
         fclose (f);
     }
 

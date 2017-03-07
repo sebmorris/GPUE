@@ -161,7 +161,7 @@ int main(){
     // Populate vortex arrays
     //########################################################################//
     //Vtx::Vortex::resetSUID();
-    for( int i = 0; i < 4; ++i ){
+    for( int i = 0; i < 2; ++i ){
         c.x = i;
         c.y = i;
         cD.x =  i+dist(rng);
@@ -175,9 +175,9 @@ int main(){
     cD.x =  12+dist(rng);
     cD.y =  16+dist(rng);
     vlp->addVtx(std::make_shared<Vtx::Vortex>(c, cD, 1, true, 0));
-    vlp->getVtx_Idx(4)->updateUID(vlp->getMax_Uid());
+    vlp->getVtx_Idx(2)->updateUID(vlp->getMax_Uid());
 
-    for( int i = 5; i < 8; ++i ){
+    for( int i = 3; i < 5; ++i ){
         c.x = i;
         c.y = i;
         cD.x =  i+dist(rng);
@@ -185,20 +185,19 @@ int main(){
         vlp->addVtx(std::make_shared<Vtx::Vortex>(c, cD, 1, true, 0));
         vlp->getVtx_Idx(i)->updateUID(vlp->getMax_Uid());
     }
-    int loop=0;
+    int loop=1;
 test:
-    if (loop==3)
+    if (loop==2)
         exit(0);
-    int size=9;
+    int size=6;
     for( int i = size; i >= 0; --i ){
-        c.x = i;
-        c.y = i;
-        cD.x =  i+dist(rng);
-        cD.y =  i+dist(rng);
+        c.x = i*loop;
+        c.y = i*loop;
+        cD.x =  i*loop+dist(rng);
+        cD.y =  i*loop+dist(rng);
         auto v = std::make_shared<Vtx::Vortex>(c, cD, 1, false, 0);
         vl->addVtx(v);
     }
-
 
     for(auto a: vlp->getVortices())
         std::cout << a->getUID() << "\n";
@@ -228,14 +227,14 @@ test:
         if (!(v->getUID() < 0))
             std::cout << "ON:="<< v->getIsOn() << " UIDc:=" << v->getUID()<< "\n";
         else {
-            std::cout << "Index=" << count << "\n";
+            std::cout << "Index=" << count << " added to list with UID="<< vl->getMax_Uid() <<"\n";
             v->updateUID(vl->getMax_Uid()++);
             v->updateIsOn(true);
             std::cout << "ON:="<< v->getIsOn() << " UIDc:=" << v->getUID()<< "\n";
         }
     }
     //vl->arrangeVtx(vlp->getVortices());
-    std::sort(vl->getVortices().begin(), vl->getVortices().end(), [](std::shared_ptr<Vtx::Vortex> a, std::shared_ptr<Vtx::Vortex> a) {
+    std::sort(vl->getVortices().begin(), vl->getVortices().end(), [](std::shared_ptr<Vtx::Vortex> a, std::shared_ptr<Vtx::Vortex> b) {
         return b->getUID() < a->getUID();
     });
     vlp->getVortices().swap(vl->getVortices());

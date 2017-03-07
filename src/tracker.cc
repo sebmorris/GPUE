@@ -337,4 +337,38 @@ namespace Tracker {
             vortCoords[ii].coordsD.y = vortCoords[ii].coords.y - X.y;
         }
     }
+
+    void updateVortices(std::shared_ptr<Vtx::VtxList> vLCurrent, std::shared_ptr<Vtx::VtxList> &vLPrev){
+        //Iterate through the previous vortices, and compare the distances
+        for (auto vtxPrev : vLPrev->getVortices()) {
+            auto vtxMin = vLCurrent->minDistPair(vtxPrev, 1);
+            //If the vortex has a min-pairing, and has a UID < 0 then we can assign it the same UID as the paired vortex
+            if (vtxMin.second != nullptr && vtxMin.second->getUID() < 0 ) {
+                vtxMin.second->updateUID(vtxPrev->getUID());
+                vtxMin.second->updateIsOn(true);
+            }
+                //If no pairing found, then the vortex has disappeared or been killed. Switch it off, and add it to the current list with the given UID
+            else{
+                vtxPrev->updateIsOn(false);
+                vLCurrent->addVtx(vtxPrev);//Will this cause trouble? Maybe rethink the UID determination
+            }
+        }
+        //Find new vortices, assign them UIDs and switch them on
+        for (auto v: vLCurrent->getVortices()) {
+            if (v->getUID() < 0){
+                v->updateUID(vLCurrent->getMax_Uid()++);
+                v->updateIsOn(true);
+            }
+        }
+        //Sort the list based on vortex UIDS. This may not be necessary, but helps for now with debugging things
+        std::sort(
+                vLCurrent->getVortices().begin(),
+                vLCurrent->getVortices().end(),
+                []( std::shared_ptr<Vtx::Vortex> a,
+                    std::shared_ptr<Vtx::Vortex> b) {
+                        return b->getUID() < a->getUID();
+        });
+        //Overwrite previous list with current list.
+        vLPrev->getVortices().swap(vLCurrent->getVortices());
+    }
 }
