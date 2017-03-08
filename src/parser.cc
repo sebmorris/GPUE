@@ -55,6 +55,7 @@ Grid parseArgs(int argc, char** argv){
     par.Kfn = "rotation_K";
     par.Vfn = "harmonic_V";
     par.Wfcfn = "standard_2d";
+    par.store("conv_type", "FFT");
 
     optind = 1;
 

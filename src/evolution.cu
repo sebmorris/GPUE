@@ -1,4 +1,3 @@
-
 #include "../include/evolution.h"
 
 void evolve_2d(Wave &wave, Op &opr,
@@ -676,10 +675,9 @@ void evolve_3d(Wave &wave, Op &opr,
 
                     // Creating the necessary double* values
                     double* edges = (double *)malloc(sizeof(double)*gridSize);
-                    double* density = (double *)malloc(sizeof(double)*gridSize);
 
                     // calling the kernel to find the edges
-                    find_edges<<<grid, threads>>>(wfc, density, edges);
+                    find_edges(par, cupar, wave, wfc, edges);
 
                     // Now we need to output everything
                     if ( write_it){

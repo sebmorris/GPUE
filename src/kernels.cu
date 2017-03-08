@@ -73,7 +73,6 @@ inline __device__ unsigned int permuteGid(int d1, int d2, int d3){
         return 0;
     }
 
-    
 }
 
 __device__ unsigned int getBid3d3d(){
@@ -103,6 +102,11 @@ __device__ double complexMagnitude(double2 in){
 
 __host__ __device__ double complexMagnitudeSquared(double2 in){
     return in.x*in.x + in.y*in.y;
+}
+
+__global__ void complexMagnitudeSquared(double2 *in, double *out){
+    int gid = getGid3d3d();
+    out[gid] = sqrt(in[gid].x*in[gid].x + in[gid].y*in[gid].y);
 }
 
 __host__ __device__ double2 complexMultiply(double2 in1, double2 in2){
@@ -150,6 +154,21 @@ __global__ void vecMult(double2 *in, double *factor, double2 *out){
     result.y = (in[gid].y * factor[gid]);
     out[gid] = result;
 }
+
+__global__ void l2_norm(double *in1, double *in2, double *in3, double *out){
+
+    int gid = getGid3d3d();
+    out[gid] = sqrt(in1[gid]*in1[gid] + in2[gid]*in2[gid] + in3[gid]*in3[gid]);
+}
+
+__global__ void l2_norm(double2 *in1, double2 *in2, double2 *in3, double *out){
+
+    int gid = getGid3d3d();
+    out[gid] = sqrt(in1[gid].x*in1[gid].x + in1[gid].y*in1[gid].y
+                    + in2[gid].x*in2[gid].x + in2[gid].y*in2[gid].y
+                    + in3[gid].x*in3[gid].x + in3[gid].y*in3[gid].y);
+}
+
 
 /**
  * Performs the non-linear evolution term of Gross--Pitaevskii equation.
@@ -424,7 +443,7 @@ template<typename T> __global__ void pSumT(T* in1, T* output, int pass){
 }
 
 /**
- * Routine for parallel summation. Can be looped over from host.
+ * Routine for parallel summation. Can be looped over from host. BETA
  */
 __global__ void pSum(double* in1, double* output, int pass){
         unsigned int tid = threadIdx.x;

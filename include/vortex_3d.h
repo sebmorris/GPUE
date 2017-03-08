@@ -19,9 +19,15 @@
 
 // Kernel to return spine of edges
 
-// We need a central kernel with just inputs and outputs
+// Function to find 3d sobel operators for fft convolution
+void find_sobel(Grid &par);
 
-__global__ void find_edges(double2* wfc, double* density, double* edges);
+// Function to transfer 3d sobel operators for non-fft convolution
+void transfer_sobel(Grid &par);
+
+// We need a central kernel with just inputs and outputs
+void find_edges(Grid &par, Cuda &cupar, Wave &wave, 
+                double2* wfc, double* edges);
 
 // Here, we will need 3 different convolution filters: row, col, depth
 // these functions will only be used in this file (for now)
