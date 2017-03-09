@@ -640,7 +640,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     // Let's go ahead and define the gDensConst here
     // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
-    double gDenConst = N*4*HBAR*HBAR*PI*(4.67e-9/mass);
+    double gDenConst = N*4*HBAR*HBAR*PI*(4.76e-9/mass);
     par.store("gDenConst", gDenConst);
 
 

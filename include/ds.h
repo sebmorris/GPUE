@@ -55,6 +55,7 @@ class Grid{
         std::unordered_map<std::string, double> param_double;
         std::unordered_map<std::string, double*> param_dstar;
         std::unordered_map<std::string, bool> param_bool;
+        std::unordered_map<std::string, cufftDoubleComplex*> sobel;
         std::unordered_map<std::string, std::string> param_string;
         std::string data_dir;
 
@@ -67,6 +68,9 @@ class Grid{
 
         // placing grid parameters in public for now
         double *x, *y, *z, *xp, *yp, *zp;
+
+        // Function to store sobel_fft operators into the sobel map
+        void store(std::string id, cufftDoubleComplex* d2param);
 
         // Function to store integer into param_int
         void store(std::string id, int iparam);
@@ -97,6 +101,9 @@ class Grid{
 
         // Fucntion to retrieve string from data_dir
         std::string sval(std::string id);
+
+        // Function to call back the sobel operators
+        cufftDoubleComplex *cufftDoubleComplexval(std::string id);
 
         // Function for file writing
         void write(std::string filename);

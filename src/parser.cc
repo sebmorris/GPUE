@@ -51,11 +51,12 @@ Grid parseArgs(int argc, char** argv){
     par.store("DX",0.0);
     par.store("mask_2d", 1e-4);
     par.store("box_size", 2.5e-5);
+    par.store("found_sobel", false);
     par.Afn = "rotation";
     par.Kfn = "rotation_K";
     par.Vfn = "harmonic_V";
     par.Wfcfn = "standard_2d";
-    par.store("conv_type", "FFT");
+    par.store("conv_type", (std::string)"FFT");
 
     optind = 1;
 

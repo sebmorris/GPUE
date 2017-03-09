@@ -156,9 +156,9 @@ double torus_V(Grid &par, Op &opr, int i, int j, int k){
     V_z = V_z * V_z;
     if (par.Afn != "file"){
         return 1 * 0.5 * mass * ( V_r + V_z) + 
-               0.5 * mass * pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
-               0.5 * mass * pow(opr.Az_fn(par.Afn)(par, opr, i, j, k),2) + 
-               0.5 * mass * pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2);
+               0.5 * mass * (pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
+                             pow(opr.Az_fn(par.Afn)(par, opr, i, j, k),2) + 
+                             pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2));
     }
     else{
         double *Ax = opr.dsval("Ax");
@@ -168,11 +168,10 @@ double torus_V(Grid &par, Op &opr, int i, int j, int k){
         int zDim = par.ival("zDim");
         int count = i*yDim*zDim + j*zDim + k; 
         return 1 * 0.5 * mass * ( V_r + V_z) + 
-               0.5 * mass * pow(Ax[count],2) + 
-               0.5 * mass * pow(Az[count],2) + 
-               0.5 * mass * pow(Ay[count],2);
+               0.5 * mass * (pow(Ax[count],2) + 
+                             pow(Az[count],2) + 
+                             pow(Ay[count],2));
     }
-
     return V_r + V_z;
 }
 

@@ -124,6 +124,11 @@ cufftHandle generate_plan_other3d(Grid &par, int axis){
 * GRID
 *-----------------------------------------------------------------------------*/
 
+// Function to store sobel_fft operators and stuff
+void Grid::store(std::string id, cufftDoubleComplex *d2param){
+    sobel[id] = d2param;
+}
+
 // Function to store integer into Grid->param_int
 void Grid::store(std::string id, int iparam){
     param_int[id] = iparam;
@@ -218,6 +223,17 @@ std::string Grid::sval(std::string id){
         std::cout << "ERROR: could not find string " << id 
                   << " in Grid::param_string." << '\n';
         assert(it != param_string.end());
+    }
+    return it->second;
+}
+
+// Function to call back the sobel operators
+cufftDoubleComplex *Grid::cufftDoubleComplexval(std::string id){
+    auto it = sobel.find(id);
+    if (it == sobel.end()){
+        std::cout << "ERROR: could not find string " << id
+                  << " in Grid::sobel." << '\n';
+        assert(it != sobel.end());
     }
     return it->second;
 }
@@ -501,7 +517,6 @@ void Op::set_fns(){
     Op_pAx_fns["rotation"] = rotation_pAx;
     Op_pAz_fns["rotation"] = rotation_pAz;
     Op_Ax_fns["rotation"] = rotation_Ax;
-    Op_Ay_fns["rotation"] = rotation_Ay;
     Op_Ay_fns["rotation"] = rotation_Ay;
     Op_Az_fns["rotation"] = rotation_Az;
 
