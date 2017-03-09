@@ -120,13 +120,13 @@ void evolve_2d(Wave &wave, Op &opr,
     //struct Vtx::Vortex *vortCoords = NULL;
 
 
-    std::shared_ptr<Vtx::VtxList> vortCoords;// = std::make_shared<Vtx::VtxList>(11);
+    std::shared_ptr<Vtx::VtxList> vortCoords = std::make_shared<Vtx::VtxList>(7);
     //std::vector<std::shared_ptr<Vtx::Vortex> vortCoords;
 
     //Previous array of vortex coordinates from vortexLocation 1's
     //struct Vtx::Vortex *vortCoordsP = NULL;
     //std::vector<struct Vtx::Vortex> vortCoordsP;
-    std::shared_ptr<Vtx::VtxList> vortCoordsP;// = std::make_shared<Vtx::VtxList>(11);
+    std::shared_ptr<Vtx::VtxList> vortCoordsP = std::make_shared<Vtx::VtxList>(7);
 
 
     LatticeGraph::Lattice lattice; //Vortex lattice graph.

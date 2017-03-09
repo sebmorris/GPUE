@@ -1,4 +1,4 @@
-CUDA_HOME = /usr/local/cuda/#/home/l/loriordan/builds
+CUDA_HOME = /home/l/loriordan/builds
 #CUTT_DIR = cutt/lib
 GPU_ARCH	= sm_60
 OS:=	$(shell uname)
@@ -6,13 +6,13 @@ ifeq ($(OS),Darwin)
 CUDA_LIB	= $(CUDA_HOME)/lib
 CUDA_HEADER	= $(CUDA_HOME)/include
 CC		= $(CUDA_HOME)/bin/nvcc #-ccbin /usr/bin/clang --ptxas-options=-v#-save-temps
-CFLAGS		= -v -g -std=c++11 
+CFLAGS		= -g -std=c++11 
 else
 CUDA_LIB	= $(CUDA_HOME)/lib64
 CUDA_HEADER	= $(CUDA_HOME)/include
 CC		= $(CUDA_HOME)/bin/nvcc --ptxas-options=-v --compiler-options -Wall #-save-temps
 CHOSTFLAGS	= #-fopenmp
-CFLAGS		= -v -g -O0 -std=c++11 -Xcompiler '-std=c++11' -Xcompiler '-fopenmp' #-L$(CUTT_DIR) -l:libcutt.a
+CFLAGS		= -g -O0 -std=c++11 -Xcompiler '-std=c++11' -Xcompiler '-fopenmp' #-L$(CUTT_DIR) -l:libcutt.a
 endif
 
 CLINKER		= $(CC) 
@@ -26,10 +26,10 @@ gpue: fileIO.o kernels.o split_op.o tracker.o minions.o ds.o edge.o node.o latti
 	#rm -rf ./*.o
 
 init.o: ./src/init.cu ./include/split_op.h ./include/kernels.h ./include/constants.h ./include/fileIO.h ./include/minions.h ./include/parser.h ./include/evolution.h Makefile
-	$(CC) -c  ./src/init.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -arch=$(GPU_ARCH)
+	$(CC) -c  ./src/init.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -Xcompiler "-fopenmp" -arch=$(GPU_ARCH)
 
 split_op.o: ./src/split_op.cu ./include/split_op.h ./include/kernels.h ./include/constants.h ./include/fileIO.h ./include/minions.h
-	$(CC) -c  ./src/split_op.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -arch=$(GPU_ARCH)
+	$(CC) -c  ./src/split_op.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -Xcompiler "-fopenmp" -arch=$(GPU_ARCH)
 
 kernels.o: ./include/split_op.h Makefile ./include/constants.h ./include/kernels.h ./src/kernels.cu
 	$(CC) -c  ./src/kernels.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -arch=$(GPU_ARCH)
@@ -53,7 +53,7 @@ unit_test.o: ./src/unit_test.cu ./include/unit_test.h
 	$(CC) -c ./src/unit_test.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) $(CHOSTFLAGS)
 
 evolution.o: ./src/evolution.cu ./include/evolution.h ./include/split_op.h ./include/constants.h ./include/kernels.h ./include/fileIO.h 
-	$(CC) -c ./src/evolution.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -arch=$(GPU_ARCH) 
+	$(CC) -c ./src/evolution.cu -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -Xcompiler "-fopenmp" -arch=$(GPU_ARCH) 
 
 ds.o: ./src/ds.cc ./include/ds.h ./include/operators.h
 	$(CC) -c ./src/ds.cc -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) $(CHOSTFLAGS)

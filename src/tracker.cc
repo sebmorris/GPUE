@@ -220,7 +220,7 @@ namespace Tracker {
 
         int2 coords; double2 coordsD;
         coords.x=0; coords.y = 0;
-        coords.x=0.; coords.y = 0.;
+        coordsD.x=0.; coordsD.y = 0.;
 
         for( i = 0; i < xDim; ++i){
             for( j = 0; j < xDim; ++j){
@@ -315,7 +315,7 @@ namespace Tracker {
     void lsFit(std::vector<std::shared_ptr<Vtx::Vortex> > &vortCoords, const double2 *wfc, int xDim){
         double2 *wfc_grid = (double2*) malloc(sizeof(double2)*4);
         double2 *res = (double2*) malloc(sizeof(double2)*3);
-        double2 X;
+        double2 R;
         double2 coordsAdjusted;
         double det=0.0;
         for(int ii=0; ii < vortCoords.size(); ++ii){
@@ -334,10 +334,10 @@ namespace Tracker {
 
             //Solve Ax=b here. A = res[0,1], b = - res[2]. Solution -> X
             det = 1.0/(res[0].x*res[1].y - res[0].y*res[1].x);
-            X.x = det*(res[1].y*res[2].x - res[0].y*res[2].y);
-            X.y = det*(-res[1].x*res[2].x + res[0].x*res[2].y);
-            coordsAdjusted.x = vortCoords[ii]->getCoords().x - X.x;
-            coordsAdjusted.y = vortCoords[ii]->getCoords().y - X.y;
+            R.x = det*(res[1].y*res[2].x - res[0].y*res[2].y);
+            R.y = det*(-res[1].x*res[2].x + res[0].x*res[2].y);
+            coordsAdjusted.x = vortCoords[ii]->getCoords().x - R.x;
+            coordsAdjusted.y = vortCoords[ii]->getCoords().y - R.y;
             vortCoords[ii]->updateCoordsD(coordsAdjusted);
         }
     }
