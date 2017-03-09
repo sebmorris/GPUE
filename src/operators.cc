@@ -92,18 +92,18 @@ double harmonic_V(Grid &par, Op &opr, int i , int j, int k){
     double V_x = omegaX*(x[i]+xOffset); 
     double V_y = gammaY*omegaY*(y[j]+yOffset);
     if (par.Afn != "file"){
-        return 0.5 * mass * ( V_x * V_x + V_y * V_y) + 
-               0.5 * mass * pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
-               0.5 * mass * pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2);
+        return 0.5 * mass * (( V_x * V_x + V_y * V_y) + 
+                             pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
+                             pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2));
     }
     else{
         double *Ax = opr.dsval("Ax");
         double *Ay = opr.dsval("Ay");
         int yDim = par.ival("yDim");
         int count = i*yDim + j; 
-        return 0.5 * mass * ( V_x * V_x + V_y * V_y) + 
-               0.5 * mass * pow(Ax[count],2) + 
-               0.5 * mass * pow(Ay[count],2);
+        return 0.5 * mass * (( V_x * V_x + V_y * V_y) + 
+                             pow(Ax[count],2) + 
+                             pow(Ay[count],2));
     }
 
 }
@@ -155,10 +155,10 @@ double torus_V(Grid &par, Op &opr, int i, int j, int k){
     double V_z = omegaR*(z[k]+zOffset);
     V_z = V_z * V_z;
     if (par.Afn != "file"){
-        return 1 * 0.5 * mass * ( V_r + V_z) + 
-               0.5 * mass * (pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
-                             pow(opr.Az_fn(par.Afn)(par, opr, i, j, k),2) + 
-                             pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2));
+        return 0.5 * mass * (( V_r + V_z) + 
+                             (pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
+                              pow(opr.Az_fn(par.Afn)(par, opr, i, j, k),2) + 
+                              pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2)));
     }
     else{
         double *Ax = opr.dsval("Ax");
@@ -167,10 +167,10 @@ double torus_V(Grid &par, Op &opr, int i, int j, int k){
         int yDim = par.ival("yDim");
         int zDim = par.ival("zDim");
         int count = i*yDim*zDim + j*zDim + k; 
-        return 1 * 0.5 * mass * ( V_r + V_z) + 
-               0.5 * mass * (pow(Ax[count],2) + 
+        return 0.5 * mass * (( V_r + V_z) + 
+                            (pow(Ax[count],2) + 
                              pow(Az[count],2) + 
-                             pow(Ay[count],2));
+                             pow(Ay[count],2)));
     }
     return V_r + V_z;
 }
@@ -192,10 +192,10 @@ double harmonic_V3d(Grid &par, Op &opr, int i , int j, int k){
     double V_y = gammaY*omegaY*(y[j]+yOffset);
     double V_z = gammaY*omegaZ*(z[k]+zOffset);
     if (par.Afn != "file"){
-        return 0.5 * mass * ( V_x * V_x + V_y * V_y + V_z*V_z) + 
-               0.5 * mass * pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
-               0.5 * mass * pow(opr.Az_fn(par.Afn)(par, opr, i, j, k),2) + 
-               0.5 * mass * pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2);
+        return 0.5 * mass * (( V_x * V_x + V_y * V_y + V_z*V_z) + 
+                            pow(opr.Ax_fn(par.Afn)(par, opr, i, j, k),2) + 
+                            pow(opr.Az_fn(par.Afn)(par, opr, i, j, k),2) + 
+                            pow(opr.Ay_fn(par.Afn)(par, opr, i, j, k),2));
     }
     else{
         double *Ax = opr.dsval("Ax");
@@ -204,10 +204,10 @@ double harmonic_V3d(Grid &par, Op &opr, int i , int j, int k){
         int yDim = par.ival("yDim");
         int zDim = par.ival("zDim");
         int count = i*yDim*zDim + j*zDim + k; 
-        return 0.5 * mass * ( V_x * V_x + V_y * V_y + V_z * V_z) + 
-               0.5 * mass * pow(Ax[count],2) + 
-               0.5 * mass * pow(Az[count],2) + 
-               0.5 * mass * pow(Ay[count],2);
+        return 0.5 * mass * (( V_x * V_x + V_y * V_y + V_z * V_z) + 
+                            pow(Ax[count],2) + 
+                            pow(Az[count],2) + 
+                            pow(Ay[count],2));
     }
 
 }
