@@ -117,14 +117,14 @@ namespace FileIO{
      * Writes out tracked vortex data.
      */
     void writeOutVortex(std::string buffer, std::string file,
-                            std::vector<struct Vtx::Vortex> &data, int step){
+                            std::vector<std::shared_ptr<Vtx::Vortex>> &data, int step){
         FILE *f;
         sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);
         f = fopen (buffer.c_str(),"w");
         int i;
         fprintf (f, "#UID,X,Xd,Y,Yd,WINDING,isOn\n");
         for (i = 0; i < data.size(); i++)
-            fprintf (f, "%d,%d,%e,%d,%e,%d\n",data[i].getUID(),data[i].getCoordsD().x,data[i].getCoordsD().x,data[i].getCoords().y,data[i].getCoordsD().y,data[i].getWinding());
+            fprintf (f, "%d,%d,%e,%d,%e,%d\n",data[i]->getUID(),data[i]->getCoordsD().x,data[i]->getCoordsD().x,data[i]->getCoords().y,data[i]->getCoordsD().y,data[i]->getWinding());
         fclose (f);
     }
 

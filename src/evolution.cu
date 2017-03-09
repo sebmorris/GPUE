@@ -104,23 +104,30 @@ void evolve_2d(Wave &wave, Op &opr,
     int* vortexLocation;
     //int* olMaxLocation = (int*) calloc(xDim*yDim,sizeof(int));
 
-    struct Vtx::Vortex central_vortex; //vortex closest to the central position
+    std::shared_ptr<Vtx::Vortex> central_vortex; //vortex closest to the central position
+    /*
 	central_vortex.coords.x = -1;
 	central_vortex.coords.y = -1;
 	central_vortex.coordsD.x = -1.;
 	central_vortex.coordsD.y = -1.;
 	central_vortex.wind = 0;
+*/
 
     // Angle of vortex lattice. Add to optical lattice for alignment.
     double vort_angle;
 
     // array of vortex coordinates from vortexLocation 1's
     //struct Vtx::Vortex *vortCoords = NULL;
-    std::vector<struct Vtx::Vortex> vortCoords;
+
+
+    std::shared_ptr<Vtx::VtxList> vortCoords;// = std::make_shared<Vtx::VtxList>(11);
+    //std::vector<std::shared_ptr<Vtx::Vortex> vortCoords;
 
     //Previous array of vortex coordinates from vortexLocation 1's
     //struct Vtx::Vortex *vortCoordsP = NULL;
-    std::vector<struct Vtx::Vortex> vortCoordsP;
+    //std::vector<struct Vtx::Vortex> vortCoordsP;
+    std::shared_ptr<Vtx::VtxList> vortCoordsP;// = std::make_shared<Vtx::VtxList>(11);
+
 
     LatticeGraph::Lattice lattice; //Vortex lattice graph.
     double* adjMat;
@@ -173,20 +180,19 @@ void evolve_2d(Wave &wave, Op &opr,
                     // exact centre, calculate lattice angle, generate optical
                     // lattice.
                     if (i == 0) {
-
-			if(num_vortices[0] > 0){
+			            if(num_vortices[0] > 0){
                              //Reserve enough space for the vortices
-                             vortCoords.reserve(num_vortices[0]);
-                             vortCoordsP.reserve(num_vortices[0]);
+                             vortCoords = std::make_shared<Vtx::VtxList>(num_vortices[0]);//reserve(num_vortices[0]);
+                             vortCoordsP = std::make_shared<Vtx::VtxList>(num_vortices[0]);
 
                         //Locate the vortex positions to the nearest grid, then perform a least-squares fit to determine the location to sub-grid reolution.
-                             Tracker::vortPos(vortexLocation, vortCoords, xDim, wfc);
-                             Tracker::lsFit(vortCoords, wfc, xDim);
+                             Tracker::vortPos(vortexLocation, vortCoords->getVortices(), xDim, wfc);
+                             Tracker::lsFit(vortCoords->getVortices(), wfc, xDim);
 
                         //Find the centre-most vortex in the lattice
-                             central_vortex = Tracker::vortCentre(vortCoords, xDim);
+                             central_vortex = Tracker::vortCentre(vortCoords->getVortices(), xDim);
                         //Determine the Angle formed by the lattice relative to the x-axis
-                             vort_angle = Tracker::vortAngle(vortCoords, central_vortex);
+                             vort_angle = Tracker::vortAngle(vortCoords->getVortices(), central_vortex);
 
                         //Store the vortex angle in the parameter file
                              par.store("Vort_angle", vort_angle);
@@ -194,18 +200,18 @@ void evolve_2d(Wave &wave, Op &opr,
 
 
                         //Determine average lattice spacing.
- 			     sepAvg = Tracker::vortSepAvg(vortCoords, central_vortex);
+                             sepAvg = Tracker::vortSepAvg(vortCoords->getVortices(), central_vortex);
 
                              par.store("Central_vort_x",
-                                  (double) central_vortex.coords.x);
+                                  (double) central_vortex->getCoords().x);
                              par.store("Central_vort_y",
-                                  (double) central_vortex.coords.y);
+                                  (double) central_vortex->getCoords().y);
                              par.store("Central_vort_winding",
-                                  (double) central_vortex.wind);
-                             par.store("Num_vort", (double) vortCoords.size());
+                                  (double) central_vortex->getWinding());
+                             par.store("Num_vort", (double) vortCoords->getVortices().size());
 
                         //Setup the optical lattice to match the spacing and angle+angle_sweep of the vortex lattice. Amplitude matched by setting laser_power parameter switch.
-                             optLatSetup(central_vortex, V, vortCoords,
+                             optLatSetup(central_vortex, V, vortCoords->getVortices(),
                                     vort_angle + PI * angle_sweep / 180.0,
                                     laser_power * HBAR * sqrt(omegaX * omegaY),
                                     V_opt, x, y, par, opr);
@@ -239,9 +245,9 @@ void evolve_2d(Wave &wave, Op &opr,
         */          // if num_vortices[1] < num_vortices[0] ... Fewer vortices
                     else {
                          if (num_vortices[0] > 0){
-                        	Tracker::vortPos(vortexLocation, vortCoords, xDim, wfc);
-                        	Tracker::lsFit(vortCoords, wfc, xDim);
-                        	Tracker::vortArrange(vortCoords, vortCoordsP);
+                        	Tracker::vortPos(vortexLocation, vortCoords->getVortices(), xDim, wfc);
+                        	Tracker::lsFit(vortCoords->getVortices(), wfc, xDim);
+                        	Tracker::vortArrange(vortCoords->getVortices(), vortCoordsP->getVortices());
                     		FileIO::writeOutInt(buffer, data_dir + "vLoc_",
                                                vortexLocation, xDim * yDim, i);
 			             }
@@ -252,9 +258,9 @@ void evolve_2d(Wave &wave, Op &opr,
                     // with vortex positions. Lambda function also defined for vortex
                     // elimination using graph positions and UID numbers.
                     if (graph && num_vortices[0] > 0) {
-                        for (int ii = 0; ii < vortCoords.size(); ++ii) {
+                        for (int ii = 0; ii < vortCoords->getVortices().size(); ++ii) {
                             std::shared_ptr<LatticeGraph::Node>
-                                n(new LatticeGraph::Node(vortCoords[ii]));
+                                n(new LatticeGraph::Node(*vortCoords->getVortices().at(ii).get()));
                             lattice.addVortex(std::move(n));
                         }
                         unsigned int *uids = (unsigned int *) malloc(
@@ -268,9 +274,9 @@ void evolve_2d(Wave &wave, Op &opr,
                             auto killIt=[&](int idx, int winding,
                                             double delta_x) {
                                 WFC::phaseWinding(Phi, 1, x, y, dx, dy,
-                                    lattice.getVortexUid(idx)->getData().coordsD.x
+                                    lattice.getVortexUid(idx)->getData().getCoordsD().x
                                     + cos(angle_sweep + vort_angle)*delta_x,
-                                    lattice.getVortexUid(idx)->getData().coordsD.y
+                                    lattice.getVortexUid(idx)->getData().getCoordsD().y
                                     + sin(angle_sweep + vort_angle)*delta_x,
                                     xDim);
                                 cudaMemcpy(Phi_gpu, Phi,
@@ -310,16 +316,16 @@ void evolve_2d(Wave &wave, Op &opr,
 
                     //Write out the vortex locations
                     FileIO::writeOutVortex(buffer, data_dir + "vort_arr",
-                                           vortCoords, i);
-                    printf("Located %d vortices\n", vortCoords.size());
+                                           vortCoords->getVortices(), i);
+                    printf("Located %d vortices\n", vortCoords->getVortices().size());
 
                     //Free memory block for now.
                     free(vortexLocation);
 
                     //Current values become previous values.
                     num_vortices[1] = num_vortices[0];
-                    vortCoords.swap(vortCoordsP);
-		            vortCoords.clear();
+                    vortCoords->getVortices().swap(vortCoordsP->getVortices());
+		            vortCoords->getVortices().clear();
 			        std::cout << "I am here" << std::endl;
 
                     break;

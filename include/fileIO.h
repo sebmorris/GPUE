@@ -98,7 +98,7 @@ namespace FileIO {
     * @param	step Index for the filename. file_step
     */
     void writeOutVortex(std::string buffer, std::string file,
-                        std::vector<struct Vtx::Vortex> &data, int step);
+                        std::vector<std::shared_ptr<Vtx::Vortex>> &data, int step);
 
 	/**
     * @brief	Writes the parameter file

@@ -33,22 +33,22 @@ namespace Vtx {
         this->timeStep = timeStep;
     }
 
-    int Vortex::getUID(){
+    int Vortex::getUID() const{
         return this->uid;
     }
-    int Vortex::getWinding(){
+    int Vortex::getWinding() const{
         return this->winding;
     }
-    bool Vortex::getIsOn(){
+    bool Vortex::getIsOn() const{
         return this->isOn;
     }
-    int2 Vortex::getCoords(){
+    int2 Vortex::getCoords() const{
         return this->coords;
     }
-    double2 Vortex::getCoordsD(){
+    double2 Vortex::getCoordsD() const{
         return this->coordsD;
     }
-    std::size_t Vortex::getTimeStep(){
+    std::size_t Vortex::getTimeStep() const{
         return this->timeStep;
     }
 

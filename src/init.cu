@@ -800,7 +800,6 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     #ifdef __linux
     int cores = omp_get_num_procs();
-    int index;
     par.store("Cores_Total",cores);
 
     // Assuming dev system specifics (Xeon with HT -> cores detected / 2)
@@ -822,10 +821,11 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
         std::cout << "finished reading Ax / Ay / Az from file" << '\n';
     }
+    int index; // outside loop declaration
     for( i=0; i < xDim; i++ ){
         for( j=0; j < yDim; j++ ){
             for( k=0; k < zDim; k++ ){
-                index = i * yDim * zDim + j * zDim + k;
+                index = (i * yDim * zDim) + (j * zDim) + k;
                 Phi[index] = fmod(l*atan2(y[j], x[i]),2*PI);
 
                 if (par.bval("read_wfc") == true){

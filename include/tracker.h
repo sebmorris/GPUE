@@ -69,7 +69,7 @@ namespace Tracker {
 	* @param	xDim Length of X dimension
 	* @param	wfc Wavefunction
 	*/
-    void vortPos(const int *marker, std::vector<struct Vtx::Vortex> &vLocation, int xDim, const double2 *wfc);
+    void vortPos(const int *marker, std::vector<std::shared_ptr<Vtx::Vortex> > &vLocation, int xDim, const double2 *wfc);
 
 	/**
 	* @brief	Accepts matrix of vortex locations as argument, returns array of x,y coordinates of locations and winding
@@ -92,7 +92,7 @@ namespace Tracker {
 	* @return	Vortex struct pointer.
 	*/
     [[deprecated]]
-    struct Vtx::Vortex *vortPosDelta(int *cMarker, int2 *pMarker, double *x, double tolerance, int xDim);
+    std::shared_ptr<Vtx::Vortex> vortPosDelta(int *cMarker, int2 *pMarker, double *x, double tolerance, int xDim);
 
 	/**
 	* @brief	Determines the most central vortex in the condensate
@@ -101,7 +101,7 @@ namespace Tracker {
 	* @param	xDim Length of X dimension
 	* @return	Central vortex struct
 	*/
-    struct Vtx::Vortex vortCentre(const std::vector<struct Vtx::Vortex> &cArray, int xDim);
+    std::shared_ptr<Vtx::Vortex> vortCentre(const std::vector<std::shared_ptr<Vtx::Vortex> > &cArray, int xDim);
 
 	/**
 	* @brief	Determines the rotation angle of the vortex lattice
@@ -110,7 +110,7 @@ namespace Tracker {
 	* @param	central Central vortex in lattice
 	* @return	$0 \leq \theta \leq 2\pi$, though between $0 \leq \theta \leq \pi\3$ is sufficient.
 	*/
-    double vortAngle(const std::vector<struct Vtx::Vortex> &vortCoords, const struct Vtx::Vortex &central);
+    double vortAngle(const std::vector<std::shared_ptr<Vtx::Vortex>> &vortCoords, const std::shared_ptr<Vtx::Vortex> central);
 
 	/**
 	* @brief	Determines average inter-vortex separation about the condensate centre
@@ -119,10 +119,10 @@ namespace Tracker {
 	* @param	centre Central vortex in lattice
 	* @return	Separation distance
 	*/
-    double vortSepAvg(const std::vector<struct Vtx::Vortex> &vArray, const struct Vtx::Vortex &centre);
+    double vortSepAvg(const std::vector<std::shared_ptr<Vtx::Vortex> > &vArray, const std::shared_ptr<Vtx::Vortex> centre);
 
 
-    double sigVOL(const std::vector<struct Vtx::Vortex> &vArr, const int2 *opLatt, const double *x);
+    double sigVOL(const std::vector<std::shared_ptr<Vtx::Vortex> > &vArr, const int2 *opLatt, const double *x);
 
 	/**
 	* @brief	Finds optical lattice maxima locations. Deprecated.
@@ -140,7 +140,7 @@ namespace Tracker {
 	* @param	vCoordsC Current vortex locations
 	* @param	vCoordsP Previous vortex locations
 	*/
-    void vortArrange(std::vector<struct Vtx::Vortex> &vCoordsC, const std::vector<struct Vtx::Vortex> &vCoordsP);
+    void vortArrange(std::vector<std::shared_ptr<Vtx::Vortex> > &vCoordsC, const std::vector<std::shared_ptr<Vtx::Vortex>> &vCoordsP);
 
 	/**
 	* @brief	Checks given coordinate for phase singularity of +ve winding
@@ -159,7 +159,7 @@ namespace Tracker {
 	* @param	wfc Wavefunction
 	* @param	xDim Length of X dimension
 	*/
-    void lsFit(std::vector<struct Vtx::Vortex> &vortCoords, const double2 *wfc, int xDim);
+    void lsFit(std::vector<std::shared_ptr<Vtx::Vortex>> &vortCoords, const double2 *wfc, int xDim);
 }
 
 #endif

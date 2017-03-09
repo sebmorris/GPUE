@@ -14,12 +14,12 @@ namespace Tracker {
     /**
      * Determines the vortex separation at the centre of the lattice.
      */
-    double vortSepAvg(const std::vector<Vtx::Vortex> &vArray, const Vtx::Vortex &centre){
+    double vortSepAvg(const std::vector<std::shared_ptr<Vtx::Vortex> > &vArray, const std::shared_ptr<Vtx::Vortex> centre){
         double min = 0.0;
         double min_tmp = 0.0;
-        min = sqrt( pow(centre.coordsD.x - vArray[0].coordsD.x,2) + pow(centre.coordsD.y - vArray[0].coordsD.y,2));
+        min = sqrt( pow(centre->getCoordsD().x - vArray[0]->getCoordsD().x,2) + pow(centre->getCoordsD().y - vArray[0]->getCoordsD().y,2));
         for (int j=1; j<vArray.size(); ++j){
-            min_tmp    = sqrt( pow(centre.coordsD.x - vArray[j].coordsD.x,2) + pow(centre.coordsD.y - vArray[j].coordsD.y,2));
+            min_tmp    = sqrt( pow(centre->getCoordsD().x - vArray[j]->getCoordsD().x,2) + pow(centre->getCoordsD().y - vArray[j]->getCoordsD().y,2));
             if(min > min_tmp && min_tmp > 1e-7){//100nm length
                 min = min_tmp;
             }
@@ -214,18 +214,20 @@ namespace Tracker {
     /**
      * Accepts matrix of vortex locations as argument, returns array of x,y coordinates of locations and first encountered vortex angle
      */
-    void vortPos(const int *marker, std::vector<Vtx::Vortex> &vLocation, int xDim, const double2 *wfc){
+    void vortPos(const int *marker, std::vector<std::shared_ptr<Vtx::Vortex> > &vLocation, int xDim, const double2 *wfc){
         int i,j;
         unsigned int counter=0;
-	    Vtx::Vortex vtx = {};
-        for(i=0; i<xDim; ++i){
-            for(j=0; j<xDim; ++j){
+
+        int2 coords; double2 coordsD;
+        coords.x=0; coords.y = 0;
+        coords.x=0.; coords.y = 0.;
+
+        for( i = 0; i < xDim; ++i){
+            for( j = 0; j < xDim; ++j){
                 if( abs((marker)[i*xDim + j]) >= 1){
-			        vtx.coords.x = i;
-			        vtx.coords.y = j;
-			        vtx.winding = (marker[i*xDim + j]);
-                    vLocation.push_back(vtx);
-                    ++counter;
+                    coords.x = i; coords.y = j;
+                    vLocation.push_back(std::make_shared<Vtx::Vortex>(coords, coordsD, marker[i*xDim + j], false, 0));
+                    //++counter;
                 }
             }
         }
@@ -234,14 +236,14 @@ namespace Tracker {
     /**
      * Ensures the vortices are tracked and arranged in the right order based on minimum distance between previous and current positions
      */
-    void vortArrange(std::vector<Vtx::Vortex> &vCoordsC, const std::vector<Vtx::Vortex> &vCoordsP){
+    void vortArrange(std::vector<std::shared_ptr<Vtx::Vortex> > &vCoordsC, const std::vector<std::shared_ptr<Vtx::Vortex> > &vCoordsP){
         int dist, dist_t;
         int i, j, index;
         for ( i = 0; i < vCoordsC.size(); ++i ){
             dist = 0x7FFFFFFF; //arbitrary big value fo initial distance value
             index = i;
             for ( j = i; j < vCoordsC.size() ; ++j){//Changed to C and P from num_vort[0] size for both. May be an issue here with inconsistent sizing
-                dist_t = ( (vCoordsP[i].coordsD.x - vCoordsC[j].coordsD.x)*(vCoordsP[i].coordsD.x - vCoordsC[j].coordsD.x) + (vCoordsP[i].coordsD.y - vCoordsC[j].coordsD.y)*(vCoordsP[i].coordsD.y - vCoordsC[j].coordsD.y) );
+                dist_t = ( (vCoordsP[i]->getCoordsD().x - vCoordsC[j]->getCoordsD().x)*(vCoordsP[i]->getCoordsD().x - vCoordsC[j]->getCoordsD().x) + (vCoordsP[i]->getCoordsD().y - vCoordsC[j]->getCoordsD().y)*(vCoordsP[i]->getCoordsD().y - vCoordsC[j]->getCoordsD().y) );
                 if(dist > dist_t ){
                     dist = dist_t;
                     index = j;
@@ -254,16 +256,16 @@ namespace Tracker {
     /**
      * Determines the coords of the vortex closest to the central position. Useful for centering the optical lattice over v. lattice*
     */
-     Vtx::Vortex vortCentre(const std::vector<Vtx::Vortex> &cArray, int xDim){
+    std::shared_ptr<Vtx::Vortex> vortCentre(const std::vector<std::shared_ptr<Vtx::Vortex> > &cArray, int xDim){
         int i, counter=0;
         int valX, valY;
         double valueTest, value = 0.0;
-        valX = (cArray)[0].coordsD.x - ((xDim/2)-1);
-        valY = (cArray)[0].coordsD.y - ((xDim/2)-1);
+        valX = (cArray)[0]->getCoordsD().x - ((xDim/2)-1);
+        valY = (cArray)[0]->getCoordsD().y - ((xDim/2)-1);
         value = sqrt( valX*valX + valY*valY );//Calcs the sqrt(x^2+y^2) from central position. try to minimise this value
         for ( i=1; i<cArray.size(); ++i ){
-            valX = (cArray)[i].coordsD.x - ((xDim/2)-1);
-            valY = (cArray)[i].coordsD.y - ((xDim/2)-1);
+            valX = (cArray)[i]->getCoordsD().x - ((xDim/2)-1);
+            valY = (cArray)[i]->getCoordsD().y - ((xDim/2)-1);
             valueTest = sqrt(valX*valX + valY*valY);
             if(value > valueTest){
                 value = valueTest;
@@ -276,16 +278,16 @@ namespace Tracker {
     /**
      * Determines the angle of the vortex lattice relative to the x-axis
      */
-    double vortAngle(const std::vector<Vtx::Vortex> &vortCoords, const Vtx::Vortex &central){
+    double vortAngle(const std::vector<std::shared_ptr<Vtx::Vortex>> &vortCoords, const std::shared_ptr<Vtx::Vortex> central){
         int location = 0;
         double minVal=1e300;//(pow(central.x - vortCoords[0].x,2) + pow(central.y - vortCoords[0].y,2));
         for (int i=0; i < vortCoords.size(); ++i){//Assuming healing length on the order of 2 um
-            if (minVal > (pow(central.coordsD.x - vortCoords[i].coordsD.x,2) + pow(central.coordsD.y - vortCoords[i].coordsD.y,2)) && abs(central.coordsD.x - vortCoords[i].coordsD.x) > 2e-6 && abs(central.coordsD.y - vortCoords[i].coordsD.y) > 2e-6){
-                minVal = (pow(central.coordsD.x - vortCoords[i].coordsD.x,2) + pow(central.coordsD.y - vortCoords[i].coordsD.y,2));
+            if (minVal > (pow(central->getCoordsD().x - vortCoords[i]->getCoordsD().x,2) + pow(central->getCoordsD().y - vortCoords[i]->getCoordsD().y,2)) && std::abs(central->getCoordsD().x - vortCoords[i]->getCoordsD().x) > 2e-6 && std::abs(central->getCoordsD().y - vortCoords[i]->getCoordsD().y) > 2e-6){
+                minVal = (pow(central->getCoordsD().x - vortCoords[i]->getCoordsD().x,2) + pow(central->getCoordsD().y - vortCoords[i]->getCoordsD().y,2));
                 location = i;
             }
         }
-        double ang=(fmod(atan2( (vortCoords[location].coords.y - central.coords.y), (vortCoords[location].coords.x - central.coords.x) ),PI/3));
+        double ang=(fmod(atan2( (vortCoords[location]->getCoordsD().y - central->getCoordsD().y), (vortCoords[location]->getCoordsD().x - central->getCoordsD().x) ),PI/3));
         printf("Angle=%e\n",ang);
         return PI/3 - ang;
 
@@ -297,11 +299,11 @@ namespace Tracker {
      * Sigma of vortex lattice and optical lattice. Deprecated
      */
     [[deprecated]]
-    double sigVOL(const std::vector<Vtx::Vortex> &vArr, const int2 *opLatt, const double *x){
+    double sigVOL(const std::vector<std::shared_ptr<Vtx::Vortex> > &vArr, const int2 *opLatt, const double *x){
         double sigma = 0.0;
-        double dx = abs(x[1]-x[0]);
+        double dx = std::abs(x[1]-x[0]);
         for (int i=0; i<vArr.size(); ++i){
-            sigma += pow( abs( sqrt( (vArr[i].coordsD.x - opLatt[i].x)*(vArr[i].coordsD.x - opLatt[i].x) + (vArr[i].coordsD.y - opLatt[i].y)*(vArr[i].coordsD.y - opLatt[i].y) )*dx),2);
+            sigma += pow( std::abs( sqrt( (vArr[i]->getCoordsD().x - opLatt[i].x)*(vArr[i]->getCoordsD().x - opLatt[i].x) + (vArr[i]->getCoordsD().y - opLatt[i].y)*(vArr[i]->getCoordsD().y - opLatt[i].y) )*dx),2);
         }
         sigma /= vArr.size();
         return sigma;
@@ -310,18 +312,20 @@ namespace Tracker {
     /**
      * Performs least squares fitting to get exact vortex core position.
      */
-    void lsFit(std::vector<Vtx::Vortex> &vortCoords, const double2 *wfc, int xDim){
+    void lsFit(std::vector<std::shared_ptr<Vtx::Vortex> > &vortCoords, const double2 *wfc, int xDim){
         double2 *wfc_grid = (double2*) malloc(sizeof(double2)*4);
         double2 *res = (double2*) malloc(sizeof(double2)*3);
         double2 X;
+        double2 coordsAdjusted;
         double det=0.0;
         for(int ii=0; ii < vortCoords.size(); ++ii){
-            vortCoords[ii].coordsD.x = 0.0; vortCoords[ii].coordsD.y = 0.0;
+            //vortCoords[ii]->getCoordsD().x = 0.0; vortCoords[ii]->getCoordsD().y = 0.0;
+            coordsAdjusted.x=0.; coordsAdjusted.y=0.;
 
-            wfc_grid[0] = wfc[vortCoords[ii].coords.x*xDim + vortCoords[ii].coords.y];
-            wfc_grid[1] = wfc[(vortCoords[ii].coords.x + 1)*xDim + vortCoords[ii].coords.y];
-            wfc_grid[2] = wfc[vortCoords[ii].coords.x*xDim + (vortCoords[ii].coords.y + 1)];
-            wfc_grid[3] = wfc[(vortCoords[ii].coords.x + 1)*xDim + (vortCoords[ii].coords.y + 1)];
+            wfc_grid[0] = wfc[vortCoords[ii]->getCoords().x*xDim + vortCoords[ii]->getCoords().y];
+            wfc_grid[1] = wfc[(vortCoords[ii]->getCoords().x + 1)*xDim + vortCoords[ii]->getCoords().y];
+            wfc_grid[2] = wfc[vortCoords[ii]->getCoords().x*xDim + (vortCoords[ii]->getCoords().y + 1)];
+            wfc_grid[3] = wfc[(vortCoords[ii]->getCoords().x + 1)*xDim + (vortCoords[ii]->getCoords().y + 1)];
 
             for(int jj=0; jj<3; ++jj) {
                 res[jj].x = lsq[jj][0]*wfc_grid[0].x + lsq[jj][1]*wfc_grid[1].x + lsq[jj][2]*wfc_grid[2].x + lsq[jj][3]*wfc_grid[3].x;
@@ -332,9 +336,9 @@ namespace Tracker {
             det = 1.0/(res[0].x*res[1].y - res[0].y*res[1].x);
             X.x = det*(res[1].y*res[2].x - res[0].y*res[2].y);
             X.y = det*(-res[1].x*res[2].x + res[0].x*res[2].y);
-
-            vortCoords[ii].coordsD.x = vortCoords[ii].coords.x - X.x;
-            vortCoords[ii].coordsD.y = vortCoords[ii].coords.y - X.y;
+            coordsAdjusted.x = vortCoords[ii]->getCoords().x - X.x;
+            coordsAdjusted.y = vortCoords[ii]->getCoords().y - X.y;
+            vortCoords[ii]->updateCoordsD(coordsAdjusted);
         }
     }
 

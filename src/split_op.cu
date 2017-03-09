@@ -20,7 +20,7 @@
 // any simulation of realistic timescales.
 unsigned int LatticeGraph::Edge::suid = 0;
 unsigned int LatticeGraph::Node::suid = 0;
-std::size_t Vtx::Vortex::suid = 0;
+//std::size_t Vtx::Vortex::suid = 0;
 
 char buffer[100]; //Buffer for printing out. Need to replace by a better write-out procedure. Consider binary or HDF.
 int verbose; //Print more info. Not curently implemented.
@@ -119,8 +119,8 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
 ** Matches the optical lattice to the vortex lattice.
 ** Moire super-lattice project.
 **/
-void optLatSetup(const struct Vtx::Vortex &centre, const double* V,
-                 std::vector<struct Vtx::Vortex> &vArray, double theta_opt,
+void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
+                 std::vector<std::shared_ptr<Vtx::Vortex>> &vArray, double theta_opt,
                  double intensity, double* v_opt, const double *x, const double *y,
                  Grid &par, Op &opr){
     std::string data_dir = par.sval("data_dir");
@@ -160,10 +160,11 @@ void optLatSetup(const struct Vtx::Vortex &centre, const double* V,
     par.store("k[2].y",(double)k[2].y);
 
     // sin(theta_opt)*(sepMin);
-    double x_shift = dx*(9+(0.5*xDim-1) - centre.coords.x);
+
+    double x_shift = dx*(9+(0.5*xDim-1) - centre->getCoordsD().x);
 
     // cos(theta_opt)*(sepMin);
-    double y_shift = dy*(0+(0.5*yDim-1) - centre.coords.y);
+    double y_shift = dy*(0+(0.5*yDim-1) - centre->getCoordsD().y);
 
     printf("Xs=%e\nYs=%e\n",x_shift,y_shift);
 

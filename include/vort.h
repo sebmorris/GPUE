@@ -61,12 +61,12 @@ namespace Vtx {
         void updateCoordsD(double2 coordsD);
         void updateTimeStep(std::size_t timeStep);
 
-        int getUID();
-        int getWinding();
-	    bool getIsOn();
-        int2 getCoords();
-        double2 getCoordsD();
-        std::size_t getTimeStep();
+        int getUID() const;
+        int getWinding() const;
+	    bool getIsOn() const;
+        int2 getCoords() const;
+        double2 getCoordsD() const;
+        std::size_t getTimeStep() const;
     };
 
 
