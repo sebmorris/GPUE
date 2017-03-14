@@ -15,7 +15,7 @@
 #include "../include/kernels.h"
 
 //We will need a few functions to deal with vortex skeletons
-std::vector< std::vector<pos> > find_vortex_skeletons(double* edges);
+pos **find_skeletons(double* edges);
 
 // Function to find the sobel operators and transfer to GPU
 void find_sobel(Grid &par){
@@ -60,15 +60,15 @@ void find_sobel(Grid &par){
         for (int i = 0; i < 3; ++i){
             for (int j = 0; j < 3; ++j){
                 for (int k = 0; k < 3; ++k){
-                    index = k + 3*j + 9*i;
+                    index = k + zDim*j + zDim*yDim*i;
                     if (k == 0){
-                        factor = 1;
+                        factor = -1;
                     }
                     if (k == 1){
                         factor = 0;
                     }
                     if (k == 2){
-                        factor = -1;
+                        factor = 1;
                     }
                     if (i == 0 && j == 0){
                         sobel_z[index].x = factor * 1;
@@ -105,15 +105,15 @@ void find_sobel(Grid &par){
         for (int i = 0; i < 3; ++i){
             for (int j = 0; j < 3; ++j){
                 for (int k = 0; k < 3; ++k){
-                    index = k + 3*j + 9*i;
+                    index = k + zDim*j + zDim*yDim*i;
                     if (j == 0){
-                        factor = 1;
+                        factor = -1;
                     }
                     if (j == 1){
                         factor = 0;
                     }
                     if (j == 2){
-                        factor = -1;
+                        factor = 1;
                     }
                     if (i == 0 && k == 0){
                         sobel_y[index].x = factor * 1;
@@ -150,15 +150,15 @@ void find_sobel(Grid &par){
         for (int i = 0; i < 3; ++i){
             for (int j = 0; j < 3; ++j){
                 for (int k = 0; k < 3; ++k){
-                    index = k + 3*j + 9*i;
+                    index = k + zDim*j + zDim*yDim*i;
                     if (i == 0){
-                        factor = 1;
+                        factor = -1;
                     }
                     if (i == 1){
                         factor = 0;
                     }
                     if (i == 2){
-                        factor = -1;
+                        factor = 1;
                     }
                     if (k == 0 && j == 0){
                         sobel_x[index].x = factor * 1;
@@ -219,13 +219,13 @@ void find_sobel(Grid &par){
                 for (int k = 0; k < 3; ++k){
                     index = k + 3*j + 9*i;
                     if (k == 0){
-                        factor = 1;
+                        factor = -1;
                     }
                     if (k == 1){
                         factor = 0;
                     }
                     if (k == 2){
-                        factor = -1;
+                        factor = 1;
                     }
                     if (i == 0 && j == 0){
                         sobel_z[index] = factor * 1;
@@ -264,13 +264,13 @@ void find_sobel(Grid &par){
                 for (int k = 0; k < 3; ++k){
                     index = k + 3*j + 9*i;
                     if (j == 0){
-                        factor = 1;
+                        factor = -1;
                     }
                     if (j == 1){
                         factor = 0;
                     }
                     if (j == 2){
-                        factor = -1;
+                        factor = 1;
                     }
                     if (i == 0 && k == 0){
                         sobel_y[index] = factor * 1;
@@ -309,13 +309,13 @@ void find_sobel(Grid &par){
                 for (int k = 0; k < 3; ++k){
                     index = k + 3*j + 9*i;
                     if (i == 0){
-                        factor = 1;
+                        factor = -1;
                     }
                     if (i == 1){
                         factor = 0;
                     }
                     if (i == 2){
-                        factor = -1;
+                        factor = 1;
                     }
                     if (k == 0 && j == 0){
                         sobel_x[index] = factor * 1;
@@ -476,7 +476,7 @@ void find_edges(Grid &par, Cuda &cupar, Wave &wave,
 
     dim3 grid = cupar.dim3val("grid");
     dim3 threads = cupar.dim3val("threads");
-    cufftHandle plan_3d = cupar.cufftHandleval("plan_3d");
+    //cufftHandle plan_3d = cupar.cufftHandleval("plan_3d");
 
     double2 *wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
     int xDim = par.ival("xDim");
@@ -485,7 +485,7 @@ void find_edges(Grid &par, Cuda &cupar, Wave &wave,
     int gSize = xDim * yDim * zDim;
 
     // First, we need to generate the wfc_density
-    double *density = (double *)malloc(sizeof(double)*gSize);
+    //double *density = (double *)malloc(sizeof(double)*gSize);
     
     // copying density to device for cuda-fication
     double *density_d;
@@ -513,14 +513,24 @@ void find_edges(Grid &par, Cuda &cupar, Wave &wave,
     cudaMalloc((void**) &gradient_y_fft, sizeof(double2) * gSize);
     cudaMalloc((void**) &gradient_z_fft, sizeof(double2) * gSize);
 
+    // This should work in principle, but the D2Z transform plays tricks
     // Generating plan for d2z in 3d
-    cufftHandle plan_3d2z;
-    cufftPlan3d(&plan_3d2z, xDim, yDim, zDim, CUFFT_D2Z);
+    //cufftHandle plan_3d2z;
+    //cufftPlan3d(&plan_3d2z, xDim, yDim, zDim, CUFFT_D2Z);
+
+    // Creating complex density
+    double2 *density_d2;
+    cudaMalloc((void**) &density_d2, sizeof(double2) * gSize);
+
+    make_cufftDoubleComplex<<<grid, threads>>>(density_d, density_d2);
+
+    cufftHandle plan_3d;
+    cufftPlan3d(&plan_3d, xDim, yDim, zDim, CUFFT_Z2Z);
 
     // Now fft forward, multiply, fft back
-    cufftExecD2Z(plan_3d2z, density_d, gradient_x_fft);
-    cufftExecD2Z(plan_3d2z, density_d, gradient_y_fft);
-    cufftExecD2Z(plan_3d2z, density_d, gradient_z_fft);
+    cufftExecZ2Z(plan_3d, density_d2, gradient_x_fft, CUFFT_FORWARD);
+    cufftExecZ2Z(plan_3d, density_d2, gradient_y_fft, CUFFT_FORWARD);
+    cufftExecZ2Z(plan_3d, density_d2, gradient_z_fft, CUFFT_FORWARD);
 
     // Now to perform the multiplication
     cMult<<<grid, threads>>>(gradient_x_fft, sobel_x_gpu, gradient_x_fft);

@@ -17,6 +17,9 @@
 #define KERNELS_H
 #include<stdio.h>
 
+// Function to convert a double* to double2*
+__global__ void make_cufftDoubleComplex(double *in, double2 *out);
+
 /**
 * @brief	Indexing of threads on grid
 * @ingroup	gpu
@@ -47,6 +50,7 @@ __device__ unsigned int getTid3d3d();
 * @return	Magnitude of complex number
 */
 __device__ double complexMagnitude(double2 in);
+__global__ void complexMagnitude(double2 *in, double *out);
 /**
 * @brief	Return the squared magnitude of a complex number. $|(a+\textrm{i}b)*(a-\textrm{i}b)|$
 * @ingroup	gpu

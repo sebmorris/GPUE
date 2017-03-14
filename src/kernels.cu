@@ -14,6 +14,13 @@ __device__ unsigned int getGid3d3d(){
     return threadId;
 }
 
+// Function to convert a double* to double2*
+__global__ void make_cufftDoubleComplex(double *in, double2 *out){
+    int gid = getGid3d3d();
+    out[gid].x = in[gid];
+    out[gid].y = 0;
+}
+
 // function to perform a transposition (2d) or permutation (3d)
 // Note: The 3 ints represent the final placement of that data direction
 //       after transposition
@@ -99,6 +106,10 @@ __device__ double2 realCompMult(double scalar, double2 comp){
 __device__ double complexMagnitude(double2 in){
     return sqrt(in.x*in.x + in.y*in.y);
 }
+__global__ void complexMagnitude(double2 *in, double *out){
+    int gid = getGid3d3d();
+    out[gid] = sqrt(in[gid].x*in[gid].x + in[gid].y*in[gid].y);
+}
 
 __host__ __device__ double complexMagnitudeSquared(double2 in){
     return in.x*in.x + in.y*in.y;
@@ -106,7 +117,7 @@ __host__ __device__ double complexMagnitudeSquared(double2 in){
 
 __global__ void complexMagnitudeSquared(double2 *in, double *out){
     int gid = getGid3d3d();
-    out[gid] = sqrt(in[gid].x*in[gid].x + in[gid].y*in[gid].y);
+    out[gid] = in[gid].x*in[gid].x + in[gid].y*in[gid].y;
 }
 
 __host__ __device__ double2 complexMultiply(double2 in1, double2 in2){

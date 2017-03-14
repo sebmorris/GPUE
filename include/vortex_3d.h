@@ -18,6 +18,7 @@
 // Kernel to return vortex positions
 
 // Kernel to return spine of edges
+pos **find_skeletons(double *edges);
 
 // Function to find 3d sobel operators for fft convolution
 void find_sobel(Grid &par);
