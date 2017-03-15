@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # This script is meant to be called with a string to grep with; however
 # If no string is provided, the program should still work
 grep_string=$1

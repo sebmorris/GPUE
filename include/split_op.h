@@ -72,16 +72,15 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
 * @param	centre Central vortex in condensate
 * @param	V Trapping potential for condensate
 * @param	vArray Vortex location array
-* @param	num_vortices Number of tracked vortices
 * @param	theta_opt Offset angle for optical lattice relative to vortex lattice
 * @param	intensity Optical lattice amplitude
 * @param	v_opt Optical lattice memory address location
 * @param	x X grid array
 * @param	y Y grid array
 */
-void optLatSetup(struct Vtx::Vortex centre, double* V, 
-                 struct Vtx::Vortex *vArray, int num_vortices, double theta_opt,
-                 double intensity, double* v_opt, double *x, double *y,
+void optLatSetup(const std::shared_ptr<Vtx::Vortex> centre, const double* V,
+                 std::vector<std::shared_ptr<Vtx::Vortex>> &vArray, double theta_opt,
+                 double intensity, double* v_opt, const double *x, const double *y,
                  Grid &par, Op &opr);
 
 /**
@@ -97,8 +96,8 @@ void optLatSetup(struct Vtx::Vortex centre, double* V,
 * @param	gState Indicate if imaginary or real time evolution
 * @return	$\langle \Psi | H | \Psi \rangle$
 */
-double energy_angmom(double* Energy, double* Energy_gpu, double2 *V_op, 
-                     double2 *K_op, double2 *gpuWfc, 
+double energy_angmom(double* Energy, double* Energy_gpu, double2 *V_op,
+                     double2 *K_op, double2 *gpuWfc,
                      int gState, Grid &par);
 
 #endif

@@ -55,13 +55,13 @@ std::shared_ptr<Node> Lattice::getVortexUid(unsigned int uid){
 }
 
 double Lattice::getVortexDistance(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2){
-	return sqrt(pow(n1->getData().coords.x - n2->getData().coords.x,2)
-	            +  pow(n1->getData().coords.y - n2->getData().coords.y,2));
+	return sqrt(pow(n1->getData().getCoords().x - n2->getData().getCoords().x,2)
+	            +  pow(n1->getData().getCoords().y - n2->getData().getCoords().y,2));
 }
 
 double Lattice::getVortexDistanceD(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2){
-	return sqrt(pow(n1->getData().coordsD.x - n2->getData().coordsD.x,2)
-	            +  pow(n1->getData().coordsD.y - n2->getData().coordsD.y,2));
+	return sqrt(pow(n1->getData().getCoordsD().x - n2->getData().getCoordsD().x,2)
+	            +  pow(n1->getData().getCoordsD().y - n2->getData().getCoordsD().y,2));
 }
 
 std::shared_ptr<Edge> Lattice::getEdgeIdx(unsigned int idx){

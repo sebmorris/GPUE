@@ -11,7 +11,7 @@
  *  @section DESCRIPTION
  *  As part of the lattice graph generation, this class allows a vortex to be
  *	treated as a node. Edges can be created or destroyed, connected nodes can
- *	be returned, UID can be determine.
+ *	be returned, UID can be determined.
  */
  //##############################################################################
 
