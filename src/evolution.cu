@@ -42,6 +42,9 @@ void evolve_2d(Wave &wave, Op &opr,
     int yDim = par.ival("yDim");
     int gridSize = xDim * yDim;
     int kill_idx = par.ival("kill_idx");
+    int charge = par.ival("charge");
+    int x0_shift = par.ival("x0_shift");
+    int y0_shift = par.ival("y0_shift");
     cufftDoubleComplex *EV = opr.cufftDoubleComplexval("EV");
     cufftDoubleComplex *wfc = wave.cufftDoubleComplexval("wfc");
     cufftDoubleComplex *EV_opt = opr.cufftDoubleComplexval("EV_opt");
@@ -250,7 +253,7 @@ void evolve_2d(Wave &wave, Op &opr,
                     }
 
                     // The following will eventually be modified and moved into a new
-                    // library that works closely with GPUE. Used to calculate a graph
+                    // library that works closely wy0_shiftUE. Used to calculate a graph
                     // with vortex positions. Lambda function also defined for vortex
                     // elimination using graph positions and UID numbers.
                     if (graph && num_vortices[0] > 0) {
@@ -267,22 +270,16 @@ void evolve_2d(Wave &wave, Op &opr,
                         }
                         if(i==0) {
                             //Lambda for vortex annihilation/creation.
-                            auto killIt=[&](int idx, int winding,
-                                            double delta_x) {
+                            auto killIt=[&](int idx, int winding, double delta_x, double delta_y) {
                                 WFC::phaseWinding(Phi, 1, x, y, dx, dy,
-                                    lattice.getVortexUid(idx)->getData().getCoordsD().x
-                                    + cos(angle_sweep + vort_angle)*delta_x,
-                                    lattice.getVortexUid(idx)->getData().getCoordsD().y
-                                    + sin(angle_sweep + vort_angle)*delta_x,
+                                    lattice.getVortexUid(idx)->getData().getCoordsD().x + delta_x,
+                                    lattice.getVortexUid(idx)->getData().getCoordsD().y + delta_y,
                                     xDim);
-                                cudaMemcpy(Phi_gpu, Phi,
-                                           sizeof(double) * xDim * yDim,
-                                           cudaMemcpyHostToDevice);
-                                cMultPhi <<<grid, threads>>> (gpuWfc, Phi_gpu,
-                                                              gpuWfc);
+                                cudaMemcpy(Phi_gpu, Phi, sizeof(double) * xDim * yDim, cudaMemcpyHostToDevice);
+                                cMultPhi <<<grid, threads>>> (gpuWfc, Phi_gpu, gpuWfc);
                             };
                             if (kill_idx > 0){
-                                killIt(kill_idx, 1, DX);
+                                killIt(kill_idx, charge, x0_shift, y0_shift);
                             }
 
                         }
