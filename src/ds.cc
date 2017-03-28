@@ -401,155 +401,104 @@ cufftDoubleComplex *Op::cufftDoubleComplexval(std::string id){
     return it->second;
 }
 
-// Map for function pointers and keys K and V
-Op::functionPtr Op::K_fn(std::string id){
-    auto it = Op_K_fns.find(id);
-    if (it == Op_K_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_K_fns. Did you mean: " << '\n';
-        for (auto item : Op_K_fns){
-            std::cout << item.first << '\n';
-        }
+// Function to set the K function for simulation based on distribution selected
+void Op::set_K_fn(std::string id){
+    if (id == "rotation_K"){
+        K_fn = rotation_K;
     }
-    return it->second;
+    else if(id == "rotation_K3d"){
+        K_fn = rotation_K3d;
+    }
+    else if(id == "rotation_gauge_K"){
+        K_fn = rotation_gauge_K;
+    }
+    else if(id == "rotation_K_dimensionless"){
+        K_fn = rotation_K_dimensionless;
+    }
 }
 
-Op::functionPtr Op::V_fn(std::string id){
-    auto it = Op_V_fns.find(id);
-    if (it == Op_V_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_V_fns. Did you mean: " << '\n';
-        for (auto item : Op_V_fns){
-            std::cout << item.first << '\n';
-        }
+void Op::set_V_fn(std::string id){
+    if (id == "harmonic_V"){
+        V_fn = harmonic_V;
     }
-    return it->second;
+    else if(id == "torus"){
+        V_fn = torus_V;
+    }
+    else if(id == "harmonic_V3d"){
+        V_fn = harmonic_V3d;
+    }
+    else if(id == "harmonic_gauge_V"){
+        K_fn = harmonic_gauge_V;
+    }
+    else if(id == "harmonic_V_dimensionless"){
+        K_fn = harmonic_V_dimensionless;
+    }
 }
 
-// Map for function pointers for pAx, pAy, and pAz
-Op::functionPtr Op::pAx_fn(std::string id){
-    auto it = Op_pAx_fns.find(id);
-    if (it == Op_pAx_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_pAx_fns. Did you mean: " << '\n';
-        for (auto item : Op_pAx_fns){
-            std::cout << item.first << '\n';
-        }
+void Op::set_A_fns(std::string id){
+    // 3d functions first
+    if (id == "rotation"){
+        Ax_fn = rotation_Ax;
+        Ay_fn = rotation_Ay;
+        Az_fn = rotation_Az;
     }
-    return it->second;
+    else if (id == "constant"){
+        Ax_fn = constant_A;
+        Ay_fn = constant_A;
+        Az_fn = constant_A;
+    }
+    else if (id == "ring"){
+        Ax_fn = ring_Ax;
+        Ay_fn = ring_Ay;
+        Az_fn = constant_A;
+    }
+
+    // 2d functions
+    else if (id == "dynamic"){
+        Ax_fn = dynamic_Ax;
+        Ay_fn = dynamic_Ay;
+        Az_fn = constant_A;
+    }
+    else if (id == "fiber2d"){
+        Ax_fn = fiber2d_Ax;
+        Ay_fn = fiber2d_Ay;
+        Az_fn = constant_A;
+    }
+    else if (id == "fiber2d"){
+        Ax_fn = fiber2d_Ax;
+        Ay_fn = fiber2d_Ay;
+        Az_fn = constant_A;
+    }
+    else if (id == "test"){
+        Ax_fn = test_Ax;
+        Ay_fn = test_Ay;
+        Az_fn = constant_A;
+    }
+    else if (id == "file"){
+        Ax_fn = nullptr;
+        Ay_fn = nullptr;
+        Az_fn = nullptr;
+    }
 }
 
-Op::functionPtr Op::pAy_fn(std::string id){
-    auto it = Op_pAy_fns.find(id);
-    if (it == Op_pAy_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_pAy_fns. Did you mean: " << '\n';
-        for (auto item : Op_pAy_fns){
-            std::cout << item.first << '\n';
-        }
-    }
-    return it->second;
-}
+// Function to set functionPtrs without an unordered map
+void set_fns(Grid &par, Op &opr, Wave &wave){
 
-Op::functionPtr Op::pAz_fn(std::string id){
-    auto it = Op_pAz_fns.find(id);
-    if (it == Op_pAz_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_pAz_fns. Did you mean: " << '\n';
-        for (auto item : Op_pAz_fns){
-            std::cout << item.first << '\n';
-        }
-    }
-    return it->second;
-}
+    // There are 3 different function distributions to keep in mind:
+    // Kfn, Vfn, Afn, wfcfn
 
-Op::functionPtr Op::Ax_fn(std::string id){
-    auto it = Op_Ax_fns.find(id);
-    if (it == Op_Ax_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_Ax_fns. Did you mean: " << '\n';
-        for (auto item : Op_Ax_fns){
-            std::cout << item.first << '\n';
-        }
-    }
-    return it->second;
-}
+    // Kfn
+    opr.set_K_fn(par.Kfn);
 
-Op::functionPtr Op::Ay_fn(std::string id){
-    auto it = Op_Ay_fns.find(id);
-    if (it == Op_Ay_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_Ay_fns. Did you mean: " << '\n';
-        for (auto item : Op_Ay_fns){
-            std::cout << item.first << '\n';
-        }
-    }
-    return it->second;
-}
+    // Vfn
+    opr.set_V_fn(par.Vfn);
 
-Op::functionPtr Op::Az_fn(std::string id){
-    auto it = Op_Az_fns.find(id);
-    if (it == Op_Az_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_Az_fns. Did you mean: " << '\n';
-        for (auto item : Op_Az_fns){
-            std::cout << item.first << '\n';
-        }
-    }
-    return it->second;
-}
-// Function to set functionPtrs for K and V
-// Unfortunately, these must be set one at a time.
-void Op::set_fns(){
+    // Afn
+    opr.set_A_fns(par.Afn);
 
-    // Non A functions
-    Op_K_fns["rotation_K"] = rotation_K;
-    Op_K_fns["rotation_K3d"] = rotation_K3d;
-    Op_K_fns["rotation_gauge_K"] = rotation_gauge_K;
-    Op_K_fns["rotation_K_dimensionless"] = rotation_K_dimensionless;
-    Op_V_fns["harmonic_V"] = harmonic_V;
-    Op_V_fns["torus"] = torus_V;
-    Op_V_fns["harmonic_V3d"] = harmonic_V3d;
-    Op_V_fns["harmonic_gauge_V"] = harmonic_gauge_V;
-    Op_V_fns["harmonic_V_dimensionless"] = harmonic_V_dimensionless;
+    // Wfcfn
+    wave.set_wfc_fn(par.Vfn);
 
-    // Rotation
-    Op_pAy_fns["rotation"] = rotation_pAy;
-    Op_pAx_fns["rotation"] = rotation_pAx;
-    Op_pAz_fns["rotation"] = rotation_pAz;
-    Op_Ax_fns["rotation"] = rotation_Ax;
-    Op_Ay_fns["rotation"] = rotation_Ay;
-    Op_Az_fns["rotation"] = rotation_Az;
-
-    // Constant
-    Op_pAy_fns["constant"] = constant_A;
-    //Op_pAy_fns["constant"] = rotation_pAy;
-    Op_pAx_fns["constant"] = constant_A;
-    Op_pAz_fns["constant"] = constant_A;
-    Op_Ax_fns["constant"] = constant_A;
-    Op_Ay_fns["constant"] = constant_A;
-    //Op_Ay_fns["constant"] = rotation_Ay;
-    Op_Az_fns["constant"] = constant_A;
-
-    // first ring
-    Op_pAy_fns["ring"] = rotation_pAx;
-    Op_pAx_fns["ring"] = rotation_pAy;
-    Op_pAz_fns["ring"] = constant_A;
-    Op_Ax_fns["ring"] = ring_Ax;
-    Op_Ay_fns["ring"] = ring_Ay;
-    Op_Az_fns["ring"] = constant_A;
-
-    // 2D
-    Op_Ax_fns["dynamic"] = dynamic_Ax;
-    Op_Ay_fns["dynamic"] = dynamic_Ay;
-    Op_Ay_fns["fiber2d"] = fiber2d_Ay;
-    Op_Ax_fns["fiber2d"] = fiber2d_Ax;
-    Op_Ay_fns["test"] = test_Ay;
-    Op_Ax_fns["test"] = test_Ax;
-    Op_Az_fns["test"] = constant_A;
-    Op_Ay_fns["file"] = nullptr;
-    Op_Ax_fns["file"] = nullptr;
-    
 }
 
 /*----------------------------------------------------------------------------//
@@ -559,19 +508,6 @@ void Op::set_fns(){
 // Functions to store data in the Wave class
 void Wave::store(std::string id, double *data){
     Wave_dstar[id] = data;
-}
-
-// Map for function pointers and wfc
-Wave::functionPtr Wave::Wfc_fn(std::string id){
-    auto it = Wfc_fns.find(id);
-    if (it == Wfc_fns.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Wave::Wfc_fns. Did you mean: " << '\n';
-        for (auto item : Wfc_fns){
-            std::cout << item.first << '\n';
-        }
-    }
-    return it->second;
 }
 
 void Wave::store(std::string id, cufftDoubleComplex *data){
@@ -599,12 +535,17 @@ cufftDoubleComplex *Wave::cufftDoubleComplexval(std::string id){
     return it->second;
 }
 
-// function to set functionPtrs for initial wavefunctions
-void Wave::set_fns(){
-    Wfc_fns["standard_2d"] = standard_wfc_2d;
-    Wfc_fns["standard_3d"] = standard_wfc_3d;
-    Wfc_fns["torus"] = torus_wfc;
-    
+// Function to set functionPtr for wfc
+void Wave::set_wfc_fn(std::string id){
+    if (id == "standard_2d"){
+        Wfc_fn = standard_wfc_2d;
+    }
+    else if(id == "standard_3d"){
+        Wfc_fn = standard_wfc_3d;
+    }
+    else if(id == "torus"){
+        Wfc_fn = torus_wfc;
+    }
 }
 
 /*----------------------------------------------------------------------------//

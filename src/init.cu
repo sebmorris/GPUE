@@ -4,8 +4,9 @@
 int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     // Setting functions for operators
-    opr.set_fns();
-    wave.set_fns();
+    set_fns(par, opr, wave);
+    //opr.set_fns();
+    //wave.set_fns();
 
     int max_threads = 128;
 
@@ -302,23 +303,13 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 wfc[(i*yDim + j)].y *= sin(Phi[(i*yDim + j)]);
             }
             else{
-                wfc[(i*yDim + j)] = wave.Wfc_fn(par.Wfcfn)(par, 
-                                                           Phi[(i*yDim + j)], 
-                                                           i, j, 0);
-/*
-                wfc[(i*yDim + j)].x = exp(-( pow((x[i])/(Rxy*a0x),2) + 
-                                             pow((y[j])/(Rxy*a0y),2) ) ) *
-                                      cos(Phi[(i*yDim + j)]);
-                wfc[(i*yDim + j)].y = -exp(-( pow((x[i])/(Rxy*a0x),2) + 
-                                              pow((y[j])/(Rxy*a0y),2) ) ) *
-                                          sin(Phi[(i*yDim + j)]);
-*/
+                wfc[(i*yDim + j)] = wave.Wfc_fn(par,Phi[(i*yDim + j)], i, j, 0);
                 sum+=sqrt(wfc[(i*xDim + j)].x*wfc[(i*yDim + j)].x + 
                           wfc[(i*xDim + j)].y*wfc[(i*yDim + j)].y);
             }
                 
-            V[(i*yDim + j)] = opr.V_fn(par.Vfn)(par, opr, i, j, 0);
-            K[(i*yDim + j)] = opr.K_fn(par.Kfn)(par, opr, i, j, 0);
+            V[(i*yDim + j)] = opr.V_fn(par, opr, i, j, 0);
+            K[(i*yDim + j)] = opr.K_fn(par, opr, i, j, 0);
 
             GV[(i*yDim + j)].x = exp( -V[(i*yDim + j)]*(gdt/(2*HBAR)));
             GK[(i*yDim + j)].x = exp( -K[(i*yDim + j)]*(gdt/HBAR));
@@ -328,14 +319,14 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
             // Ax and Ay will be calculated here but are used only for
             // debugging. They may be needed later for magnetic field calc
             if (par.Afn != "file"){
-                Ax[(i*yDim + j)] = opr.Ax_fn(par.Afn)(par, opr, i, j, 0);
-                Ay[(i*yDim + j)] = opr.Ay_fn(par.Afn)(par, opr, i, j, 0);
+                Ax[(i*yDim + j)] = opr.Ax_fn(par, opr, i, j, 0);
+                Ay[(i*yDim + j)] = opr.Ay_fn(par, opr, i, j, 0);
             }
             
             //pAy[(i*yDim + j)] = x[i]*yp[j];
-            pAy[(i*yDim + j)] = opr.pAy_fn("rotation")(par, opr, i, j, 0);
+            pAy[(i*yDim + j)] = pAy_fn(par, opr, i, j, 0);
             //pAx[(i*yDim + j)] = -y[j]*xp[i];
-            pAx[(i*yDim + j)] = opr.pAx_fn("rotation")(par, opr, i, j, 0);
+            pAx[(i*yDim + j)] = pAx_fn(par, opr, i, j, 0);
 
             GpAx[(i*yDim + j)].x = exp(-pAx[(i*yDim + j)]*gdt);
             GpAx[(i*yDim + j)].y = 0;
@@ -505,8 +496,9 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     int max_threads = 128;
 
     // Setting functions for operators
-    opr.set_fns();
-    wave.set_fns();
+    set_fns(par, opr, wave);
+    //opr.set_fns();
+    //wave.set_fns();
 
     // Re-establishing variables from parsed Grid class
     // Initializes uninitialized variables to 0 values
@@ -829,23 +821,13 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 Phi[index] = fmod(l*atan2(y[j], x[i]),2*PI);
 
                 if (par.bval("read_wfc") != true){
-                    wfc[index] = wave.Wfc_fn(par.Wfcfn)(par, Phi[index],i,j,k);
-/*
-                    wfc[index].x = exp(-( pow((x[i])/(Rxy*a0x),2) + 
-                                          pow((y[j])/(Rxy*a0y),2) +
-                                          pow((z[k])/(Rxy*a0z),2))) *
-                                          cos(Phi[index]);
-                    wfc[index].y = -exp(-( pow((x[i])/(Rxy*a0x),2) + 
-                                           pow((y[j])/(Rxy*a0y),2) +
-                                           pow((z[k])/(Rxy*a0z),2))) *
-                                           sin(Phi[index]);
-*/
+                    wfc[index] = wave.Wfc_fn(par, Phi[index],i,j,k);
                     sum+=sqrt(wfc[index].x*wfc[index].x + 
                               wfc[index].y*wfc[index].y);
                 }
                 
-                V[index] = opr.V_fn(par.Vfn)(par, opr, i, j, k);
-                K[index] = opr.K_fn(par.Kfn)(par, opr, i, j, k);
+                V[index] = opr.V_fn(par, opr, i, j, k);
+                K[index] = opr.K_fn(par, opr, i, j, k);
     
                 GV[index].x = exp( -V[index]*(gdt/(2*HBAR)));
                 GK[index].x = exp( -K[index]*(gdt/HBAR));
@@ -855,14 +837,14 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 // Ax and Ay will be calculated here but are used only for
                 // debugging. They may be needed later for magnetic field calc
                 if (par.Afn != "file"){
-                    Ax[index] = opr.Ax_fn(par.Afn)(par, opr, i, j, k);
-                    Ay[index] = opr.Ay_fn(par.Afn)(par, opr, i, j, k);
-                    Az[index] = opr.Az_fn(par.Afn)(par, opr, i, j, k);
+                    Ax[index] = opr.Ax_fn(par, opr, i, j, k);
+                    Ay[index] = opr.Ay_fn(par, opr, i, j, k);
+                    Az[index] = opr.Az_fn(par, opr, i, j, k);
                 }
                 
-                pAy[index] = opr.pAy_fn("rotation")(par, opr, i, j, k);
-                pAx[index] = opr.pAx_fn("rotation")(par, opr, i, j, k);
-                pAz[index] = opr.pAz_fn("rotation")(par, opr, i, j, k);
+                pAy[index] = pAy_fn(par, opr, i, j, k);
+                pAx[index] = pAx_fn(par, opr, i, j, k);
+                pAz[index] = pAz_fn(par, opr, i, j, k);
     
                 GpAx[index].x = exp(-pAx[index]*gdt);
                 GpAx[index].y = 0;
@@ -951,7 +933,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //std::cout << "found result" << '\n';
     if(result != CUFFT_SUCCESS){
         printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan3d(%s ,%d, %d, %d).\n", 
+        printf("Error: Could not execute cufftPlan3d(%s, %d, %d, %d).\n", 
                 "plan_3d",
                 (unsigned int)xDim, (unsigned int)yDim, (unsigned int) zDim);
         return -1;

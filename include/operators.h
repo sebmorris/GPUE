@@ -124,7 +124,7 @@ double harmonic_gauge_V(Grid &par, Op &opr, int i, int j, int k);
  * @param       location in x, y, z
  * @return      V at that location
  */
-double rotation_pAx(Grid &par, Op &opr, int i, int j, int k);
+double pAx_fn(Grid &par, Op &opr, int i, int j, int k);
 
  /**
  * @brief       determines pAy for the standard rotational case
@@ -133,7 +133,7 @@ double rotation_pAx(Grid &par, Op &opr, int i, int j, int k);
  * @param       location in x, y, z
  * @return      V at that location
  */
-double rotation_pAy(Grid &par, Op &opr, int i, int j, int k);
+double pAy_fn(Grid &par, Op &opr, int i, int j, int k);
 
  /**
  * @brief       determines pAy for the standard rotational case
@@ -142,7 +142,7 @@ double rotation_pAy(Grid &par, Op &opr, int i, int j, int k);
  * @param       location in x, y, z
  * @return      V at that location
  */
-double rotation_pAz(Grid &par, Op &opr, int i, int j, int k);
+double pAz_fn(Grid &par, Op &opr, int i, int j, int k);
 
  /**
  * @brief       determines pAx for the standard rotational case

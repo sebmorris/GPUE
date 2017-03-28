@@ -165,14 +165,6 @@ class Op{
         typedef double (*functionPtr)(Grid&, Op&, int, int, int);
         std::unordered_map<std::string, double*> Op_dstar;
         std::unordered_map<std::string, cufftDoubleComplex*> Op_cdc;
-        std::unordered_map<std::string, functionPtr> Op_K_fns;
-        std::unordered_map<std::string, functionPtr> Op_V_fns;
-        std::unordered_map<std::string, functionPtr> Op_Ax_fns;
-        std::unordered_map<std::string, functionPtr> Op_Ay_fns;
-        std::unordered_map<std::string, functionPtr> Op_Az_fns;
-        std::unordered_map<std::string, functionPtr> Op_pAx_fns;
-        std::unordered_map<std::string, functionPtr> Op_pAy_fns;
-        std::unordered_map<std::string, functionPtr> Op_pAz_fns;
         //K_fns.emplace("rotation_K", rotation_K);
         //V_fns["harmonic_V"] = harmonic_V;
         // double *V, *V_opt, *K, *xPy, *yPx, *xPy_gpu, *yPx_gpu;
@@ -189,17 +181,17 @@ class Op{
         cufftDoubleComplex *cufftDoubleComplexval(std::string id);
 
         // Map for function pointers and keys K and V
-        functionPtr K_fn(std::string id);
-        functionPtr V_fn(std::string id);
-        functionPtr pAx_fn(std::string id);
-        functionPtr pAy_fn(std::string id);
-        functionPtr pAz_fn(std::string id);
-        functionPtr Ax_fn(std::string id);
-        functionPtr Ay_fn(std::string id);
-        functionPtr Az_fn(std::string id);
+        functionPtr K_fn;
+        functionPtr V_fn;
+        functionPtr Ax_fn;
+        functionPtr Ay_fn;
+        functionPtr Az_fn;
+
+        void set_K_fn(std::string id);
+        void set_V_fn(std::string id);
+        void set_A_fns(std::string id);
 
         // Function to set K and V function pointers
-        void set_fns();
 
 };
 typedef class Op Op;
@@ -211,7 +203,6 @@ typedef class Op Op;
 class Wave{
     private:
         typedef cufftDoubleComplex (*functionPtr)(Grid&, double, int, int, int);
-        std::unordered_map<std::string, functionPtr> Wfc_fns;
         std::unordered_map<std::string, double*> Wave_dstar;
         std::unordered_map<std::string, cufftDoubleComplex*> Wave_cdc;
         //double *Energy, *energy_gpu, *r, *Phi, *Phi_gpu;
@@ -226,8 +217,8 @@ class Wave{
         double *dsval(std::string id);
         cufftDoubleComplex *cufftDoubleComplexval(std::string id);
 
-        functionPtr Wfc_fn(std::string id);
-        void set_fns();
+        functionPtr Wfc_fn;
+        void set_wfc_fn(std::string id);
 };
 typedef class Wave Wave;
 
@@ -237,5 +228,7 @@ typedef class Wave Wave;
 // I didn't know where to place these functions for now, so the'll be here
 cufftHandle generate_plan_other2d(Grid &par);
 cufftHandle generate_plan_other3d(Grid &par, int axis);
+
+void set_fns(Grid &par, Op &opr, Wave &wave);
 
 #endif
