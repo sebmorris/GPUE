@@ -35,6 +35,36 @@
  */
 double *curl2d(Grid &par, double *Ax, double *Ay);
 
+ /**
+ * @brief       Finds Bz, the curl of the gauge field
+ * @ingroup     data
+ * @param       Grid simulation data
+ * @param       gauge field Ax
+ * @param       gauge field Ay
+ * @return      Bx, the curl of A
+ */
+double *curl3d_x(Grid &par, double *Ax, double *Ay, double *Az);
+
+ /**
+ * @brief       Finds Bz, the curl of the gauge field
+ * @ingroup     data
+ * @param       Grid simulation data
+ * @param       gauge field Ax
+ * @param       gauge field Ay
+ * @return      By, the curl of A
+ */
+double *curl3d_y(Grid &par, double *Ax, double *Ay, double *Az);
+
+ /**
+ * @brief       Finds Bz, the curl of the gauge field
+ * @ingroup     data
+ * @param       Grid simulation data
+ * @param       gauge field Ax
+ * @param       gauge field Ay
+ * @return      Bz, the curl of A
+ */
+double *curl3d_z(Grid &par, double *Ax, double *Ay, double *Az);
+
 // UPDATE LIST LATER
  /**
  * @brief	determines K for the standard rotational case

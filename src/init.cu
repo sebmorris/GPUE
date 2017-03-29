@@ -870,6 +870,13 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     }
 
     if (write_file){
+        // Calculating the curl 
+        std::cout << "Calculating the 3d curl..." << '\n';
+        double *Bx = curl3d_x(par, Ax, Ay, Az);
+        double *By = curl3d_y(par, Ax, Ay, Az);
+        double *Bz = curl3d_z(par, Ax, Ay, Az);
+        std::cout << "Finished calculating Curl" << '\n';
+
         std::cout << "writing initial variables to file..." << '\n';
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
         //hdfWriteDouble(xDim, V, 0, "V_0"); //HDF COMING SOON!
@@ -883,6 +890,9 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
         FileIO::writeOutDouble(buffer, data_dir + "Ax",Ax,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Ay",Ay,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Az",Az,gSize,0);
+        FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+        FileIO::writeOutDouble(buffer, data_dir + "By",By,gSize,0);
+        FileIO::writeOutDouble(buffer, data_dir + "Bx",By,gSize,0);
         FileIO::writeOut(buffer, data_dir + "WFC",wfc,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAy",EpAy,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAx",EpAx,gSize,0);

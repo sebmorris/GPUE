@@ -29,7 +29,7 @@ double *curl2d(Grid &par, double *Ax, double *Ay){
     for (int i = 0; i < xDim; i++){
         for (int j = 0; j < yDim-1; j++){
             index = j + yDim * i;
-            curl[index] = (Ay[index] - Ay[index+yDim]) 
+            curl[index] = (Ay[index] - Ay[index+xDim]) 
                           - (Ax[index] - Ax[index+1]);
         }
     }
@@ -40,7 +40,7 @@ double *curl2d(Grid &par, double *Ax, double *Ay){
 // Function to take the curl of Ax and Ay in 2d
 // note: This is on the cpu, there should be a GPU version too.
 // Not complete yet!
-double *curl3d(Grid &par, double *Ax, double *Ay, double *Az){
+double *curl3d_x(Grid &par, double *Ax, double *Ay, double *Az){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
@@ -56,8 +56,9 @@ double *curl3d(Grid &par, double *Ax, double *Ay, double *Az){
     for (int i = 0; i < xDim; i++){
         for (int j = 0; j < yDim-1; j++){
             for (int k = 0; k < zDim - 1; k++){
-                index = j + yDim * k + zDim * yDim * i;
-                curl[index] = (Az[index] - Az[index + yDim]);
+                index = k + zDim * j + zDim * yDim * i;
+                curl[index] = (Az[index] - Az[index + xDim])
+                              -(Ay[index] - Ay[index + 1]);
             }
         }
     }
@@ -65,6 +66,63 @@ double *curl3d(Grid &par, double *Ax, double *Ay, double *Az){
     return curl;
 }
 
+// Function to take the curl of Ax and Ay in 2d
+// note: This is on the cpu, there should be a GPU version too.
+// Not complete yet!
+double *curl3d_y(Grid &par, double *Ax, double *Ay, double *Az){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int size = sizeof(double) * xDim * yDim * zDim;
+    double *curl;
+    curl = (double *)malloc(size);
+
+    int index;
+
+    // Note: To take the curl, we need a change in x and y to create a dx or dy
+    //       For this reason, we have added yDim to y and 1 to x
+    for (int i = 0; i < xDim-1; i++){
+        for (int j = 0; j < yDim; j++){
+            for (int k = 0; k < zDim - 1; k++){
+                index = k + zDim * j + zDim * yDim * i;
+                curl[index] = -(Az[index] - Az[index + xDim*yDim])
+                              +(Ax[index] - Ax[index + 1]);
+            }
+        }
+    }
+
+    return curl;
+}
+
+// Function to take the curl of Ax and Ay in 2d
+// note: This is on the cpu, there should be a GPU version too.
+// Not complete yet!
+double *curl3d_z(Grid &par, double *Ax, double *Ay, double *Az){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int size = sizeof(double) * xDim * yDim * zDim;
+    double *curl;
+    curl = (double *)malloc(size);
+
+    int index;
+
+    // Note: To take the curl, we need a change in x and y to create a dx or dy
+    //       For this reason, we have added yDim to y and 1 to x
+    for (int i = 0; i < xDim - 1; i++){
+        for (int j = 0; j < yDim-1; j++){
+            for (int k = 0; k < zDim; k++){
+                index = k + zDim * j + zDim * yDim * i;
+                curl[index] = (Ay[index] - Ay[index + xDim*yDim])
+                              -(Ax[index] - Ax[index + xDim]);
+            }
+        }
+    }
+
+    return curl;
+}
 
 // Function for simple 2d rotation with i and j as the interators
 double rotation_K(Grid &par, Op &opr, int i, int j, int k){
