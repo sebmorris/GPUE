@@ -387,13 +387,14 @@ Grid parseArgs(int argc, char** argv){
                 // If the file gauge field is chosen, we need to make sure the
                 // the files exist
                 if (strcmp(optarg, "file") == 0){
+                    std::string data_dir = par.sval("data_dir");
                     std::cout << "Finding file for Ax..." << '\n';
-                    par.Axfile = filecheck("src/Axgauge");
+                    par.Axfile = filecheck(data_dir + "/Axgauge");
                     std::cout << "Finding file for Ay..." << '\n';
-                    par.Ayfile = filecheck("src/Aygauge");
+                    par.Ayfile = filecheck(data_dir + "/Aygauge");
                     if (par.ival("dimnum") == 3){
                         std::cout << "Finding file for Az..." << '\n';
-                        par.Azfile = filecheck("src/Azgauge");
+                        par.Azfile = filecheck(data_dir + "/Azgauge");
                     }
                 }
 

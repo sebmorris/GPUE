@@ -635,7 +635,7 @@ void evolve_3d(Wave &wave, Op &opr,
     for(int i=0; i < numSteps; ++i){
         if (ramp){
             //Adjusts omega for the appropriate trap frequency.
-            omega_0=omegaX*((omega-0.39)*((double)i/(double)(numSteps)) + 0.39);
+            omega_0=(double)i/(double)(numSteps);
         }
 
         // Print-out at pre-determined rate.
@@ -752,13 +752,13 @@ void evolve_3d(Wave &wave, Op &opr,
             // Note: using scalarPow to do the scaling inside of the exp
             if (ramp){
                 scalarPow<<<grid,threads>>>((cufftDoubleComplex*) gpu1dpAy, 
-                                            omega_0/(omega * omegaY),
+                                            omega_0,
                                             (cufftDoubleComplex*) gpu1dpAy);
                 scalarPow<<<grid,threads>>>((cufftDoubleComplex*) gpu1dpAx, 
-                                            omega_0/(omega * omegaX),
+                                            omega_0,
                                             (cufftDoubleComplex*) gpu1dpAx);
                 scalarPow<<<grid,threads>>>((cufftDoubleComplex*) gpu1dpAz, 
-                                            omega_0/(omega * omegaZ),
+                                            omega_0,
                                             (cufftDoubleComplex*) gpu1dpAz);
             }
             int size = xDim*zDim;
