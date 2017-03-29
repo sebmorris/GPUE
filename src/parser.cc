@@ -52,6 +52,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("mask_2d", 1e-4);
     par.store("box_size", 2.5e-5);
     par.store("found_sobel", false);
+    par.store("ERROR", false);
     par.Afn = "rotation";
     par.Kfn = "rotation_K";
     par.Vfn = "harmonic_V";
@@ -61,7 +62,7 @@ Grid parseArgs(int argc, char** argv){
     optind = 1;
 
     while ((opt = getopt (argc, argv, 
-           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:lsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:R:v:Z:fc:F:K;")) !=-1)
+           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:lsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:R:v:Z:fc:F:KR;")) !=-1)
     {
         switch (opt)
         {
@@ -199,6 +200,12 @@ Grid parseArgs(int argc, char** argv){
             {
                 printf("Angular momentum mode engaged\n");
                 par.store("corotating",true);
+                break;
+            }
+            case 'E':
+            {
+                printf("Adding error correction");
+                par.store("ERROR",true);
                 break;
             }
             case 'f':
