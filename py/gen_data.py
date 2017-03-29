@@ -6,7 +6,7 @@
 
 import numpy as np
 
-xDim = yDim = zDim = 128
+xDim = yDim = zDim = 256
 
 # Function to plot wfc with pltvar as a variable to modify the type of plot
 def wfc_density(xDim, yDim, zDim, data_dir, pltval, i):
@@ -91,7 +91,7 @@ def proj_2d(xDim, yDim, zDim, data_dir, pltval, i):
     file = open(filename,'w')
     for k in range(0,xDim):
         for j in range(0,yDim):
-            file.write(str(wfc[j][k][zDim/2]) + '\n')
+            file.write(str(wfc[j][yDim/2][k]) + '\n')
     file.close()
 
 def proj_k2d(xDim, yDim, zDim, data_dir, pltval, i):
@@ -120,15 +120,44 @@ def to_bvox(item, xDim, yDim, zDim, nframes, filename):
     item.astype('<f4').tofile(binfile)
     binfile.close()
 
+# Function to find the edges of 3d data-set
+# note that this will be using the scipy /numpy package and will
+#      split the sobel operator into 3 subvectors
+'''
+def find_edge(xDim, yDim, zDim, data_dir, pltval, i):
 
-#proj_var2d(xDim, yDim, zDim, "data", "Ax_0")
-#proj_2d(xDim, yDim, zDim,"data","wfc",50000)
-#proj_k2d(xDim, yDim, zDim,"data","wfc",50000)
+    # grabbing the wfc
+    filename = "../" + data_dir + "/wfc_edge"
+    print(i)
+    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
+    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    lines_real = np.loadtxt(data_real)
+    lines_im = np.loadtxt(data_im)
+    print(len(lines_real))
+    wfc_real = np.reshape(lines_real, (xDim,yDim,zDim));
+    wfc_im = np.reshape(lines_im, (xDim,yDim, zDim));
+    wfc = np.fft.fftshift(np.fft.fftn(wfc_real + 1j * wfc_im))
+    wfc = abs(wfc) * abs(wfc)
 
-item_wfc = wfc_density(xDim, yDim, zDim,"data","wfc",50000)
-#item = wfc_phase(xDim, yDim, zDim,"data","wfc",90)
-item_var = var(xDim, yDim, zDim,"data","V_0")
+    # performing the sobel convolution
+    # we need to find the gradients in X, Y, and Z
+    # Gx first
+
+'''
+
+proj_var2d(xDim, yDim, zDim, "data", "Bx_0")
+proj_2d(xDim, yDim, zDim,"data","wfc",0)
+#proj_2d(xDim, yDim, zDim,"data","wfc",1000000)
+#proj_k2d(xDim, yDim, zDim,"data","wfc",500000)
+
+item_wfc = wfc_density(xDim, yDim, zDim,"data","wfc",0)
+#item_wfc = wfc_density(xDim, yDim, zDim,"data","wfc",1000000)
+item_phase = wfc_phase(xDim, yDim, zDim,"data","wfc",0)
+#item_phase = wfc_phase(xDim, yDim, zDim,"data","wfc",1000000)
+item_var = var(xDim, yDim, zDim,"data","By_0")
+item2_var = var(xDim, yDim, zDim,"data","Edges_0")
 
 to_bvox(item_wfc, xDim, yDim, zDim, 1, "test_wfc.bvox")
+to_bvox(item_phase, xDim, yDim, zDim, 1, "test_phase.bvox")
 to_bvox(item_var, xDim, yDim, zDim, 1, "test_var.bvox")
-
+to_bvox(item2_var, xDim, yDim, zDim, 1, "test_edges.bvox")

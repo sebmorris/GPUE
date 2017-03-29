@@ -120,7 +120,7 @@ def create_volume(passedName, xres, yres, zres, step_size, dens_scale,
     voxTex.color_ramp.color_mode = "RGB"
     ramp = voxTex.color_ramp
 
-    values = [(0.0,(0,0,1,0)), (0.5,(1,0,1,0.3)), (1.0, (1,0,0,1))]
+    values = [(0.0,(0,0,0,0)), (0.5,(0,1,0,0.3)), (0.75,(0,0,1,0.5)), (1.0, (1,1,1,1))]
 
     for n,value in enumerate(values):
         ramp.elements.new((n+1)*0.2)
