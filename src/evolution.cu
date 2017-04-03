@@ -647,7 +647,7 @@ void evolve_3d(Wave &wave, Op &opr,
         // Vortex & wfc analysis performed here also.
         if(i % printSteps == 0) { 
             // If the unit_test flag is on, we need a special case
-            printf("Step: %d    Omega: %lf\n", i, omega_0 / omegaX);
+            printf("Step: %d    Omega: %lf\n", i, omega_0);
             cudaMemcpy(wfc, gpuWfc, sizeof(cufftDoubleComplex)*xDim*yDim*zDim, 
                        cudaMemcpyDeviceToHost);
 

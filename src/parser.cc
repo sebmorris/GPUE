@@ -167,7 +167,7 @@ Grid parseArgs(int argc, char** argv){
             }
             case 'R':
             {
-                printf("Ramping omega with imaginary time evolution");
+                printf("Ramping omega with imaginary time evolution\n");
                 par.store("ramp",true);
                 break;
             }

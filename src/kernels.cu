@@ -253,8 +253,8 @@ __global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2
 __global__ void scalarPow(double2* in, double param, double2* out){
     unsigned int gid = getGid3d3d();
     double2 result;
-    result.x = pow(result.x, param);
-    result.y = pow(result.y, param);
+    result.x = pow(in[gid].x, param);
+    result.y = pow(in[gid].y, param);
     out[gid] = result;
 }
 
