@@ -1,5 +1,5 @@
-#CUDA_HOME = /work/scratch/schloss/cuda_8.0/
-CUDA_HOME = /apps/free/cuda/8.0.44/
+CUDA_HOME = /usr/local/cuda/
+#CUDA_HOME = /apps/free/cuda/8.0.44/
 #CUTT_DIR = cutt/lib
 GPU_ARCH	= sm_60
 OS:=	$(shell uname)

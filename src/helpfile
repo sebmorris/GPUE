@@ -41,7 +41,7 @@ Options:
 -V 0            Set y0_shift, y shift of kicking potential
 -v              Set potential [beta]
 -W              Set write_it, flag to write to file
--w 0            Set Omega_z, rotation rate reltive to omega_perp
+-w 0            Set Omega_z, rotation rate relative to omega_perp
 -X 6.283        Set omega_x
 -x 256          Set xDim, dimension in X (power of 2, please!)
 -Y 6.283        Set omega_y

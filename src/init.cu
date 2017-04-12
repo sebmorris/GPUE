@@ -792,7 +792,6 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     #ifdef __linux
     int cores = omp_get_num_procs();
-    int index;
     par.store("Cores_Total",cores);
 
     // Assuming dev system specifics (Xeon with HT -> cores detected / 2)
@@ -801,6 +800,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //std::cout << "GAMMAY IS: " << gammaY << '\n';
     //#pragma omp parallel for private(k)
     #endif
+    int index;
     // Setting Ax, Ay, and Az if from file
     if (par.Afn == "file"){
         file_A(par.Axfile, Ax);

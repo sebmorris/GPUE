@@ -636,7 +636,7 @@ void evolve_3d(Wave &wave, Op &opr,
         if (ramp){
             //Adjusts omega for the appropriate trap frequency.
             if (i == 0){
-                omega_0=(double)1/(double)(numSteps);
+                omega_0=(double)omega/(double)(numSteps);
             }
             else{
                 omega_0 = (double)(i+1) / (double)i;
