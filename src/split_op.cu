@@ -191,25 +191,100 @@ void optLatSetup(struct Vtx::Vortex centre, double* V,
 ** Calculates energy and angular momentum of current state. 
 ** Implementation not fully finished.
 **/
-/*
-double energy_angmom(double *Energy, double* Energy_gpu, double2 *V_op, 
-                     double2 *K_op, double2 *gpuWfc, 
-                     int gState, Grid &par){
+double energy_angmom(double2 *V_op, double2 *K_op,
+                     double2 *gpuWfc, int gState, Grid &par, Cuda &cupar){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
+    int zDim = 1;
     double dx = par.dval("dx");
     double dy = par.dval("dy");
-    double dt = par.dval("dt");
+    double dz = 1;
 
-    double renorm_factor_2d=1.0/pow(xDim*yDim,0.5);
-    double result=0;
-
-    for (int i=0; i < xDim*yDim; ++i){
-        Energy[i] = 0.0; 
+    // in case of 3d
+    if (par.ival("dimnum") == 3){
+        zDim = par.ival("zDim");
+        dz = par.dval("dz");
     }
-    return result*dx*dy;
+    int gSize = xDim * yDim * zDim;
+    double dt = par.dval("dt");
+    double gDenConst = par.dval("gDenConst");
+
+    double mass = par.dval("mass");
+    double omegaZ = par.dval("omegaZ");
+
+    dim3 threads = cupar.dim3val("threads");
+    dim3 grid = cupar.dim3val("grid");
+
+    // Creating the 2d plan and defining other cuda variables
+    cufftHandle plan;
+    cufftResult result;
+    cudaError_t err;
+
+    if (par.ival("dimnum") == 2){
+        plan = cupar.cufftHandleval("plan_2d");
+    }
+    if (par.ival("dimnum") == 3){
+        plan = cupar.cufftHandleval("plan_3d");
+    }
+
+
+    double renorm_factor_2d=1.0/pow(gSize,0.5);
+    double out;
+
+    // now allocating space on CPU and GPU for energy
+    double2 *energy, *energy_gpu, *tmp_wfc;
+
+    energy = (double2*)malloc(sizeof(double2)*gSize);
+    tmp_wfc = (double2*)malloc(sizeof(double2)*gSize);
+
+    // manually assigning each element because I am bad at this
+    for (int i = 0; i < gSize; ++i){
+        tmp_wfc[i] = gpuWfc[i];
+    }
+
+    cudaMalloc((void**) &energy_gpu, sizeof(double2)*gSize);
+    tmp_wfc = gpuWfc;
+
+    for (int i=0; i < gSize; ++i){
+        energy[i].x = 0.0; 
+        energy[i].y = 0.0; 
+    }
+
+    // Now to memcpy the values over
+    cudaMemcpy(energy_gpu, energy, sizeof(double2)*gSize,
+               cudaMemcpyHostToDevice);
+
+    cudaMalloc((void**) &energy_gpu, sizeof(double2) * gSize);
+    energyCalc<<<grid,threads>>>( tmp_wfc, V_op, 0.5*dt, energy_gpu, gState,1,
+                                  0.5*sqrt(omegaZ/mass), gDenConst);
+    result = cufftExecZ2Z( plan, tmp_wfc, tmp_wfc, CUFFT_FORWARD );
+
+    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor_2d, tmp_wfc);//Normalise
+    energyCalc<<<grid,threads>>>( tmp_wfc, K_op, dt, energy_gpu, gState,0, 
+                                  0.5*sqrt(omegaZ/mass), gDenConst);
+    result = cufftExecZ2Z( plan, tmp_wfc, tmp_wfc, CUFFT_INVERSE );
+    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor_2d, tmp_wfc);//Normalise
     
+    err=cudaMemcpy(energy, energy_gpu, 
+                   sizeof(cufftDoubleComplex)*gSize, 
+                   cudaMemcpyDeviceToHost);
+    if(err!=cudaSuccess){
+        std::cout << "ERROR: Could not copy energy to host!" << '\n';
+        exit(1);
+    }
+    
+    for(int i=0; i<gSize; i++){
+        out += energy[i].x;
+        //printf("En=%E\n",result*dx*dy*dz);
+    }
+
+    cudaFree(energy_gpu);
+    cudaFree(tmp_wfc);
+    free(energy);
+    return out*dx*dy*dz;
+
 }
+/*
 
 // Creates narrow Gaussian "delta" peaks for vortex kicking
 void delta_define(double *x, double *y, double x0, double y0, double *delta,

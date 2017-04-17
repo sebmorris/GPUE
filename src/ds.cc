@@ -464,9 +464,9 @@ void Op::set_A_fns(std::string id){
         Ay_fn = fiber2d_Ay;
         Az_fn = constant_A;
     }
-    else if (id == "fiber2d"){
-        Ax_fn = fiber2d_Ax;
-        Ay_fn = fiber2d_Ay;
+    else if (id == "test"){
+        Ax_fn = test_Ax;
+        Ay_fn = test_Ay;
         Az_fn = constant_A;
     }
     else if (id == "test"){
@@ -474,6 +474,8 @@ void Op::set_A_fns(std::string id){
         Ay_fn = test_Ay;
         Az_fn = constant_A;
     }
+
+    // If reading from file, these will be set later
     else if (id == "file"){
         Ax_fn = nullptr;
         Ay_fn = nullptr;

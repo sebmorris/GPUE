@@ -197,14 +197,11 @@ double harmonic_V(Grid &par, Op &opr, int i , int j, int k){
 
 // Function for simple 3d torus trapping potential
 double torus_V(Grid &par, Op &opr, int i, int j, int k){
-    double V;
-
     double *x = par.dsval("x");
     double *y = par.dsval("y");
     double *z = par.dsval("z");
 
     double xMax = par.dval("xMax");
-    double yMax = par.dval("yMax");
 
     double omegaX = par.dval("omegaX");
     double omegaY = par.dval("omegaY");
@@ -217,32 +214,13 @@ double torus_V(Grid &par, Op &opr, int i, int j, int k){
 
     // Now we need to determine how we are representing V_xyz
 
-    double angle = atan(x[i]/y[j]);
-    if (y[j] <0){
-        angle += M_PI;
-    }
-
-    // Creating a harmonic trap that stretches azimuthally in a toroidal shape
-    // this is done by combining x and y into an r term and comparing this
-    // to the large torus radius
-    //double rMax = sqrt(xMax*xMax + yMax*yMax);
     double rMax = xMax;
-    //double r = sqrt(x[i] * x[i] + y[j] * y[j]);
-
     double rad = sqrt((x[i] - xOffset) * (x[i] - xOffset)
                       + (y[j] - yOffset) * (y[j] - yOffset)) - 0.5*rMax*fudge;
-    //double rad = ((abs(r) - rMax * 0.5 * fudge) 
-                 //* (abs(r) - rMax * 0.5 * fudge));
-    //double rad = ((r - rMax * 0.5 * fudge) 
-                 //* (r - rMax * 0.5 * fudge));
-    double omegaR = sqrt(omegaX*omegaX + omegaY*omegaY);
-    double V_r = omegaR*rad;
-    V_r = V_r*V_r;
-
-    double V_z = omegaR*(z[k]+zOffset);
-    V_z = V_z * V_z;
+    double omegaR = (omegaX*omegaX + omegaY*omegaY + omegaZ*omegaZ);
+    double V_tot = omegaR*((z[k] - zOffset)*(z[k] - zOffset) + rad*rad);
     if (par.Afn != "file"){
-        return 0.5 * mass * (( V_r + V_z) + 
+        return 0.5 * mass * (( V_tot) + 
                              (pow(opr.Ax_fn(par, opr, i, j, k),2) + 
                               pow(opr.Az_fn(par, opr, i, j, k),2) + 
                               pow(opr.Ay_fn(par, opr, i, j, k),2)));
@@ -254,12 +232,12 @@ double torus_V(Grid &par, Op &opr, int i, int j, int k){
         int yDim = par.ival("yDim");
         int zDim = par.ival("zDim");
         int count = i*yDim*zDim + j*zDim + k; 
-        return 0.5 * mass * (( V_r + V_z) + 
+        return 0.5 * mass * (( V_tot) + 
                             (pow(Ax[count],2) + 
                              pow(Az[count],2) + 
                              pow(Ay[count],2)));
     }
-    return V_r + V_z;
+    return V_tot;
 }
 
 // Function for simple 3d harmonic V with i and j as the iterators
@@ -914,7 +892,6 @@ cufftDoubleComplex torus_wfc(Grid &par, double Phi,
     double fudge = par.dval("fudge");
 
     double xMax = par.dval("xMax");
-    double yMax = par.dval("yMax");
 
     double Rxy = par.dval("Rxy");
 

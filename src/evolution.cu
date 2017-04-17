@@ -301,8 +301,10 @@ void evolve_2d(Wave &wave, Op &opr,
                                  wfc, xDim * yDim, i);
             }
             //std::cout << "written" << '\n';
-            //printf("Energy[t@%d]=%E\n",i,energy_angmom(V_gpu, 
-            //       K_gpu, dx, dy, gpuWfc,gstate));
+            if (par.bval("energy_calc")){
+                printf("Energy[t@%d]=%E\n",i,energy_angmom(V_gpu, 
+                       K_gpu, gpuWfc, gstate, par, cupar));
+            }
         }
 
         // No longer writing out
@@ -710,8 +712,10 @@ void evolve_3d(Wave &wave, Op &opr,
                                  wfc, xDim*yDim*zDim, i);
             }
             //std::cout << "written" << '\n';
-            //printf("Energy[t@%d]=%E\n",i,energy_angmom(V_gpu, 
-            //       K_gpu, dx, dy, gpuWfc,gstate));
+            if (par.bval("energy_calc")){
+                printf("Energy[t@%d]=%E\n",i,energy_angmom(V_gpu,
+                       K_gpu, gpuWfc, gstate, par, cupar));
+            }
         }
 
         // No longer writing out
