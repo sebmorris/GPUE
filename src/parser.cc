@@ -49,7 +49,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("fudge", 1.0);
     par.store("kill_idx", -1);
     par.store("DX",0.0);
-    par.store("mask_2d", 1e-4);
+    par.store("mask_2d", 1.5e-4);
     par.store("box_size", 2.5e-5);
     par.store("found_sobel", false);
     par.store("energy_calc", false);
@@ -58,6 +58,7 @@ Grid parseArgs(int argc, char** argv){
     par.Vfn = "harmonic_V";
     par.Wfcfn = "standard_2d";
     par.store("conv_type", (std::string)"FFT");
+    par.store("charge", 0);
 
     optind = 1;
 
@@ -212,6 +213,13 @@ Grid parseArgs(int argc, char** argv){
             {
                 printf("No longer writing initial variables to file.\n");
                 par.store("write_file", false);
+                break;
+            }
+            case 'q':
+            {
+                int q = atoi(optarg);
+                printf(" Imprinting vortex with charge q=: %E\n",q);
+                par.store("charge",(int)q);
                 break;
             }
             case 's':

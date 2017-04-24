@@ -164,15 +164,17 @@ class Op{
     private:
         typedef double (*functionPtr)(Grid&, Op&, int, int, int);
         std::unordered_map<std::string, double*> Op_dstar;
+        std::unordered_map<std::string, const double*> Op_cdstar;
         std::unordered_map<std::string, cufftDoubleComplex*> Op_cdc;
         //K_fns.emplace("rotation_K", rotation_K);
         //V_fns["harmonic_V"] = harmonic_V;
         // double *V, *V_opt, *K, *xPy, *yPx, *xPy_gpu, *yPx_gpu;
         //cufftDoubleComplex *GK,*GV_half,*GV,*EK,*EV,*EV_opt,*GxPy,*GyPx,
         //                   *ExPy,*EyPx,*EappliedField,*K_gpu,*V_gpu;
-    public:
 
+    public:
         // Functions to store data
+        void store(std::string id, const double *data);
         void store(std::string id, double *data);
         void store(std::string id, cufftDoubleComplex *data);
 
