@@ -243,7 +243,14 @@ namespace Tracker {
             dist = 0x7FFFFFFF; //arbitrary big value fo initial distance value
             index = i;
             for ( j = i; j < vCoordsC.size() ; ++j){//Changed to C and P from num_vort[0] size for both. May be an issue here with inconsistent sizing
-                dist_t = ( (vCoordsP[i]->getCoordsD().x - vCoordsC[j]->getCoordsD().x)*(vCoordsP[i]->getCoordsD().x - vCoordsC[j]->getCoordsD().x) + (vCoordsP[i]->getCoordsD().y - vCoordsC[j]->getCoordsD().y)*(vCoordsP[i]->getCoordsD().y - vCoordsC[j]->getCoordsD().y) );
+                dist_t = ( (vCoordsP[i]->getCoordsD().x 
+                            - vCoordsC[j]->getCoordsD().x)
+                         * (vCoordsP[i]->getCoordsD().x 
+                            - vCoordsC[j]->getCoordsD().x) 
+                         + (vCoordsP[i]->getCoordsD().y 
+                            - vCoordsC[j]->getCoordsD().y)
+                         * (vCoordsP[i]->getCoordsD().y 
+                            - vCoordsC[j]->getCoordsD().y) );
                 if(dist > dist_t ){
                     dist = dist_t;
                     index = j;

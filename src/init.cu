@@ -381,7 +381,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //std::cout << "wrote initial variables" << '\n';
 
     //free(V);
-    free(K); free(r); free(Phi);
+    //free(K); free(r); free(Phi);
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 

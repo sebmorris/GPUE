@@ -59,11 +59,12 @@ Grid parseArgs(int argc, char** argv){
     par.Wfcfn = "standard_2d";
     par.store("conv_type", (std::string)"FFT");
     par.store("charge", 0);
+    par.store("flip", false);
 
     optind = 1;
 
     while ((opt = getopt (argc, argv, 
-           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:KR;")) !=-1)
+           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:Rq:;")) !=-1)
     {
         switch (opt)
         {
@@ -219,6 +220,7 @@ Grid parseArgs(int argc, char** argv){
             {
                 int q = atoi(optarg);
                 printf(" Imprinting vortex with charge q=: %E\n",q);
+                par.store("flip", true);
                 par.store("charge",(int)q);
                 break;
             }

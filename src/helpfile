@@ -20,9 +20,10 @@ Options:
 -h              Print help menu, exit GPUE
 -H phrase       Print help menu, searching for "phrase"
 -i 1            Set interaction strength between particles
--K              Selects vortex with specified ID to be killed/flipped/mutliply-charged
+-K              Selects vortex with specified ID to be 
+                    killed/flipped/mutliply-charged
 -k 0            Set kick_it, kicking for Moire lattice simulations
-                0 = off, 1 = periodic kicking, 2 = single kick
+                    0 = off, 1 = periodic kicking, 2 = single kick
 -L 0            Set l, vortex winding [2*pi*L]
 -l              Set ang_mom flag to use angular momentum
 -m              Set 2d_mask for vortex tracking
@@ -31,16 +32,19 @@ Options:
 -P 0            Set laser_power, strength of kicking [hbar * omega_perp]
 -p 100          Set printSteps, frequency of printing
 -Q 0            Set z0_shift, z shift of kicking potential (bad flag, I know)
--q 0            Set the vortex winding for imprinting/annihilation/flipping during real-time
+-q 0            Set the vortex winding for imprinting/annihilation/flipping 
+                    during real-time
 -R              Set ramping flag for imaginary time evolution
 -r              Set read_wfc to read wavefunction from file
 -S 0            Set sepMinEpsilon, kicking potential lattice spacing scaling
 -s              Set gpe, flag for using Gross-Pitaevskii Equation
 -T 1e-4         Set gdt, timestep for imaginary-time
 -t 1e-4         Set dt, timestep for real-time
--U 0            Set x0_shift, x shift of kicking potential, shift of the imprinting vortex position defined by K and q
+-U 0            Set x0_shift, x shift of kicking potential, shift of the 
+                    imprinting vortex position defined by K and q
 -u              Performs all unit tests
--V 0            Set y0_shift, y shift of kicking potential, shift of the imprinting vortex position defined by K and q
+-V 0            Set y0_shift, y shift of kicking potential, shift of the 
+                    imprinting vortex position defined by K and q
 -v              Set potential [beta]
 -W              Set write_it, flag to write to file
 -w 0            Set Omega_z, rotation rate relative to omega_perp

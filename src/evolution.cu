@@ -108,12 +108,12 @@ void evolve_2d(Wave &wave, Op &opr,
 
     std::shared_ptr<Vtx::Vortex> central_vortex; //vortex closest to the central position
     /*
-	central_vortex.coords.x = -1;
-	central_vortex.coords.y = -1;
-	central_vortex.coordsD.x = -1.;
-	central_vortex.coordsD.y = -1.;
-	central_vortex.wind = 0;
-*/
+    central_vortex.coords.x = -1;
+    central_vortex.coords.y = -1;
+    central_vortex.coordsD.x = -1.;
+    central_vortex.coordsD.y = -1.;
+    central_vortex.wind = 0;
+    */
 
     // Angle of vortex lattice. Add to optical lattice for alignment.
     double vort_angle;
@@ -179,52 +179,67 @@ void evolve_2d(Wave &wave, Op &opr,
                     // exact centre, calculate lattice angle, generate optical
                     // lattice.
                     if (i == 0) {
-			            if(num_vortices[0] > 0){
-                             //Reserve enough space for the vortices
-                             vortCoords = std::make_shared<Vtx::VtxList>(num_vortices[0]);//reserve(num_vortices[0]);
-                             vortCoordsP = std::make_shared<Vtx::VtxList>(num_vortices[0]);
+                         if(num_vortices[0] > 0){
+                         //Reserve enough space for the vortices
+                         //reserve(num_vortices[0]);
+                         vortCoords = std::make_shared<Vtx::VtxList>
+                                          (num_vortices[0]);
+                         vortCoordsP = std::make_shared<Vtx::VtxList>
+                                           (num_vortices[0]);
 
-                        //Locate the vortex positions to the nearest grid, then perform a least-squares fit to determine the location to sub-grid reolution.
-                             Tracker::vortPos(vortexLocation, vortCoords->getVortices(), xDim, wfc);
-                             Tracker::lsFit(vortCoords->getVortices(), wfc, xDim);
+                        //Locate the vortex positions to the nearest grid, then                         //perform a least-squares fit to determine the location                         //to sub-grid reolution.
+                         Tracker::vortPos(vortexLocation,
+                                 vortCoords->getVortices(), xDim, wfc);
+                         Tracker::lsFit(vortCoords->getVortices(),wfc,xDim);
 
                         //Find the centre-most vortex in the lattice
-                             central_vortex = Tracker::vortCentre(vortCoords->getVortices(), xDim);
-                        //Determine the Angle formed by the lattice relative to the x-axis
-                             vort_angle = Tracker::vortAngle(vortCoords->getVortices(), central_vortex);
+                         central_vortex = Tracker::vortCentre(vortCoords->
+                                 getVortices(), xDim);
+                        //Determine the Angle formed by the lattice relative to                         //the x-axis
+                         vort_angle = Tracker::vortAngle(vortCoords->
+                                 getVortices(), central_vortex);
 
                         //Store the vortex angle in the parameter file
-                             par.store("Vort_angle", vort_angle);
+                         par.store("Vort_angle", vort_angle);
                              
-
-
                         //Determine average lattice spacing.
-                             sepAvg = Tracker::vortSepAvg(vortCoords->getVortices(), central_vortex);
+                         sepAvg = Tracker::vortSepAvg(vortCoords->
+                                 getVortices(), central_vortex);
 
-                             par.store("Central_vort_x",
+                         par.store("Central_vort_x",
                                   (double) central_vortex->getCoords().x);
-                             par.store("Central_vort_y",
+                         par.store("Central_vort_y",
                                   (double) central_vortex->getCoords().y);
-                             par.store("Central_vort_winding",
+                         par.store("Central_vort_winding",
                                   (double) central_vortex->getWinding());
-                             par.store("Num_vort", (double) vortCoords->getVortices().size());
+                         par.store("Num_vort", (double) vortCoords->
+                                 getVortices().size());
 
-                        //Setup the optical lattice to match the spacing and angle+angle_sweep of the vortex lattice. Amplitude matched by setting laser_power parameter switch.
-                             optLatSetup(central_vortex, V, vortCoords->getVortices(),
+                        //Setup the optical lattice to match the spacing and
+                        // angle+angle_sweep of the vortex lattice.
+                        // Amplitude matched by setting laser_power
+                        // parameter switch.
+                         optLatSetup(central_vortex, V, 
+                                    vortCoords->getVortices(),
                                     vort_angle + PI * angle_sweep / 180.0,
                                     laser_power * HBAR * sqrt(omegaX * omegaY),
                                     V_opt, x, y, par, opr);
 
 
 			}
-                        //If kick_it param is 2, perform a single kick of the optical lattice for the first timestep only. This is performed by loading the EV_opt exp(V + V_opt) array into GPU memory for the potential.
+                        // If kick_it param is 2, perform a single kick of the 
+                        // optical lattice for the first timestep only.
+                        // This is performed by loading the
+                        // EV_opt exp(V + V_opt) array into GPU memory
+                        // for the potential.
                         if (kick_it == 2) {
                             printf("Kicked it 1\n");
                             cudaMemcpy(V_gpu, EV_opt,
                                        sizeof(cufftDoubleComplex) * xDim * yDim,
                                        cudaMemcpyHostToDevice);
                         }
-                        //Write out the newly specified potential and exp potential to files
+                        // Write out the newly specified potential
+                        // and exp potential to files
                         FileIO::writeOutDouble(buffer, data_dir + "V_opt_1",
                                                V_opt, xDim * yDim, 0);
                         FileIO::writeOut(buffer, data_dir + "EV_opt_1", EV_opt,
@@ -235,31 +250,38 @@ void evolve_2d(Wave &wave, Op &opr,
                                               data_dir + "Params.dat");
                     }
                     //If i!=0 and the number of vortices changes
-        /*            else if (num_vortices[0] > num_vortices[1]) {
+/*
+                    else if (num_vortices[0] > num_vortices[1]) {
                         printf("Number of vortices increased from %d to %d\n",
                                num_vortices[1], num_vortices[0]);
-                        Tracker::vortPos(vortexLocation, vortCoords.data(), xDim, wfc);
-                        Tracker::lsFit(vortCoords.data(), wfc, num_vortices[0], xDim);
+                        Tracker::vortPos(vortexLocation, vortCoords.data(), 
+                                         xDim, wfc);
+                        Tracker::lsFit(vortCoords.data(), wfc, num_vortices[0],
+                                       xDim);
                     }
-        */          // if num_vortices[1] < num_vortices[0] ... Fewer vortices
+*/
+                    // if num_vortices[1] < num_vortices[0] ... Fewer vortices
                     else {
                          if (num_vortices[0] > 0){
-                        	Tracker::vortPos(vortexLocation, vortCoords->getVortices(), xDim, wfc);
-                        	Tracker::lsFit(vortCoords->getVortices(), wfc, xDim);
-                        	Tracker::vortArrange(vortCoords->getVortices(), vortCoordsP->getVortices());
+                        	Tracker::vortPos(vortexLocation, 
+                                    vortCoords->getVortices(), xDim, wfc);
+                        	Tracker::lsFit(vortCoords->getVortices(), 
+                                               wfc, xDim);
+                        	Tracker::vortArrange(vortCoords->getVortices(),
+                                                    vortCoordsP->getVortices());
                     		FileIO::writeOutInt(buffer, data_dir + "vLoc_",
                                                vortexLocation, xDim * yDim, i);
-			             }
+                         }
                     }
 
-                    // The following will eventually be modified and moved into a new
-                    // library that works closely wy0_shiftUE. Used to calculate a graph
-                    // with vortex positions. Lambda function also defined for vortex
-                    // elimination using graph positions and UID numbers.
+                    // The following will eventually be modified and moved into
+                    // a new library that works closely wy0_shiftUE. Used to 
+                    // also defined for vortex elimination using graph positions                    // and UID numbers.
                     if (graph && num_vortices[0] > 0) {
-                        for (int ii = 0; ii < vortCoords->getVortices().size(); ++ii) {
+                        for (int ii = 0; ii < vortCoords->getVortices().size();                              ++ii) {
                             std::shared_ptr<LatticeGraph::Node>
-                                n(new LatticeGraph::Node(*vortCoords->getVortices().at(ii).get()));
+                                n(new LatticeGraph::Node(
+                                    *vortCoords->getVortices().at(ii).get()));
                             lattice.addVortex(std::move(n));
                         }
                         unsigned int *uids = (unsigned int *) malloc(
@@ -281,16 +303,17 @@ void evolve_2d(Wave &wave, Op &opr,
                             if (kill_idx > 0){
                                 killIt(kill_idx, charge, x0_shift, y0_shift);
                             }
-
                         }
-                        lattice.createEdges(1.5 * 2e-5 / dx);//Assumes that vortices
-                        //only form edges when the distance is upto 1.5*2e-5. Replace
-                        //with delaunay triangulation determined edges for better
-                        //computational scaling (and sanity)
+                        lattice.createEdges(1.5 * 2e-5 / dx);
 
-                        //O(n^2) -> terrible implementation, but it works for now.
-                        //Generates the adjacency matrix from the graph, and outputs
-                        //to a Mathematica compatible format.
+                        //Assumes that vortices
+                        //only form edges when the distance is upto 1.5*2e-5.
+                        //Replace with delaunay triangulation determined edges 
+                        //for better computational scaling (and sanity)
+
+                        //O(n^2) -> terrible implementation. It works for now.
+                        //Generates the adjacency matrix from the graph, and
+                        //outputs to a Mathematica compatible format.
                         adjMat = (double *)calloc(lattice.getVortices().size() *
                                                   lattice.getVortices().size(),
                                                    sizeof(double));
@@ -310,7 +333,8 @@ void evolve_2d(Wave &wave, Op &opr,
                     //Write out the vortex locations
                     FileIO::writeOutVortex(buffer, data_dir + "vort_arr",
                                            vortCoords->getVortices(), i);
-                    printf("Located %d vortices\n", vortCoords->getVortices().size());
+                    printf("Located %d vortices\n", 
+                           vortCoords->getVortices().size());
 
                     //Free memory block for now.
                     free(vortexLocation);
