@@ -260,16 +260,6 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     cudaMalloc((void**) &par_sum, sizeof(cufftDoubleComplex) * (gSize/threads.x));
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
-    //std::cout << "all variables malloc'd" << '\n';
-
-    #ifdef __linux
-    int cores = omp_get_num_procs();
-    par.store("Cores_Total",cores);
-
-    // Assuming dev system specifics (Xeon with HT -> cores detected / 2)
-    par.store("Cores_Max",cores/2);
-    omp_set_num_threads(cores/2);
-
     // Setting Ax, and Ay if from file
     if (par.Afn == "file"){
         file_A(par.Axfile, Ax);
@@ -278,8 +268,16 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
         opr.store("Ay", Ay);
         std::cout << "finished reading Ax / Ay from file" << '\n';
     }
+    #ifdef __linux
+    int cores = omp_get_num_procs();
+    par.store("Cores_Total",cores);
+
+    // Assuming dev system specifics (Xeon with HT -> cores detected / 2)
+    par.store("Cores_Max",cores/2);
+    omp_set_num_threads(cores/2);
+
     std::cout << Ax[256] << '\t' << Ay[0] << '\n';
-    #pragma omp parallel for private(j)
+    //#pragma omp parallel for private(j)
     #endif
     for( i=0; i < xDim; i++ ){
         for( j=0; j < yDim; j++ ){
@@ -299,8 +297,8 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                                           sin(Phi[(i*yDim + j)]);
             }
             else if (par.bval("read_wfc") == true){
-                wfc[(i*yDim + j)].x *= cos(Phi[(i*yDim + j)]);
-                wfc[(i*yDim + j)].y *= sin(Phi[(i*yDim + j)]);
+                //wfc[(i*yDim + j)].x *= cos(Phi[(i*yDim + j)]);
+                //wfc[(i*yDim + j)].y *= sin(Phi[(i*yDim + j)]);
             }
             else{
                 wfc[(i*yDim + j)] = wave.Wfc_fn(par,Phi[(i*yDim + j)], i, j, 0);

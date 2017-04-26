@@ -55,8 +55,8 @@ Grid parseArgs(int argc, char** argv){
     par.store("energy_calc", false);
     par.Afn = "rotation";
     par.Kfn = "rotation_K";
-    par.Vfn = "harmonic_V";
-    par.Wfcfn = "standard_2d";
+    par.Vfn = "2d";
+    par.Wfcfn = "2d";
     par.store("conv_type", (std::string)"FFT");
     par.store("charge", 0);
     par.store("flip", false);
@@ -373,8 +373,8 @@ Grid parseArgs(int argc, char** argv){
                 //setting 3d parameters
                 if (dimnum == 3){
                     par.Kfn = "rotation_K3d";
-                    par.Vfn = "harmonic_V3d";
-                    par.Wfcfn = "standard_3d";
+                    par.Vfn = "3d";
+                    par.Wfcfn = "3d";
                     if (par.Afn == "file"){
                         std::cout << "Finding file for Az..." << '\n';
                         par.Azfile = filecheck("src/Azgauge");

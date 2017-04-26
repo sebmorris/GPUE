@@ -423,13 +423,13 @@ void Op::set_K_fn(std::string id){
 }
 
 void Op::set_V_fn(std::string id){
-    if (id == "harmonic_V"){
+    if (id == "2d"){
         V_fn = harmonic_V;
     }
     else if(id == "torus"){
         V_fn = torus_V;
     }
-    else if(id == "harmonic_V3d"){
+    else if(id == "3d"){
         V_fn = harmonic_V3d;
     }
     else if(id == "harmonic_gauge_V"){
@@ -504,7 +504,7 @@ void set_fns(Grid &par, Op &opr, Wave &wave){
     opr.set_A_fns(par.Afn);
 
     // Wfcfn
-    wave.set_wfc_fn(par.Vfn);
+    wave.set_wfc_fn(par.Wfcfn);
 
 }
 
@@ -544,10 +544,10 @@ cufftDoubleComplex *Wave::cufftDoubleComplexval(std::string id){
 
 // Function to set functionPtr for wfc
 void Wave::set_wfc_fn(std::string id){
-    if (id == "standard_2d"){
+    if (id == "2d"){
         Wfc_fn = standard_wfc_2d;
     }
-    else if(id == "standard_3d"){
+    else if(id == "3d"){
         Wfc_fn = standard_wfc_3d;
     }
     else if(id == "torus"){

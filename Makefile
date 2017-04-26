@@ -1,7 +1,7 @@
 #CUDA_HOME = /usr/local/cuda/
 CUDA_HOME = /apps/free/cuda/7.5.18/
 #CUTT_DIR = cutt/lib
-GPU_ARCH	= sm_50
+GPU_ARCH	= sm_20
 OS:=	$(shell uname)
 ifeq ($(OS),Darwin)
 CUDA_LIB	= $(CUDA_HOME)/lib
