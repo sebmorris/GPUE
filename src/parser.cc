@@ -219,7 +219,7 @@ Grid parseArgs(int argc, char** argv){
             case 'q':
             {
                 int q = atoi(optarg);
-                printf(" Imprinting vortex with charge q=: %E\n",q);
+                std::cout << "Imprinting vortex with charge q " << q << '\n';
                 par.store("flip", true);
                 par.store("charge",(int)q);
                 break;

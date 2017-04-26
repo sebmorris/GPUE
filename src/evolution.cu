@@ -293,7 +293,7 @@ void evolve_2d(Wave &wave, Op &opr,
                         if(i==0) {
                             //Lambda for vortex annihilation/creation.
                             auto killIt=[&](int idx, int winding, double delta_x, double delta_y) {
-                                WFC::phaseWinding(Phi, 1, x, y, dx, dy,
+                                WFC::phaseWinding(Phi, winding, x, y, dx, dy,
                                     lattice.getVortexUid(idx)->getData().getCoordsD().x + delta_x,
                                     lattice.getVortexUid(idx)->getData().getCoordsD().y + delta_y,
                                     xDim);
