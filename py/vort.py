@@ -25,6 +25,11 @@ dt = (c.getfloat('Params','dt'))
 xMax = (c.getfloat('Params','xMax'))
 yMax = (c.getfloat('Params','yMax'))
 
+# quick check to make sure evMax Steps is right. This is simply because of the 
+# way GPUE outputs data.
+if (evMaxVal % incr == 0):
+    evMaxVal = evMaxVal - incr
+
 ###############################################################################
 class Vortex: #Tracks indivisual vortices over time.
 ###############################################################################

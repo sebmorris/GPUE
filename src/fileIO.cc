@@ -126,7 +126,8 @@ namespace FileIO{
 
         fprintf (f, "#UID,X,Xd,Y,Yd,WINDING,isOn\n");
         for (i = 0; i < data.size(); i++)
-            fprintf (f, "%d,%d,%e,%d,%e,%d\n",data[i]->getUID(),data[i]->getCoords().x,data[i]->getCoordsD().x,data[i]->getCoords().y,data[i]->getCoordsD().y,data[i]->getWinding());
+            //fprintf (f, "%d,%d,%e,%d,%e,%d\n",data[i]->getUID(),data[i]->getCoords().x,data[i]->getCoordsD().x,data[i]->getCoords().y,data[i]->getCoordsD().y,data[i]->getWinding());
+            fprintf (f, "%d,%e,%d,%e,%d\n",data[i]->getCoords().x,data[i]->getCoordsD().x,data[i]->getCoords().y,data[i]->getCoordsD().y,data[i]->getWinding());
         fclose (f);
     }
 
