@@ -4,17 +4,22 @@ from numpy import genfromtxt
 import math as m
 import numpy as np
 import copy as cp
-import ConfigParser 
+import ConfigParser
+import sys
 
 ###############################################################################
+if (len(sys.argv) == 2):
+    data_dir = "../" + sys.argv[1] + "/"
+else:
+    data_dir = ""
 c = ConfigParser.ConfigParser()
-c.readfp(open(r'Params.dat'))
+c.readfp(open(data_dir + 'Params.dat', "r"))
 
 xDim = int(c.getfloat('Params','xDim'))
 yDim = int(c.getfloat('Params','yDim'))
 gndMaxVal = int(c.getfloat('Params','gsteps'))
 evMaxVal = int(c.getfloat('Params','esteps'))
-incr = int(c.getfloat('Params','print_out'))
+incr = int(c.getfloat('Params','printSteps'))
 dx = (c.getfloat('Params','dx'))
 dt = (c.getfloat('Params','dt'))
 xMax = (c.getfloat('Params','xMax'))
@@ -53,7 +58,7 @@ class Vortex: #Tracks indivisual vortices over time.
 ###############################################################################
 		r = m.sqrt((self.x - vtx.x)**2 + (self.y - vtx.y)**2)
 		return r
-	
+
 ###############################################################################
 class VtxList: #Linked-list for tracking vortices
 ###############################################################################
@@ -87,7 +92,7 @@ class VtxList: #Linked-list for tracking vortices
 			vtx = vtx.next
 			pos = pos +1
 		return [vtx,pos]
-		
+
 ###############################################################################
 	def max_uid(self): #Return position and value of largest uid
 ###############################################################################
@@ -104,7 +109,7 @@ class VtxList: #Linked-list for tracking vortices
 				val = vtx.uid
 			pos = pos +1
 		return [val,pos]
-		
+
 ###############################################################################
 	def add(self,Vtx,index=None): #Add a vtx at index, otherwise end
 ###############################################################################
@@ -119,8 +124,8 @@ class VtxList: #Linked-list for tracking vortices
 		else:
 			Vtx.next = self.element(index)
 			self.element(index-1).next = Vtx
-			self.length = self.length + 1	
-	
+			self.length = self.length + 1
+
 ###############################################################################
 	def as_np(self): #Return numpy array with format x,y,sign,uid,isOn
 ###############################################################################
@@ -137,7 +142,7 @@ class VtxList: #Linked-list for tracking vortices
 ###############################################################################
 	def write_out(self,time,data): #Write out CSV file as  x,y,sign,uid,isOn
 ###############################################################################
-		np.savetxt('vort_ord_'+str(time)+'.csv',data,fmt='%10.5f,%10.5f,%i,%i,%i',delimiter=',')
+		np.savetxt(data_dir+'vort_ord_'+str(time)+'.csv',data,fmt='%10.5f,%10.5f,%i,%i,%i',delimiter=',')
 
 ###############################################################################
 	def idx_min_dist(self,vortex, isSelf=False): #Closest vtx to self
@@ -184,83 +189,83 @@ class VtxList: #Linked-list for tracking vortices
 ###############################################################################
 	def vort_decrease(self,positions,vorts_p): #Turn off vortex timeline
 ###############################################################################
-		max_uid = vorts_p.max_uid()
 		for i4 in positions:
+			#print positions, "Decrease"
 			vtx = cp.copy(i4)
 			vtx.update_on(False)
-			vtx.update_next(None)
+			vtx.update_next(None) 
 			self.add(vtx)
-		
+
 ###############################################################################
 	def vort_increase(self,positions,vorts_p): #Add new vtx to tracking
 ###############################################################################
 		counter = 1
 		max_uid = vorts_p.max_uid()
 		for i4 in positions:
+			#print positions, "Increase"
 			self.element(i4).update_uid(max_uid[0] + counter)
 			counter = counter+1
-		
+
 ###############################################################################
 def do_the_thing(start,fin,incr): #Performs the tracking
 ###############################################################################
-	#v_arr_p=genfromtxt('vort_lsq_' + str(0) + '.csv',delimiter=',')
-	v_arr_p=genfromtxt('vort_arr_' + str(1000),delimiter=',')
-	for i in range( start + incr + 1000, fin + 1, incr): #loop over samples in time
-	#	print v_arr_p[:,2]
+	v_arr_p=genfromtxt(data_dir+'vort_arr_' + str(incr),delimiter=',')
+	for i in range( start + incr*2, fin + 1, incr): #loop over samples in time
 		vorts_p = VtxList()
 		vorts_c = VtxList()
-		#v_arr_c=genfromtxt('vort_lsq_' + str(i) + '.csv',delimiter=',' )
-		v_arr_c=genfromtxt('vort_arr_' + str(i), delimiter=',')
+		v_arr_c=genfromtxt(data_dir+'vort_arr_' + str(i), delimiter=',')
 		if i==2000:
-			v_arr_p_coords = np.array([a for a in v_arr_p[:,[1,3]]])
-			v_arr_c_coords = np.array([a for a in v_arr_c[:,[1,3]]])
-			v_arr_p_sign = np.array([a for a in v_arr_p[:,4]])
-			v_arr_c_sign = np.array([a for a in v_arr_c[:,4]])
+			v_arr_p_coords = np.array([a for a in v_arr_p[:,[1,3]]]) # Select the coordinates from the previous timestep
+			v_arr_c_coords = np.array([a for a in v_arr_c[:,[1,3]]]) # Select the coordinates from the current timestep
+			v_arr_p_sign = np.array([a for a in v_arr_p[:,4]]) # Select the vortex signs from previous
+			v_arr_c_sign = np.array([a for a in v_arr_c[:,4]]) # Select the vortex signs from current
 		else:
-			v_arr_p_coords = np.array([a for a in v_arr_p[:,[0,1]]])
-			v_arr_p_sign = np.array([a for a in v_arr_p[:,2]])
-			
-		v_arr_c_coords = np.array([a for a in v_arr_c[:,[1,3]]])
-		v_arr_c_sign = np.array([a for a in v_arr_c[:,4]])
-		for i1 in range(0,v_arr_p_coords.size/2): #loop over coordinates for a given time
-			vtx_p = Vortex(i1,v_arr_p_coords[i1][0],v_arr_p_coords[i1][1],True,sign=v_arr_p_sign[i1])#,v_arr_p[i1][2])
-			vorts_p.add(vtx_p)
-		
-		for i2 in range(0,v_arr_c_coords.size/2):
-			vtx_c = Vortex(-1-i2,v_arr_c_coords[i2][0],v_arr_c_coords[i2][1],True,sign=v_arr_c_sign[i2])#,v_arr_p[i1][0])
-			vorts_c.add(vtx_c)
+			v_arr_p_coords = np.array([a for a in v_arr_p[:,[0,1]]]) #Previous coords
+			v_arr_p_sign = np.array([a for a in v_arr_p[:,2]]) #Previous sign
 
-		for i3 in range(0,vorts_p.length):
-			index_r = vorts_c.idx_min_dist(vorts_p.element(i3))
-			
-			v0c = vorts_c.element(index_r[0]).sign
-			v0p = vorts_p.element(i3).sign
-			v1c = vorts_c.element(index_r[0]).uid
-			if (index_r[1] < 7) and (vorts_c.element(index_r[0]).sign == vorts_p.element(i3).sign) and (vorts_c.element(index_r[0]).uid < 0):
-			#if (index_r[1] < 2) and (vorts_c.element(index_r[0]).sign > 0) and (vorts_c.element(index_r[0]).uid < 0):
+		v_arr_c_coords = np.array([a for a in v_arr_c[:,[1,3]]]) #Current coords
+		v_arr_c_sign = np.array([a for a in v_arr_c[:,4]]) #Current sign
+		for i1 in range(0,v_arr_p_coords.size/2): #loop over previous coordinates for a given time
+			vtx_p = Vortex(i1,v_arr_p_coords[i1][0],v_arr_p_coords[i1][1],True,sign=v_arr_p_sign[i1]) # Create a vortex object with uid given by number i1
+			vorts_p.add(vtx_p)#Add vortex to the list
+
+		for i2 in range(0,v_arr_c_coords.size/2): #loop over current coordinates for a given time
+			vtx_c = Vortex(-1-i2,v_arr_c_coords[i2][0],v_arr_c_coords[i2][1],True,sign=v_arr_c_sign[i2]) # Create a vortex object with uid -1 - i2
+			vorts_c.add(vtx_c) #Add vortex object to list
+
+		for i3 in range(0,vorts_p.length): # For all previous vortices in list
+			index_r = vorts_c.idx_min_dist(vorts_p.element(i3)) # Find the smallest distance vortex index between current and previous data
+
+			v0c = vorts_c.element(index_r[0]).sign #Get the sign of the smallest distance vortex
+			v0p = vorts_p.element(i3).sign # Get the sign of the current vortex at index i3
+			v1c = vorts_c.element(index_r[0]).uid #Get uid of current vortex
+                        #Check if distance is less than 7 grid points, and that the sign is matched between previous and current vortices, and that the current vortex has a negative uid, indicating that a pair has not yet been found. If true, then update the current vortex index to that of the previous vortex index, and turn vortex on --- may be dangerous
+			if (index_r[1] < 4) and (vorts_c.element(index_r[0]).sign == vorts_p.element(i3).sign) and (vorts_c.element(index_r[0]).uid < 0) and (vorts_p.element(i3).isOn == True):
 				vorts_c.element(index_r[0]).update_uid(vorts_p.element(i3).uid)
 				vorts_c.element(index_r[0]).update_on(True)
 
 		#You will never remember why this works
-		uid_c = [[a for a in b][3] for b in vorts_c.as_np()]
-		uid_p = [[a for a in b][3] for b in vorts_p.as_np()]
+		uid_c = [[a for a in b][3] for b in vorts_c.as_np()] # Slice the uids for current data
+		uid_p = [[a for a in b][3] for b in vorts_p.as_np()] # Slice uids for previous data
 		#Check the difference between current and previous vtx data
-		dpc = set(uid_p).difference(set(uid_c))
+		dpc = set(uid_p).difference(set(uid_c)) # Creates a set and checks the elements for differences. Namely, finds which uids are unique to previous (ie which ones are no longer in current due to annihilation or falling outside boundary), which uids are only in current (ie newly found vortices, or older vortices that have reappeared)
 		dcp = set(uid_c).difference(set(uid_p))
 		vtx_pos_p=[]
 		vtx_pos_c=[]
+                #For all elements in the set of previous to current, note [vtx, pos] vtx for previous, and pos for current
 		for i5 in dpc:
-			vtx_pos_p = np.append(vtx_pos_p,vorts_p.vtx_uid(i5)[0])
-		for i6 in dcp:	
-			vtx_pos_c = np.append(vtx_pos_c,vorts_c.vtx_uid(i6)[1])
-		if len(dpc or dcp) >= 1:
+			vtx_pos_p = np.append(vtx_pos_p,vorts_p.vtx_uid(i5)[0]) #vtx
+		for i6 in dcp:
+			vtx_pos_c = np.append(vtx_pos_c,vorts_c.vtx_uid(i6)[1]) #pos
+		if len(dpc or dcp) >= 1: #if any differences were found, call the below functions
 			vorts_c.vort_decrease(vtx_pos_p,vorts_p)
 			vorts_c.vort_increase(vtx_pos_c,vorts_p)
 
+                # Sort the vortices in current based on uid value, and write out the data
 		vorts_c_update=sorted(vorts_c.as_np(),key=lambda vtx: vtx[3])
 		vorts_c.write_out(i,np.asarray(vorts_c_update))
 		print "[" + str(i) +"]", "Length of previous=" + str(len(v_arr_p_coords)), "Length of current=" + str(len(vorts_c_update))
-		v_arr_p=genfromtxt('vort_ord_' + str(i) + '.csv',delimiter=',' )
+		v_arr_p=genfromtxt(data_dir+'vort_ord_' + str(i) + '.csv',delimiter=',' )
 
 ###############################################################################
 ###############################################################################
