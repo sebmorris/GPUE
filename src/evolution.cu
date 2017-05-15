@@ -636,6 +636,7 @@ void evolve_3d(Wave &wave, Op &opr,
     bool lz = par.bval("corotating");
     std::cout << "COROTATING IS: " << lz << '\n';
     bool ramp = par.bval("ramp");
+    int ramp_type = par.ival("ramp_type");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
@@ -696,12 +697,23 @@ void evolve_3d(Wave &wave, Op &opr,
     // Iterating through all of the steps in either g or esteps.
     for(int i=0; i < numSteps; ++i){
         if (ramp){
+
             //Adjusts omega for the appropriate trap frequency.
-            if (i == 0){
-                omega_0=(double)omega/(double)(numSteps);
+            if (ramp_type == 1){
+                if (i == 0){
+                    omega_0 = (double)omega;
+                }
+                else{
+                    omega_0 = (double)i / (double)(i+1);
+                }
             }
             else{
-                omega_0 = (double)(i+1) / (double)i;
+                if (i == 0){
+                    omega_0=(double)omega/(double)(numSteps);
+                }
+                else{
+                    omega_0 = (double)(i+1) / (double)i;
+                }
             }
         }
 
