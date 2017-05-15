@@ -34,7 +34,8 @@ Options:
 -Q 0            Set z0_shift, z shift of kicking potential (bad flag, I know)
 -q 0            Set the vortex winding for imprinting/annihilation/flipping 
                     during real-time
--R              Set ramping flag for imaginary time evolution
+-R 1            Set ramping flag for imaginary time evolution
+                    1 for ramping up, 0 for ramping down
 -r              Set read_wfc to read wavefunction from file
 -S 0            Set sepMinEpsilon, kicking potential lattice spacing scaling
 -s              Set gpe, flag for using Gross-Pitaevskii Equation
@@ -48,6 +49,7 @@ Options:
 -v              Set potential [beta]
 -W              Set write_it, flag to write to file
 -w 0            Set Omega_z, rotation rate relative to omega_perp
+                    This acts as a value to multiply the gauge fields by
 -X 6.283        Set omega_x
 -x 256          Set xDim, dimension in X (power of 2, please!)
 -Y 6.283        Set omega_y

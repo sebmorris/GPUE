@@ -43,6 +43,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("omegaY", 6.283);
     par.store("data_dir", (std::string)"data/");
     par.store("ramp", false);
+    par.store("ramp_type", 1);
     par.store("dimnum", 2);
     par.store("dimensionless", false);
     par.store("write_file", true);
@@ -64,7 +65,7 @@ Grid parseArgs(int argc, char** argv){
     optind = 1;
 
     while ((opt = getopt (argc, argv, 
-           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:Rq:;")) !=-1)
+           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:;")) !=-1)
     {
         switch (opt)
         {
@@ -169,8 +170,10 @@ Grid parseArgs(int argc, char** argv){
             }
             case 'R':
             {
+                int ramp_type = atoi(optarg);
                 printf("Ramping omega with imaginary time evolution\n");
                 par.store("ramp",true);
+                par.store("ramp_type", ramp_type);
                 break;
             }
             case 'r':

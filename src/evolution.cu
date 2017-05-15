@@ -138,14 +138,16 @@ void evolve_2d(Wave &wave, Op &opr,
     double sepAvg = 0.0;
 
     int num_kick = 0;
-    double t_kick = (2*PI/omega_0)/(6*Dt); // Assuming triangular lattice at rotation of omega_0
+    // Assuming triangular lattice at rotation of omega_0
+    double t_kick = (2*PI/omega_0)/(6*Dt); 
 
     //std::cout << "numSteps is: " << numSteps << '\n';
     // Iterating through all of the steps in either g or esteps.
     for(int i=0; i < numSteps; ++i){
         if ( ramp ){
             //Adjusts omega for the appropriate trap frequency.
-            omega_0=omegaX*((omega-0.39)*((double)i/(double)(numSteps)) + 0.39); // assuming critical rot. freq. of 0.39\omega_\perp to seed a vortex
+            omega_0=omegaX*((omega-0.39)*((double)i/(double)(numSteps)) + 0.39);
+            // assuming critical rot. freq. of 0.39\omega_\perp to seed a vortex
         }
 
         // Print-out at pre-determined rate.
