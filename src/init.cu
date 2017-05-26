@@ -262,9 +262,9 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 
     // Setting Ax, and Ay if from file
     if (par.Afn == "file"){
-        file_A(par.Axfile, Ax);
+        file_A(par.Axfile, Ax, omega);
         opr.store("Ax",Ax);
-        file_A(par.Ayfile, Ay);
+        file_A(par.Ayfile, Ay, omega);
         opr.store("Ay", Ay);
         std::cout << "finished reading Ax / Ay from file" << '\n';
     }
@@ -801,13 +801,13 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     int index;
     // Setting Ax, Ay, and Az if from file
     if (par.Afn == "file"){
-        file_A(par.Axfile, Ax);
+        file_A(par.Axfile, Ax, omega);
         opr.store("Ax",Ax);
 
-        file_A(par.Ayfile, Ay);
+        file_A(par.Ayfile, Ay, omega);
         opr.store("Ay", Ay);
 
-        file_A(par.Azfile, Az);
+        file_A(par.Azfile, Az, omega);
         opr.store("Az", Az);
 
         std::cout << "finished reading Ax / Ay / Az from file" << '\n';

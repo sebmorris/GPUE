@@ -615,13 +615,13 @@ double dynamic_Az(Grid &par, Op &opr, int i, int j, int k){
 
 // Function to read Ax from file.
 // Note that this comes with a special method in init...
-void file_A(std::string filename, double *A){
+void file_A(std::string filename, double *A, double omega){
     std::fstream infile(filename, std::ios_base::in);
 
     double inval;
     int count = 0;
     while (infile >> inval){
-        A[count] = inval;
+        A[count] = omega * inval;
         count++;
     }
 }
