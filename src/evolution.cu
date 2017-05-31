@@ -956,8 +956,8 @@ void evolve_3d(Wave &wave, Op &opr,
                     // loop to multiply by Ay
                     for (int i = 0; i < yDim; i++){
                         result = cufftExecZ2Z(plan_dim2,
-                                 &gpuWfc[i*xDim*zDim],
-                                 &gpuWfc[i*xDim*zDim],CUFFT_FORWARD);
+                                 &gpuWfc[i*size],
+                                 &gpuWfc[i*size],CUFFT_FORWARD);
                     }
 
                     scalarMult<<<grid,threads>>>(gpuWfc,
@@ -967,8 +967,8 @@ void evolve_3d(Wave &wave, Op &opr,
 
                     for (int i = 0; i < yDim; i++){
                         result = cufftExecZ2Z(plan_dim2,
-                                 &gpuWfc[i*xDim*zDim],
-                                 &gpuWfc[i*xDim*zDim],CUFFT_INVERSE);
+                                 &gpuWfc[i*size],
+                                 &gpuWfc[i*size],CUFFT_INVERSE);
                     }
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
@@ -1007,8 +1007,8 @@ void evolve_3d(Wave &wave, Op &opr,
                     // loop to multiply by Ay
                     for (int i = 0; i < yDim; i++){
                         result = cufftExecZ2Z(plan_dim2,
-                                 &gpuWfc[i*xDim*zDim],
-                                 &gpuWfc[i*xDim*zDim],CUFFT_FORWARD);
+                                 &gpuWfc[i*size],
+                                 &gpuWfc[i*size],CUFFT_FORWARD);
                     }
 
                     scalarMult<<<grid,threads>>>(gpuWfc,
@@ -1018,8 +1018,8 @@ void evolve_3d(Wave &wave, Op &opr,
 
                     for (int i = 0; i < yDim; i++){
                         result = cufftExecZ2Z(plan_dim2,
-                                 &gpuWfc[i*xDim*zDim],
-                                 &gpuWfc[i*xDim*zDim],CUFFT_INVERSE);
+                                 &gpuWfc[i*size],
+                                 &gpuWfc[i*size],CUFFT_INVERSE);
                     }
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);

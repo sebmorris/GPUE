@@ -621,7 +621,7 @@ void file_A(std::string filename, double *A, double omega){
     double inval;
     int count = 0;
     while (infile >> inval){
-        A[count] = omega * inval;
+        A[count] = omega*inval;
         count++;
     }
 }

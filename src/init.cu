@@ -336,10 +336,10 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
             EK[(i*yDim + j)].x=cos( -K[(i*yDim + j)]*(dt/HBAR));
             EK[(i*yDim + j)].y=sin( -K[(i*yDim + j)]*(dt/HBAR));
 
-            EpAy[(i*yDim + j)].x=cos(-omega*omegaX*pAy[(i*yDim + j)]*dt);
-            EpAy[(i*yDim + j)].y=sin(-omega*omegaX*pAy[(i*yDim + j)]*dt);
-            EpAx[(i*yDim + j)].x=cos(-omega*omegaX*pAx[(i*yDim + j)]*dt);
-            EpAx[(i*yDim + j)].y=sin(-omega*omegaX*pAx[(i*yDim + j)]*dt);
+            EpAy[(i*yDim + j)].x=cos(-pAy[(i*yDim + j)]*dt);
+            EpAy[(i*yDim + j)].y=sin(-pAy[(i*yDim + j)]*dt);
+            EpAx[(i*yDim + j)].x=cos(-pAx[(i*yDim + j)]*dt);
+            EpAx[(i*yDim + j)].y=sin(-pAx[(i*yDim + j)]*dt);
 
         }
     }
@@ -856,12 +856,12 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 EK[index].x=cos( -K[index]*(dt/HBAR));
                 EK[index].y=sin( -K[index]*(dt/HBAR));
 
-                EpAy[index].x=cos(-omega*omegaX*pAy[index]*dt);
-                EpAy[index].y=sin(-omega*omegaX*pAy[index]*dt);
-                EpAx[index].x=cos(-omega*omegaX*pAx[index]*dt);
-                EpAx[index].y=sin(-omega*omegaX*pAx[index]*dt);
-                EpAz[index].x=cos(-omega*omegaX*pAz[index]*dt);
-                EpAz[index].y=sin(-omega*omegaX*pAz[index]*dt);
+                EpAy[index].x=cos(-pAy[index]*dt);
+                EpAy[index].y=sin(-pAy[index]*dt);
+                EpAx[index].x=cos(-pAx[index]*dt);
+                EpAx[index].y=sin(-pAx[index]*dt);
+                EpAz[index].x=cos(-pAz[index]*dt);
+                EpAz[index].y=sin(-pAz[index]*dt);
 
             }
         }
