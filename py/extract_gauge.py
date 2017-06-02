@@ -37,13 +37,13 @@ def write_constant(outfile, res):
         file.write(str(0) + '\n')
     file.close()
 
-var = extract_field("Avec_broad_256.mat","avec")
+var = extract_field("linpol_vecpot.mat","avec")
 
 # These are the necessary parameters for when the BEC is 10x too large
 #write_3d(var, "gauge_3d",  0.001)
 #write_2d(var, "gauge_2d",  0.001)
-write_3d(var, "gauge_3d",  1.0/3100)
-write_2d(var, "gauge_2d",  1.0/3100)
+write_3d(var, "gauge_3d",  1.0/3100.)
+write_2d(var, "gauge_2d",  1.0/3100.)
 #write_constant("const_256", 256)
 
 # This is for the case where the BEC is the appropriate size

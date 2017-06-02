@@ -22,7 +22,7 @@ import bpy
 import numpy as np
 
 # files for visualization
-voxelfile = "test_wfc.bvox"
+voxelfile = "edges_linpol.bvox"
 infile = open(voxelfile, "r")
 
 #------------------------------------------------------------------------------#
@@ -38,9 +38,9 @@ def remove_obj(scene):
 # Function to define the scene
 def def_scene(box_length, res_stand, xres, yres, zres):
     # first, we need to relocate the camera
-    x_cam = 3.0
-    y_cam = 3.2
-    z_cam = 2.0
+    x_cam = 1.0
+    y_cam = 1.2
+    z_cam = 0.0
 
     scene = bpy.context.scene
 
@@ -49,9 +49,7 @@ def def_scene(box_length, res_stand, xres, yres, zres):
 
     # defining dummy location (empty) to point camera at.
     bpy.ops.object.add(type="EMPTY",
-                       location=(box_length * xres * 0.5 / res_stand,
-                                 box_length * yres * 0.5 / res_stand,
-                                 box_length * zres * 0.5 / res_stand))
+                       location=(0,0,0))
 
     context = bpy.context
 
@@ -78,17 +76,15 @@ def def_scene(box_length, res_stand, xres, yres, zres):
     scene.render.threads = 8
 
     # Sets the BG to be black
-    bpy.data.worlds["World"].horizon_color = (0,0,0)
+    bpy.data.worlds["World"].horizon_color = (1,1,1)
 
     return scene
 
 # function to create cube for data
 def create_cube(box_length, res_stand, xres, yres, zres, step_size, 
-                dens_scale, voxelfile, color_num):
+                dens_scale, voxelfile):
     cube = bpy.ops.mesh.primitive_cube_add(
-               location=((box_length * xres / (2*res_stand)),
-                         (box_length * yres / (2*res_stand)),
-                         (box_length * zres / (2*res_stand))),
+               location=(0,0,0),
                radius = box_length * 0.5)
 
     bpy.ops.object.mode_set(mode="EDIT")
@@ -99,18 +95,19 @@ def create_cube(box_length, res_stand, xres, yres, zres, step_size,
     # setting voxel material
     me = ob.data
     mat = create_volume("MaterialVolume", xres, yres, zres, step_size,
-                        dens_scale, voxelfile, color_num)
+                        dens_scale, voxelfile)
     me.materials.append(mat)
 
     return cube
 
 # function to create voxel material for cube
 def create_volume(passedName, xres, yres, zres, step_size, dens_scale, 
-                  voxelfile, color_num):
+                  voxelfile):
     volMat = bpy.data.materials.new(passedName)
     volMat.type = "VOLUME"
     volMat.volume.density = 0.0
     volMat.volume.step_method = "CONSTANT"
+    volMat.volume.step_size = step_size
     volMat.volume.depth_threshold = 0.01
     volMat.volume.density_scale = dens_scale
     matTex = volMat.texture_slots.add()
@@ -123,9 +120,10 @@ def create_volume(passedName, xres, yres, zres, step_size, dens_scale,
     values = [(0.0,(0,0,0,0)), (0.5,(0,1,0,0.3)), (0.75,(0,0,1,0.5)), (1.0, (1,1,1,1))]
 
     for n,value in enumerate(values):
-        ramp.elements.new((n+1)*0.2)
-        elt = ramp.elements[n]
+        #ramp.elements.new((n+1)*0.2)
         (pos, color) = value
+        ramp.elements.new(pos)
+        elt = ramp.elements[n]
         elt.position = pos
         elt.color = color
     voxTex.voxel_data.filepath = voxelfile
@@ -151,10 +149,15 @@ def render_img(filename):
     bpy.data.scenes['Scene'].render.filepath = filename
     bpy.ops.render.render( write_still=True )
 
+# Function to print colorbar on image
+
+
 #------------------------------------------------------------------------------#
 # MAIN
 #------------------------------------------------------------------------------#
 
-scene = def_scene(5, 64, 64, 64, 64)
-create_cube(5, 64, 64, 64,64, 0.1, 0.5, voxelfile, 1)
-render_img("image.png")
+xDim = yDim = zDim = 256
+scene = def_scene(5, xDim, xDim, yDim, zDim)
+create_cube(5, xDim, xDim, yDim, zDim, 0.01, 15, voxelfile)
+filename = "image.png"
+render_img(filename)
