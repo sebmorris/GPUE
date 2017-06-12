@@ -299,7 +299,7 @@ void evolve_2d(Wave &wave, Op &opr,
                                 if (winding < 0){
                                     // Killing initial vortex and then 
                                     // imprinting new one
-                                    WFC::phaseWinding(Phi, winding, x,y, dx,dy,
+                                    WFC::phaseWinding(Phi, 1, x,y, dx,dy,
                                         lattice.getVortexUid(idx)->
                                             getData().getCoordsD().x,
                                         lattice.getVortexUid(idx)->
