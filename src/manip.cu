@@ -22,7 +22,9 @@ void WFC::phaseWinding(double *phi, int winding, double *x, double *y, double dx
     for(int a = 0; a< sites; ++a){
         for(int ii=0; ii < dim; ++ii){
             for(int jj=0; jj < dim; ++jj){
-                phi[ii*dim +jj] = fmod(phi[ii*dim +jj] + winding*(atan2(y[jj]-(posy[a]-dim/2+1)*dx, x[ii]-(posx[a]-dim/2+1)*dy) ),2*PI);
+                phi[ii*dim +jj] = fmod(phi[ii*dim +jj] 
+                    + (double)winding*(atan2(y[jj]-(posy[a]-dim/2+1)*dx, 
+                                     x[ii]-(posx[a]-dim/2+1)*dy) ),2*PI);
             }
         }
     }

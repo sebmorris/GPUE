@@ -43,8 +43,8 @@ void evolve_2d(Wave &wave, Op &opr,
     int gridSize = xDim * yDim;
     int kill_idx = par.ival("kill_idx");
     int charge = par.ival("charge");
-    int x0_shift = par.ival("x0_shift");
-    int y0_shift = par.ival("y0_shift");
+    int x0_shift = par.dval("x0_shift");
+    int y0_shift = par.dval("y0_shift");
     cufftDoubleComplex *EV = opr.cufftDoubleComplexval("EV");
     cufftDoubleComplex *wfc = wave.cufftDoubleComplexval("wfc");
     cufftDoubleComplex *EV_opt = opr.cufftDoubleComplexval("EV_opt");
@@ -296,7 +296,7 @@ void evolve_2d(Wave &wave, Op &opr,
                             //Lambda for vortex annihilation/creation.
                             auto killIt=[&](int idx, int winding, 
                                             double delta_x, double delta_y) {
-                                if (winding < 0){
+                                if (abs(delta_x) > 0 || abs(delta_y) > 0){
                                     // Killing initial vortex and then 
                                     // imprinting new one
                                     WFC::phaseWinding(Phi, 1, x,y, dx,dy,
@@ -306,8 +306,15 @@ void evolve_2d(Wave &wave, Op &opr,
                                             getData().getCoordsD().y,
                                         xDim);
 
+                                    cudaMemcpy(Phi_gpu, Phi, 
+                                               sizeof(double) * xDim * yDim, 
+                                               cudaMemcpyHostToDevice);
+                                    cMultPhi <<<grid, threads>>>(gpuWfc,Phi_gpu,
+                                                                  gpuWfc);
+
                                     // Imprinting new one
-                                    WFC::phaseWinding(Phi, winding, x,y, dx,dy,
+                                    int cval = -winding;
+                                    WFC::phaseWinding(Phi, cval, x,y, dx,dy,
                                         lattice.getVortexUid(idx)->
                                             getData().getCoordsD().x + delta_x,
                                         lattice.getVortexUid(idx)->
@@ -322,11 +329,12 @@ void evolve_2d(Wave &wave, Op &opr,
                                                                   gpuWfc);
                                 }
                                 else{
-                                    WFC::phaseWinding(Phi, winding, x,y, dx,dy,
+                                    int cval = -(winding-1);
+                                    WFC::phaseWinding(Phi, cval, x,y,dx,dy,
                                         lattice.getVortexUid(idx)->
-                                            getData().getCoordsD().x + delta_x,
+                                            getData().getCoordsD().x,
                                         lattice.getVortexUid(idx)->
-                                            getData().getCoordsD().y + delta_y,
+                                            getData().getCoordsD().y,
                                         xDim);
                                     cudaMemcpy(Phi_gpu, Phi, 
                                                sizeof(double) * xDim * yDim, 
