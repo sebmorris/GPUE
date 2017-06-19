@@ -408,7 +408,17 @@ void evolve_2d(Wave &wave, Op &opr,
                                               gstate, par, cupar);
                 // Now opening and closing file for writing.
                 std::ofstream energy_out;
-                energy_out.open(data_dir + "energy.dat");
+                std::string mode = "energyi.dat";
+                if (gstate == 1){
+                    mode = "energy.dat";
+                }
+                if (i == 0){
+                    energy_out.open(data_dir + mode);
+                }
+                else{
+                    energy_out.open(data_dir + mode, std::ios::out |
+                                                     std::ios::app);
+                }
                 energy_out << energy << '\n';
                 energy_out.close();
                 printf("Energy[t@%d]=%E\n",i,energy); 
@@ -836,7 +846,17 @@ void evolve_3d(Wave &wave, Op &opr,
                                               gstate, par, cupar);
                 // Now opening and closing file for writing.
                 std::ofstream energy_out;
-                energy_out.open(data_dir + "energy.dat");
+                std::string mode = "energyi.dat";
+                if (gstate == 1){
+                    mode = "energy.dat";
+                }
+                if (i == 0){
+                    energy_out.open(data_dir + mode);
+                }
+                else{
+                    energy_out.open(data_dir + mode, std::ios::out |
+                                                     std::ios::app);
+                }
                 energy_out << energy << '\n';
                 energy_out.close();
                 printf("Energy[t@%d]=%E\n",i,energy);

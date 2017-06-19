@@ -242,13 +242,8 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     energy = (double2*)malloc(sizeof(double2)*gSize);
     tmp_wfc = (double2*)malloc(sizeof(double2)*gSize);
 
-    // manually assigning each element because I am bad at this
-    for (int i = 0; i < gSize; ++i){
-        tmp_wfc[i] = gpuWfc[i];
-    }
-
     cudaMalloc((void**) &energy_gpu, sizeof(double2)*gSize);
-    tmp_wfc = gpuWfc;
+    cudaMalloc((void**) &tmp_wfc, sizeof(double2)*gSize);
 
     for (int i=0; i < gSize; ++i){
         energy[i].x = 0.0; 
@@ -262,7 +257,7 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     cudaMalloc((void**) &energy_gpu, sizeof(double2) * gSize);
     energyCalc<<<grid,threads>>>( tmp_wfc, V_op, 0.5*dt, energy_gpu, gState,1,
                                   0.5*sqrt(omegaZ/mass), gDenConst);
-    result = cufftExecZ2Z( plan, tmp_wfc, tmp_wfc, CUFFT_FORWARD );
+    result = cufftExecZ2Z( plan, gpuWfc, tmp_wfc, CUFFT_FORWARD );
 
     scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor_2d, tmp_wfc);//Normalise
     energyCalc<<<grid,threads>>>( tmp_wfc, K_op, dt, energy_gpu, gState,0, 
