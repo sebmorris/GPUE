@@ -396,8 +396,14 @@ void evolve_2d(Wave &wave, Op &opr,
             }
             //std::cout << "written" << '\n';
             if (par.bval("energy_calc")){
-                printf("Energy[t@%d]=%E\n",i,energy_angmom(V_gpu, 
-                       K_gpu, gpuWfc, gstate, par, cupar));
+                double energy = energy_angmom(V_gpu,K_gpu, gpuWfc, 
+                                              gstate, par, cupar);
+                // Now opening and closing file for writing.
+                std::ofstream energy_out;
+                energy_out.open(data_dir + "energy.dat");
+                energy_out << energy << '\n';
+                energy_out.close();
+                printf("Energy[t@%d]=%E\n",i,energy); 
             }
         }
 
@@ -818,8 +824,14 @@ void evolve_3d(Wave &wave, Op &opr,
             }
             //std::cout << "written" << '\n';
             if (par.bval("energy_calc")){
-                printf("Energy[t@%d]=%E\n",i,energy_angmom(V_gpu,
-                       K_gpu, gpuWfc, gstate, par, cupar));
+                double energy = energy_angmom(V_gpu,K_gpu, gpuWfc, 
+                                              gstate, par, cupar);
+                // Now opening and closing file for writing.
+                std::ofstream energy_out;
+                energy_out.open(data_dir + "energy.dat");
+                energy_out << energy << '\n';
+                energy_out.close();
+                printf("Energy[t@%d]=%E\n",i,energy);
             }
         }
 
