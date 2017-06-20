@@ -240,7 +240,7 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     double2 *energy, *energy_gpu, *tmp_wfc;
 
     energy = (double2*)malloc(sizeof(double2)*gSize);
-    tmp_wfc = (double2*)malloc(sizeof(double2)*gSize);
+    //tmp_wfc = (double2*)malloc(sizeof(double2)*gSize);
 
     cudaMalloc((void**) &energy_gpu, sizeof(double2)*gSize);
     cudaMalloc((void**) &tmp_wfc, sizeof(double2)*gSize);
@@ -255,6 +255,7 @@ double energy_angmom(double2 *V_op, double2 *K_op,
                cudaMemcpyHostToDevice);
 
     cudaMalloc((void**) &energy_gpu, sizeof(double2) * gSize);
+    cudaMalloc((void**) &tmp_wfc, sizeof(double2) * gSize);
     energyCalc<<<grid,threads>>>( tmp_wfc, V_op, 0.5*dt, energy_gpu, gState,1,
                                   0.5*sqrt(omegaZ/mass), gDenConst);
     result = cufftExecZ2Z( plan, gpuWfc, tmp_wfc, CUFFT_FORWARD );
@@ -274,7 +275,7 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     }
     
     for(int i=0; i<gSize; i++){
-        out += energy[i].x;
+        out += energy[i].x + energy[i].y;
         //printf("En=%E\n",result*dx*dy*dz);
     }
 
