@@ -254,8 +254,6 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     cudaMemcpy(energy_gpu, energy, sizeof(double2)*gSize,
                cudaMemcpyHostToDevice);
 
-    cudaMalloc((void**) &energy_gpu, sizeof(double2) * gSize);
-    cudaMalloc((void**) &tmp_wfc, sizeof(double2) * gSize);
     energyCalc<<<grid,threads>>>( tmp_wfc, V_op, 0.5*dt, energy_gpu, gState,1,
                                   0.5*sqrt(omegaZ/mass), gDenConst);
     result = cufftExecZ2Z( plan, gpuWfc, tmp_wfc, CUFFT_FORWARD );
