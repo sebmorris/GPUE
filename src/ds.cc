@@ -453,9 +453,9 @@ void Op::set_A_fns(std::string id){
         Az_fn = constant_A;
     }
     else if (id == "ring"){
-        Ax_fn = ring_Ax;
-        Ay_fn = ring_Ay;
-        Az_fn = constant_A;
+        Ax_fn = constant_A;
+        Ay_fn = constant_A;
+        Az_fn = ring_Az;
     }
 
     // 2d functions
