@@ -319,9 +319,6 @@ Grid parseArgs(int argc, char** argv){
             {
                 std::string data_dir = optarg;
                 std::cout << "Data directory is: " << data_dir << '\n';
-                if (stat(data_dir.c_str(), &st) == -1) {
-                    mkdir(data_dir.c_str(), 0700);
-                }
                 par.store("data_dir", data_dir + "/");
                 break;
             }
@@ -532,6 +529,12 @@ Grid parseArgs(int argc, char** argv){
             }
         }
     }
+
+    // Setting variables
+    if (stat(par.sval("data_dir").c_str(), &st) == -1) {
+        mkdir(par.sval("data_dir").c_str(), 0700);
+    }
+
 
     return par;
 }
