@@ -816,7 +816,23 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
         for( j=0; j < yDim; j++ ){
             for( k=0; k < zDim; k++ ){
                 index = (i * yDim * zDim) + (j * zDim) + k;
-                Phi[index] = fmod(l*atan2(y[j], x[i]),2*PI);
+                if (par.Afn == "rotation"){
+                    Phi[index] = fmod(l*atan2(y[j], x[i]),2*PI);
+                }
+                else if (par.Afn == "torus"){
+                    double xOffset = par.dval("x0_shift");
+                    double yOffset = par.dval("y0_shift");
+                    double rMax = par.dval("xMax");
+                    double fudge = par.dval("fudge");
+                    double x_loc = x[i] - xOffset;
+                    double y_loc = y[j] - yOffset;
+                    double radius = sqrt(x_loc*x_loc + y_loc*y_loc)
+                                    - 0.5*rMax*fudge;
+                    Phi[index] = fmod(l*atan2(z[k], radius),2*PI);
+                }
+                else{
+                    Phi[index] = 0.0;
+                }
 
                 if (par.bval("read_wfc") != true){
                     wfc[index] = wave.Wfc_fn(par, Phi[index],i,j,k);

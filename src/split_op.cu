@@ -273,7 +273,7 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     }
     
     for(int i=0; i<gSize; i++){
-        out += energy[i].x + energy[i].y;
+        out += energy[i].x - energy[i].y;
         //printf("En=%E\n",result*dx*dy*dz);
     }
 
