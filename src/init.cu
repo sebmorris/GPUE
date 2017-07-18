@@ -819,7 +819,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 if (par.Afn == "rotation"){
                     Phi[index] = fmod(l*atan2(y[j], x[i]),2*PI);
                 }
-                else if (par.Afn == "torus"){
+                else if (par.Vfn == "torus"){
                     double xOffset = par.dval("x0_shift");
                     double yOffset = par.dval("y0_shift");
                     double rMax = par.dval("xMax");

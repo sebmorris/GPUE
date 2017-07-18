@@ -859,9 +859,9 @@ cufftDoubleComplex torus_wfc(Grid &par, double Phi,
     //double a0r = sqrt(a0x*a0x + a0y*a0y);
 
     wfc.x = exp(-( pow((rad)/(Rxy*a0x*0.5),2) + 
-                   pow((z[k])/(Rxy*a0z*0.5),2) ) );
+                   pow((z[k])/(Rxy*a0z*0.5),2) ) ) * cos(Phi);
     wfc.y = -exp(-( pow((rad)/(Rxy*a0x*0.5),2) + 
-                    pow((z[k])/(Rxy*a0z*0.5),2) ) );
+                    pow((z[k])/(Rxy*a0z*0.5),2) ) ) * sin(Phi);
 
     return wfc;
 
