@@ -406,7 +406,7 @@ double ring_Az(Grid &par, Op &opr, int i, int j, int k){
 
     double rad = sqrt(x[i]*x[i] + y[j]*y[j]);
 
-    return exp(-rad) * 0.0001 * omega;
+    return exp(-rad * omega) * 0.01;
 }
 
 // Function to return 0, this is for constant gauge field tests.
