@@ -43,7 +43,26 @@ def plot_var(xDim, yDim, data_dir, pltval):
     plt.imshow(val, extent=(1,xDim,1,yDim), interpolation='nearest',
                    cmap = cm.jet)
     plt.colorbar()
+    fig = plt.gcf()
     plt.show()
+
+# function to plot a variable with a range
+def plot_var_range(xDim, yDim, data_dir, pltval, start, end, incr):
+    for i in range(start, end, incr):
+        print(i)
+        output = pltval + "%s" % i
+        data = "../" + data_dir + "/" + output
+        lines = np.loadtxt(data)
+        val = np.reshape(lines, (xDim,yDim))
+        plt.imshow(val, extent=(1,xDim,1,yDim), interpolation='nearest',
+                       cmap = cm.jet)
+        plt.colorbar()
+        fig = plt.gcf()
+        #plt.show()
+        plt.draw()
+        fig.savefig(output + '.png')
+        plt.clf()
+
     
 # Function to plot wfc with pltvar as a variable to modify the type of plot
 def plot_wfc(xDim, yDim, data_dir, pltval, start, end, incr):
@@ -171,6 +190,7 @@ def parse_args(string_list):
             par.start = int(string_list[i+1])
             par.end = int(string_list[i+2]) + 1
             par.incr = int(string_list[i+3])
+            par.range = True
             i+= 4
         # -g for "grid"
         elif (string_list[i] == "g"):
@@ -192,6 +212,9 @@ def plot(par):
     elif (par.item == "GK" or par.item == "GV"):
         plot_complex(par.xDim, par.yDim, par.data_dir, par.item,
                      par.start, par.end, par.incr)
+    elif (par.end != 1):
+        plot_var_range(par.xDim, par.yDim, par.data_dir, par.item,
+                 par.start, par.end, par.incr)
     else:
         plot_var(par.xDim, par.yDim, par.data_dir, par.item)
 

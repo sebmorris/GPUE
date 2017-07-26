@@ -6,7 +6,8 @@
 
 import numpy as np
 
-xDim = yDim = zDim = 256
+xDim = yDim = zDim = 128
+#xDim = yDim = zDim = 256
 
 # Function to create plot with vtk
 def to_vtk(item, xDim, yDim, zDim, nframes, filename):
@@ -50,7 +51,6 @@ def wfc_density(xDim, yDim, zDim, data_dir, pltval, i):
     maximum = max(wfc)
     wfc /= maximum
     wfc = np.reshape(wfc,(xDim,yDim,zDim))
-    #print(wfc)
     return wfc
 
 def wfc_phase(xDim, yDim, zDim, data_dir, pltval, i):
@@ -77,6 +77,31 @@ def wfc_phase(xDim, yDim, zDim, data_dir, pltval, i):
     wfc = np.reshape(wfc,(xDim,yDim,zDim))
     return wfc
 
+def proj_phase_2d(xDim, yDim, zDim, data_dir, pltval, i):
+    filename = "../" + data_dir + "/wfc_ph_%s" %i
+    print(i)
+    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
+    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    if (pltval == "wfc_ev"):
+        data_real = "../" + data_dir + "/wfc_ev_%s" % i
+        data_im = "../" + data_dir + "/wfc_evi_%s" % i
+    elif (pltval == "wfc_ramp"):
+        data_real = "../" + data_dir + "/wfc_0_ramp_%s" % i
+        data_im = "../" + data_dir + "/wfc_0_rampi_%s" % i
+    lines_real = np.loadtxt(data_real)
+    lines_im = np.loadtxt(data_im)
+    print(len(lines_real))
+    wfc_real = np.reshape(lines_real, (xDim,yDim,zDim));
+    wfc_im = np.reshape(lines_im, (xDim,yDim, zDim));
+    wfc = (wfc_real + 1j * wfc_im)
+    wfc = np.angle(wfc)
+    file = open(filename,'w')
+    for k in range(0,xDim):
+        for j in range(0,yDim):
+            file.write(str(wfc[j][k][zDim/2]) + '\n')
+    file.close()
+
+
 def var(xDim, yDim, zDim, data_dir, pltval):
     data = "../" + data_dir + "/" + pltval
     lines = np.loadtxt(data)
@@ -100,7 +125,7 @@ def proj_var2d(xdim, yDim, zDim, data_dir, pltval):
 
 
 def proj_2d(xDim, yDim, zDim, data_dir, pltval, i):
-    filename = "../" + data_dir + "/wfc_0"
+    filename = "../" + data_dir + "/wfc_%s" %i
     print(i)
     data_real = "../" + data_dir + "/wfc_0_const_%s" % i
     data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
@@ -120,7 +145,7 @@ def proj_2d(xDim, yDim, zDim, data_dir, pltval, i):
     file = open(filename,'w')
     for k in range(0,xDim):
         for j in range(0,yDim):
-            file.write(str(wfc[xDim/2][k][j]) + '\n')
+            file.write(str(wfc[j][k][zDim/2]) + '\n')
     file.close()
 
 def proj_k2d(xDim, yDim, zDim, data_dir, pltval, i):
@@ -170,14 +195,18 @@ to_bvox(item2_var, xDim, yDim, zDim, 1, "test_edges.bvox")
 
 '''
 # Writing out the potential
-item_pot = var(xDim, yDim, zDim, "data", "V_0")
-to_bvox(item_pot, xDim, yDim, zDim, 1, "test_pot.bvox")
-#item_gauge = var(xDim, yDim, zDim, "data", "Az_0")
-#to_bvox(item_gauge, xDim, yDim, zDim, 1, "test_gauge.bvox")
-for i in range(0,21):
-    num = i * 5000
+#item_pot = var(xDim, yDim, zDim, "data", "V_0")
+#to_bvox(item_pot, xDim, yDim, zDim, 1, "test_pot.bvox")
+item_gauge = var(xDim, yDim, zDim, "data", "Az_0")
+to_bvox(item_gauge, xDim, yDim, zDim, 1, "test_gauge.bvox")
+for i in range(0,6):
+#for i in [86, 143, 195, 95, 152, 204]:
+    num = i * 1000
+    proj_2d(xDim, yDim, zDim, "data", "wfc", num)
     item = wfc_density(xDim, yDim, zDim, "data", "wfc", num)
+    item_ph = wfc_phase(xDim, yDim, zDim, "data", "wfc", num)
     to_bvox(item, xDim, yDim, zDim, 1, "wfc_%s.bvox" %num)
+    to_bvox(item_ph, xDim, yDim, zDim, 1, "wfc_ph_%s.bvox" %num)
 
 item_edges = var(xDim, yDim, zDim,"data","Edges_0")
 to_bvox(item_edges, xDim, yDim, zDim, 1, "test_edges.bvox")
@@ -214,5 +243,12 @@ to_bvox(item_edges, xDim, yDim, zDim, 1, "edges_linpol.bvox")
 to_vtk(item_edges, xDim, yDim, zDim, 1, "edges_linpol.vtk")
 '''
 
+'''
 item = wfc_density(xDim, yDim, zDim, "data", "wfc", 100000)
 to_vtk(item, xDim, yDim, zDim, 1, "wfc.vtk")
+to_bvox(item, xDim, yDim, zDim, 1, "wfc_check.bvox")
+'''
+
+#proj_phase_2d(xDim, yDim, zDim, "data", "wfc", 660)
+#proj_phase_2d(xDim, yDim, zDim, "data", "wfc", 320)
+proj_phase_2d(xDim, yDim, zDim, "data", "wfc", 1000)
