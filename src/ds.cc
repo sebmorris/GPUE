@@ -462,16 +462,11 @@ void Op::set_A_fns(std::string id){
     else if (id == "dynamic"){
         Ax_fn = dynamic_Ax;
         Ay_fn = dynamic_Ay;
-        Az_fn = constant_A;
+        Az_fn = dynamic_Az;
     }
     else if (id == "fiber2d"){
         Ax_fn = fiber2d_Ax;
         Ay_fn = fiber2d_Ay;
-        Az_fn = constant_A;
-    }
-    else if (id == "test"){
-        Ax_fn = test_Ax;
-        Ay_fn = test_Ay;
         Az_fn = constant_A;
     }
     else if (id == "test"){

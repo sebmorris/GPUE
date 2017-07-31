@@ -321,9 +321,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
                 Ay[(i*yDim + j)] = opr.Ay_fn(par, opr, i, j, 0);
             }
 
-            //pAy[(i*yDim + j)] = x[i]*yp[j];
             pAy[(i*yDim + j)] = pAy_fn(par, opr, i, j, 0);
-            //pAx[(i*yDim + j)] = -y[j]*xp[i];
             pAx[(i*yDim + j)] = pAx_fn(par, opr, i, j, 0);
 
             GpAx[(i*yDim + j)].x = exp(-pAx[(i*yDim + j)]*gdt);

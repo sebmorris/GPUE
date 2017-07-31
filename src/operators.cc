@@ -402,11 +402,12 @@ double rotation_Ay(Grid &par, Op &opr, int i, int j, int k){
 double ring_Az(Grid &par, Op &opr, int i, int j, int k){
     double *x = par.dsval("x");
     double *y = par.dsval("y");
+    double xMax = par.dval("xMax");
     double omega = par.dval("omega");
 
     double rad = sqrt(x[i]*x[i] + y[j]*y[j]);
 
-    return exp(-rad * omega) * 0.01;
+    return omega * exp(-rad*rad / (0.0001*xMax)) * 0.01;
 }
 
 // Function to return 0, this is for constant gauge field tests.
@@ -422,7 +423,7 @@ double test_Ax(Grid &par, Op &opr, int i, int j, int k){
     double omegaX = par.dval("omegaX");
     double yMax = par.dval("yMax");
     //double val = -y[j]*y[j];
-    double val = (sin(y[j] * 10000)+1) * omegaX * yMax * omega;
+    double val = (sin(y[j] * 50000)+1) * omegaX * yMax * omega;
     return val;
 }
 
