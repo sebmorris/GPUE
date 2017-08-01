@@ -36,12 +36,12 @@ void fft_test();
 
 void test_all(){
     std::cout << "Starting unit tests..." << '\n';
-    //parameter_test();
-    //parser_test();
+    parameter_test();
+    parser_test();
     //evolve_2d_test();
-    //grid_test2d();
-    //grid_test3d();
-    //parSum_test();
+    grid_test2d();
+    grid_test3d();
+    parSum_test();
     fft_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
@@ -334,26 +334,23 @@ void parSum_test(){
     // 2D test first
 
     // For now, we will assume an 8x8 array for summing
-    dim3 threads(32, 1, 1);
+    dim3 threads(16, 1, 1);
     int total_threads = threads.x*threads.y*threads.z;
-    int xDim = 64;
-    int yDim = 64;
-    int zDim = 1;
 
     par.store("dimnum", 2);
-    par.store("xDim", xDim);
-    par.store("yDim", yDim);
-    par.store("zDim", zDim);
+    par.store("xDim", 64);
+    par.store("yDim", 64);
+    par.store("zDim", 1);
     par.store("dx",1.0);
     par.store("dy",1.0);
     par.store("dz",1.0);
     cupar.store("threads",threads);
 
     // Now we need to initialize the grid for the getGid3d3d kernel
-    int gsize = xDim*yDim;
+    int gsize = 64*64;
     dim3 grid;
-    grid.x = 2;
-    grid.y = yDim;
+    grid.x = 4;
+    grid.y = 64;
 
     cupar.store("grid", grid);
 
@@ -382,7 +379,8 @@ void parSum_test(){
 
     // Creating parsum on device
     double2 *par_sum;
-    cudaMalloc((void**) &par_sum, sizeof(cufftDoubleComplex)*gsize/total_threads);
+    cudaMalloc((void**) &par_sum, 
+                   sizeof(cufftDoubleComplex)*gsize/total_threads);
 
     parSum(gpu_wfc, par_sum, par, cupar);
 
@@ -407,7 +405,7 @@ void parSum_test(){
     }
 
     // Now for the 3d case
-    // For now, we will assume a 4x4x4 array for summing
+    // For now, we will assume a 16x16x16 array for summing
     par.store("dimnum", 3);
     par.store("xDim", 16);
     par.store("yDim", 16);
@@ -416,12 +414,12 @@ void parSum_test(){
     par.store("dy",1.0);
     par.store("dz",1.0);
 
-    cupar.store("threads",threads);
+    //cupar.store("threads",threads);
 
     // Now we need to initialize the grid for the getGid3d3d kernel
-    grid.x = gsize;
-    grid.y = 1;
-    grid.z = 1;
+    grid.x = 1;
+    grid.y = 16;
+    grid.z = 16;
 
     cupar.store("grid", grid);
 
@@ -564,8 +562,8 @@ void parser_test(){
     assert(noarg_grid.ival("zDim") == 256);
     assert(noarg_grid.dval("omega") == 0);
     assert(noarg_grid.dval("gammaY") == 1.0);
-    assert(noarg_grid.dval("gsteps") == 1e4);
-    assert(noarg_grid.dval("esteps") == 1000);
+    assert(noarg_grid.ival("gsteps") == 1);
+    assert(noarg_grid.ival("esteps") == 1);
     assert(noarg_grid.dval("gdt") == 1e-4);
     assert(noarg_grid.dval("dt") == 1e-4);
     assert(noarg_grid.ival("device") == 0);
@@ -575,17 +573,38 @@ void parser_test(){
     assert(noarg_grid.dval("winding") == 0);
     assert(noarg_grid.bval("corotating") == false);
     assert(noarg_grid.bval("gpe") == false);
-    assert(noarg_grid.dval("omegaZ") == 0);
-    assert(noarg_grid.dval("int_scaling") == 0);
+    assert(noarg_grid.dval("omegaZ") == 6.283);
+    assert(noarg_grid.dval("interaction") == 1);
     assert(noarg_grid.dval("laser_power") == 0);
     assert(noarg_grid.dval("angle_sweep") == 0);
     assert(noarg_grid.ival("kick_it") == 0);
     assert(noarg_grid.bval("write_it") == false);
     assert(noarg_grid.dval("x0_shift") == 0);
     assert(noarg_grid.dval("y0_shift") == 0);
+    assert(noarg_grid.dval("z0_shift") == 0);
     assert(noarg_grid.dval("sepMinEpsilon") == 0);
     assert(noarg_grid.bval("graph") == false);
     assert(noarg_grid.bval("unit_test") == false);
+    assert(noarg_grid.dval("omegaX") == 6.283);
+    assert(noarg_grid.dval("omegaY") == 6.283);
+    assert(noarg_grid.sval("data_dir") == "data/");
+    assert(noarg_grid.bval("ramp") == false);
+    assert(noarg_grid.ival("ramp_type") == 1);
+    assert(noarg_grid.ival("dimnum") == 2);
+    assert(noarg_grid.bval("write_file") == true);
+    assert(noarg_grid.dval("fudge") == 1.0);
+    assert(noarg_grid.ival("kill_idx") == -1);
+    assert(noarg_grid.dval("DX") == 0.0);
+    assert(noarg_grid.dval("mask_2d") == 1.5e-4);
+    assert(noarg_grid.dval("box_size") == 2.5e-5);
+    assert(noarg_grid.bval("found_sobel") == false);
+    assert(noarg_grid.Afn == "rotation");
+    assert(noarg_grid.Kfn == "rotation_K");
+    assert(noarg_grid.Vfn == "2d");
+    assert(noarg_grid.Wfcfn == "2d");
+    assert(noarg_grid.sval("conv_type") == "FFT");
+    assert(noarg_grid.ival("charge") == 0);
+    assert(noarg_grid.bval("flip") == false);
 
     // Now testing all values specified by command-line arguments
     std::cout << "Testing command-line parser with all arguments..." << '\n';
@@ -593,7 +612,46 @@ void parser_test(){
 
     // I apologize for the mess... If you have a better way of creating the 
     // char ** for this without running into memory issues, let me know!
-    char *fake_fullargv[] = {strdup("./gpue"), strdup("-d"), strdup("0"), strdup("-e"), strdup("1000"), strdup("-G"), strdup("1"), strdup("-g"), strdup("1e4"), strdup("-i"), strdup("0"), strdup("-k"), strdup("0"), strdup("-L"), strdup("0"), strdup("-n"), strdup("1"), strdup("-O"), strdup("0"), strdup("-o"), strdup("0"), strdup("-P"), strdup("0"), strdup("-p"), strdup("100"), strdup("-S"), strdup("0"), strdup("-T"), strdup("1e-4"), strdup("-t"), strdup("1e-4"), strdup("-U"), strdup("0"), strdup("-V"), strdup("0"), strdup("-W"), strdup("-w"), strdup("0"), strdup("-X"), strdup("1.0"), strdup("-x"), strdup("256"), strdup("-Y"), strdup("1.0"), strdup("-y"), strdup("256"), strdup("-r"), strdup("-l"), strdup("-a"), strdup("-s"), NULL};
+    char *fake_fullargv[] = {strdup("./gpue"), 
+                             strdup("-A"), strdup("rotation"), 
+                             strdup("-a"),
+                             strdup("-b"), strdup("2.5e-5"), 
+                             strdup("-C"), strdup("0"), 
+                             strdup("-c"), strdup("3"), 
+                             strdup("-D"), strdup("data"), 
+                             strdup("-E"), 
+                             strdup("-e"), strdup("1"), 
+                             strdup("-f"), 
+                             strdup("-G"), strdup("1"),
+                             strdup("-g"), strdup("1"), 
+                             strdup("-i"), strdup("1"), 
+                             strdup("-K"), strdup("0"), 
+                             strdup("-k"), strdup("0"),
+                             strdup("-L"), strdup("0"), 
+                             strdup("-l"), 
+                             strdup("-n"), strdup("1"), 
+                             strdup("-O"), strdup("0"),
+                             strdup("-P"), strdup("0"), 
+                             strdup("-p"), strdup("100"),
+                             strdup("-Q"), strdup("0"), 
+                             strdup("-q"), strdup("0"), 
+                             strdup("-R"), strdup("1"), 
+                             //strdup("-r"),
+                             strdup("-S"), strdup("0"), 
+                             strdup("-s"),
+                             strdup("-T"), strdup("1e-4"), 
+                             strdup("-t"), strdup("1e-4"), 
+                             strdup("-U"), strdup("0"), 
+                             strdup("-V"), strdup("0"), 
+                             strdup("-W"), 
+                             strdup("-w"), strdup("0"), 
+                             strdup("-X"), strdup("1.0"),
+                             strdup("-x"), strdup("256"), 
+                             strdup("-Y"), strdup("1.0"), 
+                             strdup("-y"), strdup("256"),
+                             strdup("-Z"), strdup("6.283"), 
+                             strdup("-z"), strdup("256"), 
+                             NULL};
     int fake_argc = sizeof(fake_fullargv) / sizeof(char *) - 1;
 
     // Now to read into gpue and see what happens
@@ -606,30 +664,49 @@ void parser_test(){
     assert(fullarg_grid.ival("zDim") == 256);
     assert(fullarg_grid.dval("omega") == 0);
     assert(fullarg_grid.dval("gammaY") == 1.0);
-    assert(fullarg_grid.dval("gsteps") == 1e4);
-    assert(fullarg_grid.dval("esteps") == 1000);
+    assert(fullarg_grid.ival("gsteps") == 1);
+    assert(fullarg_grid.ival("esteps") == 1);
     assert(fullarg_grid.dval("gdt") == 1e-4);
     assert(fullarg_grid.dval("dt") == 1e-4);
     assert(fullarg_grid.ival("device") == 0);
     assert(fullarg_grid.ival("atoms") == 1);
-    assert(fullarg_grid.bval("read_wfc") == true);
+    assert(fullarg_grid.bval("read_wfc") == false);
     assert(fullarg_grid.ival("printSteps") == 100);
     assert(fullarg_grid.dval("winding") == 0);
     assert(fullarg_grid.bval("corotating") == true);
     assert(fullarg_grid.bval("gpe") == true);
-    assert(fullarg_grid.dval("omegaZ") == 0);
-    assert(fullarg_grid.dval("int_scaling") == 0);
+    assert(fullarg_grid.dval("omegaZ") == 6.283);
+    assert(fullarg_grid.dval("interaction") == 1);
     assert(fullarg_grid.dval("laser_power") == 0);
     assert(fullarg_grid.dval("angle_sweep") == 0);
     assert(fullarg_grid.ival("kick_it") == 0);
     assert(fullarg_grid.bval("write_it") == true);
     assert(fullarg_grid.dval("x0_shift") == 0);
     assert(fullarg_grid.dval("y0_shift") == 0);
+    assert(fullarg_grid.dval("z0_shift") == 0);
     assert(fullarg_grid.dval("sepMinEpsilon") == 0);
     assert(fullarg_grid.bval("graph") == true);
-    assert(fullarg_grid.dval("omegaY") == 1.0);
-    assert(fullarg_grid.dval("omegaX") == 1.0);
     assert(fullarg_grid.bval("unit_test") == false);
+    assert(fullarg_grid.dval("omegaX") == 1.0);
+    assert(fullarg_grid.dval("omegaY") == 1.0);
+    assert(fullarg_grid.sval("data_dir") == "data/");
+    assert(fullarg_grid.bval("ramp") == true);
+    assert(fullarg_grid.ival("ramp_type") == 1);
+    assert(fullarg_grid.ival("dimnum") == 3);
+    assert(fullarg_grid.bval("write_file") == false);
+    assert(fullarg_grid.dval("fudge") == 1.0);
+    assert(fullarg_grid.ival("kill_idx") == 0);
+    assert(fullarg_grid.dval("DX") == 0.0);
+    assert(fullarg_grid.dval("mask_2d") == 1.5e-4);
+    assert(fullarg_grid.dval("box_size") == 2.5e-5);
+    assert(fullarg_grid.bval("found_sobel") == false);
+    assert(fullarg_grid.Afn == "rotation");
+    assert(fullarg_grid.Kfn == "rotation_K3d");
+    assert(fullarg_grid.Vfn == "3d");
+    assert(fullarg_grid.Wfcfn == "3d");
+    assert(fullarg_grid.sval("conv_type") == "FFT");
+    assert(fullarg_grid.ival("charge") == 0);
+    assert(fullarg_grid.bval("flip") == true);
 
 }
 
@@ -641,7 +718,31 @@ void evolve_2d_test(){
     std::cout << "Testing the evolve_2d function" << '\n';
 
     // Note: the omega_z value (-o flag) is arbitrary
-    char * fake_argv[] = {strdup("./gpue"), strdup("-d"), strdup("0"), strdup("-e"), strdup("2.01e4"), strdup("-G"), strdup("1.0"), strdup("-g"), strdup("0"), strdup("-i"), strdup("1.0"), strdup("-k"), strdup("0"), strdup("-L"), strdup("0"), strdup("-n"), strdup("1e6"), strdup("-O"), strdup("0.0"), strdup("-o"), strdup("10.0"), strdup("-P"), strdup("0.0"), strdup("-p"), strdup("1000"), strdup("-S"), strdup("0.0"), strdup("-T"), strdup("1e-4"), strdup("-t"), strdup("1e-4"), strdup("-U"), strdup("0"), strdup("-V"), strdup("0"), strdup("-w"), strdup("0.0"), strdup("-X"), strdup("1.0"), strdup("-x"), strdup("256"), strdup("-Y"), strdup("1.0"), strdup("-y"), strdup("256"), strdup("-W"), strdup("-D"), strdup("data"), NULL};
+    char * fake_argv[] = {strdup("./gpue"), 
+                          strdup("-C"), strdup("0"), 
+                          strdup("-e"), strdup("2.01e4"), 
+                          strdup("-G"), strdup("1.0"), 
+                          strdup("-g"), strdup("0"), 
+                          strdup("-i"), strdup("1.0"), 
+                          strdup("-k"), strdup("0"), 
+                          strdup("-L"), strdup("0"), 
+                          strdup("-n"), strdup("1e6"), 
+                          strdup("-O"), strdup("0.0"), 
+                          strdup("-Z"), strdup("10.0"), 
+                          strdup("-P"), strdup("0.0"), 
+                          strdup("-p"), strdup("1000"), 
+                          strdup("-S"), strdup("0.0"), 
+                          strdup("-T"), strdup("1e-4"), 
+                          strdup("-t"), strdup("1e-4"), 
+                          strdup("-U"), strdup("0"), 
+                          strdup("-V"), strdup("0"), 
+                          strdup("-w"), strdup("0.0"), 
+                          strdup("-X"), strdup("1.0"), 
+                          strdup("-x"), strdup("256"), 
+                          strdup("-Y"), strdup("1.0"), 
+                          strdup("-y"), strdup("256"), 
+                          strdup("-W"), 
+                          strdup("-D"), strdup("data"), NULL};
     int fake_argc = sizeof(fake_argv) / sizeof(char *) - 1;
 
     // Now to read into gpue and see what happens
@@ -913,16 +1014,3 @@ void evolve_2d_test(){
     std::cout << "EVOLUTION TEST UNFINISHED!" << '\n';
     
 }
-
-/*
-// Performs simple trapezoidal integral -- following python notation
-// Note: Because of the shape of the wfc array, we may need to create a temp 
-//       array to do the actual integration here. Look into it!
-double trapz(double *array, int dimension, double dx){
-    double integral = 0;
-    for (int i = 1; i < dimension; ++i){
-        integral += (array[i-1] + array[i]) * 0.5 * dx;
-    }
-    return integral;
-}
-*/

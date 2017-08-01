@@ -45,7 +45,6 @@ Grid parseArgs(int argc, char** argv){
     par.store("ramp", false);
     par.store("ramp_type", 1);
     par.store("dimnum", 2);
-    par.store("dimensionless", false);
     par.store("write_file", true);
     par.store("fudge", 1.0);
     par.store("kill_idx", -1);
@@ -262,18 +261,6 @@ Grid parseArgs(int argc, char** argv){
                 par.store("interaction",interaction);
                 break;
             }
-/*
-            case 'C':
-            {
-                std::cout << "Dimensionless units will be used." << '\n'; 
-                // updating the functions for dimensionless-ness, 
-                // if you know what I mean...
-                par.Vfn += "_dimensionless";
-                par.Kfn += "_dimensionless";
-                par.store("dimensionless", true);
-                break;
-            }
-*/
             case 'P':
             {
                 double laser_power = atof(optarg);
