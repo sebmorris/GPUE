@@ -1,4 +1,5 @@
 #include "../include/operators.h"
+#include "../include/kernels.h"
 
 double sign(double x){
     if (x < 0){
@@ -538,33 +539,6 @@ std::unordered_map<std::string, double> read_matlab_data(int index){
     return matlab_variables;
 }
 
-
-// Functions for dynamic fields read in by string
-double dynamic_Ax(Grid &par, Op &opr, int i, int j, int k){
-    double val = 0;
-    std::string equation = par.sval("Axstring");
-    parse_equation(par, equation, val, i, j, k);
-    // For debugging
-    // exit(0);
-    return val;
-}
-
-double dynamic_Ay(Grid &par, Op &opr, int i, int j, int k){
-    double val = 0;
-    std::string equation = par.sval("Aystring");
-    parse_equation(par, equation, val, i, j, k);
-    // For debugging
-    //exit(0);
-    return val;
-}
-
-double dynamic_Az(Grid &par, Op &opr, int i, int j, int k){
-    double val = 0;
-    std::string equation = par.sval("Aystring");
-    parse_equation(par, equation, val, i, j, k);
-    return val;
-}
-
 // Function to read Ax from file.
 // Note that this comes with a special method in init...
 void file_A(std::string filename, double *A, double omega){
@@ -590,201 +564,6 @@ std::string filecheck(std::string filename){
     } 
 
     return filename;
-}
-
-// This function will be used with the dynamic gauge fields for AX,y,z (above)
-// BETA, mfunctions_map does not seem to work!
-void parse_equation(Grid par, std::string &equation, double &val, 
-                    int i, int j, int k){
-
-    // boolean value iff first minus
-    bool minus = false;
-
-    //std::cout << equation << '\n';
-
-    // Because this will be called recursively, we need to return if the string
-    // length is 0
-    if (equation.length() == 0){
-        std::cout << "There's nothing here!" << '\n';
-        //return;
-    }
-
-    // vector of all possibe mathematical operators (not including functions)
-    std::vector<std::string> moperators(4);
-    moperators = {
-        "-", "/", "*", "+"
-    };
-
-    // And another vector for brackets of various types which indicate recursive
-    // parsing of the equation
-    std::vector<std::string> mbrackets;
-    mbrackets = {
-        "(", "[", "]", ")"
-    };
-
-    // vector of all possible mathematical functions... more to come
-    std::vector<std::string> mfunctions(5);
-    mfunctions = {
-        "sin", "cos", "exp", "tan", "erf", "sqrt", "sign"
-    };
-
-    // We also need a specific map for the functions above
-    typedef double (*functionPtr)(double);
-    std::unordered_map<std::string, functionPtr> mfunctions_map;
-    mfunctions_map["sin"] = sin;
-    mfunctions_map["cos"] = cos;
-    mfunctions_map["tan"] = tan;
-    mfunctions_map["exp"] = exp;
-    mfunctions_map["erf"] = erf;
-    mfunctions_map["sqrt"] = sqrt;
-    mfunctions_map["sign"] = sign;
-    
-
-    // Check for parentheses
-    for (auto &mbra : mbrackets){
-        //std::cout << equation.substr(0,1) << '\n';
-        if (equation.substr(0,1) == mbra){
-            if (mbra == ")" || mbra == "]"){
-                //std::cout << "could not find matching " << mbra << "!\n";
-                exit(0);
-            }
-            else if (mbra == "("){
-                int brapos = equation.find(")");
-                std::string new_eqn = equation.substr(1,brapos-1);
-                parse_equation(par, new_eqn, val, i, j, k);
-                equation = equation.substr(brapos+1, equation.size());
-            }
-            else if (mbra == "["){
-                int brapos = equation.find("]");
-                std::string new_eqn = equation.substr(1,brapos-1);
-                parse_equation(par, new_eqn, val, i, j, k);
-                equation = equation.substr(brapos, equation.size());
-            }
-        }
-    }
-
-
-    // We will have values and operators, but some operators will need to 
-    // recursively call this function (think exp(), sin(), cos())...
-    // We now need to do some silly sorting to figure out which operator 
-    // comes first and where it is
-    size_t index = equation.length();
-    std::string currmop = "";
-    size_t moppos;
-    for (auto &mop : moperators){
-        moppos = equation.find(mop);
-        if (moppos < equation.length()){
-            if (moppos < index){ // && moppos > 0){
-                currmop = mop;
-                index = moppos;
-            }
-/*
-            else if(moppos == 0 && mop == "-"){
-                minus = true;
-                equation = equation.substr(1,equation.size());
-            }
-*/
-        }
-    }
-
-    //std::cout << currmop << '\t' << index << '\n';
-
-    // Now we do a similar thing for the mbrackets
-    // Sharing moppos from above
-    for (auto &mbra : mbrackets){
-        moppos = equation.find(mbra);
-        if (moppos < equation.length()){
-            if (moppos < index){
-                currmop = mbra;
-                index = moppos;
-            }
-        }
-    }
-
-    // Now we need to get the string we are working with...
-    std::string item = equation.substr(0,index);
-
-    // now we need to find the string in either mfunctions or par
-    // First, we'll check mfunctions
-
-    // Now we need to check to see if the string is in mfunctions
-    auto it = mfunctions_map.find(item);
-    if (it != mfunctions_map.end()){
-        int openbracket, closebracket;
-        openbracket = index;
-        closebracket = equation.find(equation[openbracket]);
-        std::string ineqn = equation.substr(openbracket + 1, 
-                                            closebracket - 1);
-        double inval = 1;
-        parse_equation(par, ineqn, inval, i, j, k);
-        val = mfunctions_map[item](inval);
-
-        // now we need to parse the rest of the string...
-        ineqn = equation.substr(closebracket, equation.size());
-        parse_equation(par, ineqn, val, i, j, k);
-    }
-
-    // Now we need to do a similar thing for all the maps in par.
-    else if (par.is_double(item)){
-        val = par.dval(item);
-    }
-    else if (par.is_dstar(item)){
-        if (item == "x" || item == "px"){
-            val = par.dsval(item)[i];
-        }
-        if (item == "y" || item == "py"){
-            val = par.dsval(item)[j];
-        }
-        if (item == "z" || item == "pz"){
-            val = par.dsval(item)[k];
-        }
-    }
-    else if (item.find_first_not_of("0123456789.") > item.size() &&
-             item.size() > 0){
-        //std::cout << item << '\n';
-        val = std::stod(item);
-    }
-    else if (item.size() > 0){
-        std::cout << "could not find string " << item << "! please use one of "
-                  << "the following variables:" << '\n';
-        par.print_map();
-    }
-
-    if (minus){
-        val *= -1;
-    }
-
-    //std::cout << item << '\t' << currmop << '\n';
-
-    // Now to deal with the operator at the end
-    if (currmop == "+"){
-        double inval = 1;
-        std::string new_eqn = equation.substr(index+1,equation.size());
-        //std::cout << new_eqn << '\n';
-        parse_equation(par, new_eqn, inval, i, j, k);
-        val += inval;
-    }
-    if (currmop == "-"){
-        double inval = 1;
-        std::string new_eqn = equation.substr(index+1,equation.size());
-        //std::cout << new_eqn << '\n';
-        parse_equation(par, new_eqn, inval, i, j, k);
-        val -= inval;
-    }
-    if (currmop == "*"){
-        double inval = 1;
-        std::string new_eqn = equation.substr(index+1,equation.size());
-        //std::cout << new_eqn << '\n';
-        parse_equation(par, new_eqn, inval, i, j, k);
-        val *= inval;
-    }
-    if (currmop == "/"){
-        double inval = 1;
-        std::string new_eqn = equation.substr(index+1,equation.size());
-        //std::cout << new_eqn << '\n';
-        parse_equation(par, new_eqn, inval, i, j, k);
-        val /= inval;
-    }
 }
 
 // Function to compute the wfc for the standard 2d case
@@ -866,4 +645,163 @@ cufftDoubleComplex torus_wfc(Grid &par, double Phi,
 
     return wfc;
 
+}
+
+/*----------------------------------------------------------------------------//
+* GPU KERNELS
+*-----------------------------------------------------------------------------*/
+
+// Function to generate momentum grids
+void generate_p_space(Grid &par){
+
+    int dimnum = par.ival("dimnum");
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+    double xMax = par.dval("xMax");
+    double yMax = par.dval("yMax");
+    double zMax = par.dval("zMax");
+    double pxMax = par.dval("pxMax");
+    double pyMax = par.dval("pyMax");
+    double pzMax = par.dval("pzMax");
+    double dx = par.dval("dx");
+    double dy = par.dval("dy");
+    double dz = par.dval("dz");
+    double dpx = par.dval("dpx");
+    double dpy = par.dval("dpy");
+    double dpz = par.dval("dpz");
+
+    double *x, *y, *z, *px, *py, *pz,
+           *x_gpu, *y_gpu, *z_gpu, 
+           *px_gpu, *py_gpu, *pz_gpu;
+
+    if (dimnum == 2){
+        x = (double *) malloc(sizeof(double) * xDim);
+        y = (double *) malloc(sizeof(double) * yDim);
+        z = (double *) malloc(sizeof(double) * zDim);
+        px = (double *) malloc(sizeof(double) * xDim);
+        py = (double *) malloc(sizeof(double) * yDim);
+        pz = (double *) malloc(sizeof(double) * zDim);
+
+        for(int i=0; i<xDim/2; ++i){
+            x[i] = -xMax + i*dx;
+            x[i + (xDim/2)] = i*dx;
+
+            px[i] = i*dpx;
+            px[i + (xDim/2)] = -pxMax + i*dpx;
+
+        }
+        for(int i=0; i<yDim/2; ++i){
+            y[i] = -yMax + i*dy;
+            y[i + (yDim/2)] = i*dy;
+
+            py[i] = i*dpy;
+            py[i + (yDim/2)] = -pyMax + i*dpy;
+
+        }
+
+        z[0] = 0;
+        pz[0] = 0;
+
+    }
+    else if(dimnum == 3){
+        x = (double *) malloc(sizeof(double) * xDim);
+        y = (double *) malloc(sizeof(double) * yDim);
+        z = (double *) malloc(sizeof(double) * zDim);
+        px = (double *) malloc(sizeof(double) * xDim);
+        py = (double *) malloc(sizeof(double) * yDim);
+        pz = (double *) malloc(sizeof(double) * zDim);
+        for(int i=0; i<xDim/2; ++i){
+            x[i] = -xMax + i*dx;
+            x[i + (xDim/2)] = i*dx;
+
+            px[i] = i*dpx;
+            px[i + (xDim/2)] = -pxMax + i*dpx;
+
+        }
+        for(int i=0; i<yDim/2; ++i){
+            y[i] = -yMax + i*dy;
+            y[i + (yDim/2)] = i*dy;
+
+            py[i] = i*dpy;
+            py[i + (yDim/2)] = -pyMax + i*dpy;
+
+        }
+        for(int i=0; i<zDim/2; ++i){
+            z[i] = -zMax + i*dz;
+            z[i + (zDim/2)] = i*dz;
+
+            pz[i] = i*dpz;
+            pz[i + (zDim/2)] = -pzMax + i*dpz;
+
+        }
+
+    }
+    par.store("x",x);
+    par.store("y",y);
+    par.store("z",z);
+    par.store("px",px);
+    par.store("py",py);
+    par.store("pz",pz);
+
+    // Now move these items to the gpu
+    cudaMalloc((void**) &x_gpu, sizeof(double) * xDim);
+    cudaMalloc((void**) &y_gpu, sizeof(double) * yDim);
+    cudaMalloc((void**) &z_gpu, sizeof(double) * zDim);
+    cudaMalloc((void**) &px_gpu, sizeof(double) * xDim);
+    cudaMalloc((void**) &py_gpu, sizeof(double) * yDim);
+    cudaMalloc((void**) &pz_gpu, sizeof(double) * zDim);
+
+    cudaMemcpy(x_gpu, x, sizeof(double)*xDim, cudaMemcpyHostToDevice);
+    cudaMemcpy(y_gpu, y, sizeof(double)*yDim, cudaMemcpyHostToDevice);
+    cudaMemcpy(z_gpu, z, sizeof(double)*zDim, cudaMemcpyHostToDevice);
+    cudaMemcpy(px_gpu, px, sizeof(double)*xDim, cudaMemcpyHostToDevice);
+    cudaMemcpy(py_gpu, py, sizeof(double)*yDim, cudaMemcpyHostToDevice);
+    cudaMemcpy(pz_gpu, pz, sizeof(double)*zDim, cudaMemcpyHostToDevice);
+
+    par.store("x_gpu",x_gpu);
+    par.store("y_gpu",y_gpu);
+    par.store("z_gpu",z_gpu);
+    par.store("px_gpu",px_gpu);
+    par.store("py_gpu",py_gpu);
+    par.store("pz_gpu",pz_gpu);
+}
+
+// This function is basically a wrapper to call the appropriate K kernel
+void generate_K(Grid &par){
+
+    // For k, we need xp, yp, and zp. These will also be used in generating 
+    // pAxyz parameters, so it should already be stored in par.
+    double *px_gpu = par.dsval("px_gpu");
+    double *py_gpu = par.dsval("py_gpu");
+    double *pz_gpu = par.dsval("pz_gpu");
+    double gSize = par.dval("gSize");
+    double mass = par.dval("mas");
+
+    dim3 threads = par.ival("threads");
+    dim3 grid = par.ival("grid");
+
+    // Creating K to work with
+    double *K, *K_gpu;
+    K = (double*)malloc(sizeof(double)*gSize);
+    cudaMalloc((void**) &K_gpu, sizeof(double)*gSize);
+
+    simple_K<<<grid, threads>>>(px_gpu, py_gpu, pz_gpu, mass, K_gpu);
+
+    cudaMemcpy(K, K_gpu, sizeof(double)*gSize, cudaMemcpyDeviceToHost);
+    par.store("K",K);
+    par.store("K_gpu",K_gpu);
+    
+}
+
+// Simple kernel for generating K
+__global__ void simple_K(double *xp, double *yp, double *zp, double mass,
+                         double *K){
+
+    unsigned int gid = getGid3d3d();
+    unsigned int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    unsigned int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    unsigned int zid = blockDim.z*blockIdx.z + threadIdx.z;
+    K[gid] = (HBAR*HBAR/(2*mass))*(xp[xid]*xp[xid] + yp[yid]*yp[yid]
+                                  + zp[zid]*zp[zid]);
 }

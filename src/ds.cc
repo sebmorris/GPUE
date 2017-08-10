@@ -458,12 +458,6 @@ void Op::set_A_fns(std::string id){
         Az_fn = ring_Az;
     }
 
-    // 2d functions
-    else if (id == "dynamic"){
-        Ax_fn = dynamic_Ax;
-        Ay_fn = dynamic_Ay;
-        Az_fn = dynamic_Az;
-    }
     else if (id == "fiber2d"){
         Ax_fn = fiber2d_Ax;
         Ay_fn = fiber2d_Ay;

@@ -280,47 +280,10 @@ std::unordered_map<std::string, double> read_matlab_data(int index);
  * @param       location in x, y, z
  * @return      V at that location
  */
-double dynamic_Ax(Grid &par, Op &opr, int i, int j, int k);
-
- /**
- * @brief       determines pAy for the standard rotational case
- * @ingroup     data
- * @param       Grid simulation data
- * @param       location in x, y, z
- * @return      V at that location
- */
-double dynamic_Ay(Grid &par, Op &opr, int i, int j, int k);
-
- /**
- * @brief       determines pAy for the standard rotational case
- * @ingroup     data
- * @param       Grid simulation data
- * @param       location in x, y, z
- * @return      V at that location
- */
-double dynamic_Az(Grid &par, Op &opr, int i, int j, int k);
-
- /**
- * @brief       determines pAy for the standard rotational case
- * @ingroup     data
- * @param       Grid simulation data
- * @param       location in x, y, z
- * @return      V at that location
- */
 void file_A(std::string filename, double *A, double omega);
 
 // Function to check whether a file exists
 std::string filecheck(std::string filename);
-
- /**
- * @brief       determines pAy for the standard rotational case
- * @ingroup     data
- * @param       Grid simulation data
- * @param       location in x, y, z
- * @return      V at that location
- */
-void parse_equation(Grid par, std::string &equation, double &val, 
-                    int i, int j, int k);
 
 /*----------------------------------------------------------------------------//
 * WFC
@@ -356,4 +319,17 @@ cufftDoubleComplex standard_wfc_3d(Grid &par, double Phi,
 cufftDoubleComplex torus_wfc(Grid &par, double Phi,
                              int i, int j, int k);
 
+/*----------------------------------------------------------------------------//
+* GPU KERNELS
+*-----------------------------------------------------------------------------*/
+
+// Function to generate momentum grids
+void generate_p_space(Grid &par);
+
+// This function is basically a wrapper to call the appropriate K kernel
+void generate_K(Grid &par);
+
+// Simple kernel for generating K
+__global__ void simple_K(double *xp, double *yp, double *zp, double mass,
+                         double *K);
 #endif
