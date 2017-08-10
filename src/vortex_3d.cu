@@ -468,15 +468,14 @@ void transfer_sobel(Grid &par){
 }
 
 // function to transform a wavefunction to a field of edges
-void find_edges(Grid &par, Cuda &cupar, Wave &wave, 
+void find_edges(Grid &par, Wave &wave, 
                 double2* wfc, double* edges){
 
     // for this, we simply need to take our sobel 3d sobel filter,
     // FFT forward, multiply, FFT back.
 
-    dim3 grid = cupar.dim3val("grid");
-    dim3 threads = cupar.dim3val("threads");
-    //cufftHandle plan_3d = cupar.cufftHandleval("plan_3d");
+    dim3 grid = par.grid;
+    dim3 threads = par.threads;
 
     double2 *wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
     int xDim = par.ival("xDim");

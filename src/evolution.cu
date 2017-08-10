@@ -1,7 +1,7 @@
 #include "../include/evolution.h"
 
 void evolve_2d(Wave &wave, Op &opr,
-               cufftDoubleComplex *gpuParSum, int numSteps, Cuda &cupar,
+               cufftDoubleComplex *gpuParSum, int numSteps,
                unsigned int gstate, Grid &par,
                std::string buffer){
 
@@ -58,13 +58,13 @@ void evolve_2d(Wave &wave, Op &opr,
               << EV_opt[0].x << '\t' << '\n';
 
     // getting data from Cuda class
-    cufftResult result = cupar.cufftResultval("result");
-    cufftHandle plan_1d = cupar.cufftHandleval("plan_1d");
-    cufftHandle plan_2d = cupar.cufftHandleval("plan_2d");
-    cufftHandle plan_other2d = cupar.cufftHandleval("plan_other2d");
+    cufftResult result;
+    cufftHandle plan_1d = par.ival("plan_1d");
+    cufftHandle plan_2d = par.ival("plan_2d");
+    cufftHandle plan_other2d = par.ival("plan_other2d");
 
-    dim3 threads = cupar.dim3val("threads");
-    dim3 grid = cupar.dim3val("grid");
+    dim3 threads = par.threads;
+    dim3 grid = par.grid;
 
     // Because no two operations are created equally.
     // Multiplication is faster than divisions.
@@ -134,7 +134,6 @@ void evolve_2d(Wave &wave, Op &opr,
     LatticeGraph::Lattice lattice; //Vortex lattice graph.
     double* adjMat;
 
-    double vortOLSigma=0.0;
     double sepAvg = 0.0;
 
     int num_kick = 0;
@@ -405,7 +404,7 @@ void evolve_2d(Wave &wave, Op &opr,
             //std::cout << "written" << '\n';
             if (par.bval("energy_calc")){
                 double energy = energy_angmom(V_gpu,K_gpu, gpuWfc, 
-                                              gstate, par, cupar);
+                                              gstate, par);
                 // Now opening and closing file for writing.
                 std::ofstream energy_out;
                 std::string mode = "energyi.dat";
@@ -603,7 +602,7 @@ void evolve_2d(Wave &wave, Op &opr,
         }
 
         if(gstate==0){
-            parSum(gpuWfc, gpuParSum, par, cupar);
+            parSum(gpuWfc, gpuParSum, par);
         }
     }
 
@@ -640,10 +639,10 @@ void evolve_2d(Wave &wave, Op &opr,
     opr.store("EV_opt", EV_opt);
 
     // getting data from Cuda class
-    cupar.store("result", result);
-    cupar.store("plan_1d", plan_1d);
-    cupar.store("plan_2d", plan_2d);
-    cupar.store("grid", grid);
+    par.store("result", result);
+    par.store("plan_1d", plan_1d);
+    par.store("plan_2d", plan_2d);
+    par.store("grid", grid);
 */
 
 }
@@ -655,7 +654,7 @@ void evolve_2d(Wave &wave, Op &opr,
 *-----------------------------------------------------------------------------*/
 
 void evolve_3d(Wave &wave, Op &opr,
-               cufftDoubleComplex *gpuParSum, int numSteps, Cuda &cupar,
+               cufftDoubleComplex *gpuParSum, int numSteps,
                unsigned int gstate, Grid &par,
                std::string buffer){
 
@@ -711,13 +710,13 @@ void evolve_3d(Wave &wave, Op &opr,
               << EV_opt[0].x << '\t' << '\n';
 
     // getting data from Cuda class
-    cufftResult result = cupar.cufftResultval("result");
-    cufftHandle plan_1d = cupar.cufftHandleval("plan_1d");
-    cufftHandle plan_3d = cupar.cufftHandleval("plan_3d");
-    cufftHandle plan_dim2 = cupar.cufftHandleval("plan_dim2");
-    cufftHandle plan_dim3 = cupar.cufftHandleval("plan_dim3");
-    dim3 threads = cupar.dim3val("threads");
-    dim3 grid = cupar.dim3val("grid");
+    cufftResult result;
+    cufftHandle plan_1d = par.ival("plan_1d");
+    cufftHandle plan_3d = par.ival("plan_3d");
+    cufftHandle plan_dim2 = par.ival("plan_dim2");
+    cufftHandle plan_dim3 = par.ival("plan_dim3");
+    dim3 threads = par.threads;
+    dim3 grid = par.grid;
 
     // Because no two operations are created equally.
     // Multiplication is faster than divisions.
@@ -813,7 +812,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     double* edges = (double *)malloc(sizeof(double)*gridSize);
 
                     // calling the kernel to find the edges
-                    find_edges(par, cupar, wave, wfc, edges);
+                    find_edges(par, wave, wfc, edges);
 
                     // Now we need to output everything
                     if ( write_it){
@@ -843,7 +842,7 @@ void evolve_3d(Wave &wave, Op &opr,
             //std::cout << "written" << '\n';
             if (par.bval("energy_calc")){
                 double energy = energy_angmom(V_gpu,K_gpu, gpuWfc, 
-                                              gstate, par, cupar);
+                                              gstate, par);
                 // Now opening and closing file for writing.
                 std::ofstream energy_out;
                 std::string mode = "energyi.dat";
@@ -1113,7 +1112,7 @@ void evolve_3d(Wave &wave, Op &opr,
         }
 
         if(gstate==0){
-            parSum(gpuWfc, gpuParSum, par, cupar);
+            parSum(gpuWfc, gpuParSum, par);
         }
     }
 
@@ -1150,10 +1149,10 @@ void evolve_3d(Wave &wave, Op &opr,
     opr.store("EV_opt", EV_opt);
 
     // getting data from Cuda class
-    cupar.store("result", result);
-    cupar.store("plan_1d", plan_1d);
-    cupar.store("plan_2d", plan_2d);
-    cupar.store("grid", grid);
+    par.store("result", result);
+    par.store("plan_1d", plan_1d);
+    par.store("plan_2d", plan_2d);
+    par.grid = grid;
 
 */
 }

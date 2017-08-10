@@ -51,14 +51,13 @@ int isError(int result, char* c){
 /*
  * Used to perform parallel summation on WFC for normalisation.
  */
-void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
-            Cuda &cupar){
+void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     // May need to add double l
     int dimnum = par.ival("dimnum");
     double dx = par.dval("dx");
     double dy = par.dval("dy");
     double dz = par.dval("dz");
-    dim3 threads = cupar.dim3val("threads");
+    dim3 threads = par.threads;
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
@@ -83,7 +82,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
               << "threads.x are: " << threads.x << '\n';
 */
 
-    dim3 grid = cupar.dim3val("grid");
+    dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
         if(grid_tmp.x == gsize){
             multipass<<<block,threads,threads.x*sizeof(double2)>>>(&gpuWfc[0],
@@ -197,7 +196,7 @@ void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
 ** Implementation not fully finished.
 **/
 double energy_angmom(double2 *V_op, double2 *K_op,
-                     double2 *gpuWfc, int gState, Grid &par, Cuda &cupar){
+                     double2 *gpuWfc, int gState, Grid &par){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = 1;
@@ -217,8 +216,8 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     double mass = par.dval("mass");
     double omegaZ = par.dval("omegaZ");
 
-    dim3 threads = cupar.dim3val("threads");
-    dim3 grid = cupar.dim3val("grid");
+    dim3 threads = par.threads;
+    dim3 grid = par.grid;
 
     // Creating the 2d plan and defining other cuda variables
     cufftHandle plan;
@@ -226,10 +225,10 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     cudaError_t err;
 
     if (par.ival("dimnum") == 2){
-        plan = cupar.cufftHandleval("plan_2d");
+        plan = par.ival("plan_2d");
     }
     if (par.ival("dimnum") == 3){
-        plan = cupar.cufftHandleval("plan_3d");
+        plan = par.ival("plan_3d");
     }
 
 

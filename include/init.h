@@ -52,7 +52,7 @@
  * @param	Grid class
  * @param	Wave class
  */
-int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave);
+int init_2d(Op &opr, Grid &par, Wave &wave);
 
  /**
  * @brief       Initializes data structures
@@ -62,6 +62,6 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave);
  * @param       Grid class
  * @param       Wave class
  */
-int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave);
+int init_3d(Op &opr, Grid &par, Wave &wave);
 
 #endif

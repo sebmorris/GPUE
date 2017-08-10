@@ -27,7 +27,7 @@ void find_sobel(Grid &par);
 void transfer_sobel(Grid &par);
 
 // We need a central kernel with just inputs and outputs
-void find_edges(Grid &par, Cuda &cupar, Wave &wave, 
+void find_edges(Grid &par, Wave &wave, 
                 double2* wfc, double* edges);
 
 // Here, we will need 3 different convolution filters: row, col, depth

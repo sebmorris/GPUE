@@ -55,7 +55,7 @@
  * @return	0 for success. See CUDA failure codes in cuda.h for other values.
  */
 void evolve_2d(Wave &wave, Op &opr,
-            cufftDoubleComplex *gpuParSum, int numSteps, Cuda &cupar,
+            cufftDoubleComplex *gpuParSum, int numSteps,
             unsigned int gstate, Grid &par, 
             std::string buffer);
 
@@ -68,7 +68,7 @@ void evolve_2d(Wave &wave, Op &opr,
  * @return      0 for success. See CUDA failure codes in cuda.h for other values
  */
 void evolve_3d(Wave &wave, Op &opr,
-            cufftDoubleComplex *gpuParSum, int numSteps, Cuda &cupar,
+            cufftDoubleComplex *gpuParSum, int numSteps,
             unsigned int gstate, Grid &par, 
             std::string buffer);
 

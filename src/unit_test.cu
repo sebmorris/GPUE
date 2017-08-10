@@ -329,7 +329,6 @@ void parSum_test(){
 
     // first, we need to initialize the Grid and Cuda classes
     Grid par;
-    Cuda cupar;
 
     // 2D test first
 
@@ -344,7 +343,7 @@ void parSum_test(){
     par.store("dx",1.0);
     par.store("dy",1.0);
     par.store("dz",1.0);
-    cupar.store("threads",threads);
+    par.threads = threads;
 
     // Now we need to initialize the grid for the getGid3d3d kernel
     int gsize = 64*64;
@@ -352,7 +351,7 @@ void parSum_test(){
     grid.x = 4;
     grid.y = 64;
 
-    cupar.store("grid", grid);
+    par.grid = grid;
 
     // now we need to initialize the wfc to all 1's;
     double2 *wfc, *host_sum;
@@ -382,7 +381,7 @@ void parSum_test(){
     cudaMalloc((void**) &par_sum, 
                    sizeof(cufftDoubleComplex)*gsize/total_threads);
 
-    parSum(gpu_wfc, par_sum, par, cupar);
+    parSum(gpu_wfc, par_sum, par);
 
     // copying parsum back
     err = cudaMemcpy(host_sum, par_sum, 
@@ -414,20 +413,18 @@ void parSum_test(){
     par.store("dy",1.0);
     par.store("dz",1.0);
 
-    //cupar.store("threads",threads);
-
     // Now we need to initialize the grid for the getGid3d3d kernel
     grid.x = 1;
     grid.y = 16;
     grid.z = 16;
 
-    cupar.store("grid", grid);
+    par.grid = grid;
 
     // copying host wfc back to device
     err = cudaMemcpy(gpu_wfc, wfc, sizeof(cufftDoubleComplex)*gsize,
                      cudaMemcpyHostToDevice);
 
-    parSum(gpu_wfc, par_sum, par, cupar);
+    parSum(gpu_wfc, par_sum, par);
 
     // copying parsum back
     err = cudaMemcpy(host_sum, par_sum, 
@@ -482,44 +479,6 @@ void parameter_test(){
     assert(bvar == grid_test.bval("bvar"));
 
     std::cout << "Grid class checked, now checking the Cuda class..." << '\n';
-
-    // Now checking the Cuda class
-    // This one will require creating a list of variables...
-    cudaError_t err = cudaSuccess;
-    cufftHandle plan_1d = 4, plan_2d = 6;
-    cudaStream_t streamA = 0, streamB = 0, streamC = 0, streamD = 0;
-    cufftResult result = CUFFT_SUCCESS;
-    dim3 grid;
-
-    grid.x = 1; grid.y = 2; grid.z = 3;
-
-    // Creating Cuda class to test with
-    Cuda cuda_test;
-
-    // Testing the store and value functions
-    cuda_test.store("err", err);
-    cuda_test.store("result", result);
-    cuda_test.store("plan_1d", plan_1d);
-    cuda_test.store("plan_2d", plan_2d);
-    cuda_test.store("streamA", streamA);
-    cuda_test.store("streamB", streamB);
-    cuda_test.store("streamC", streamC);
-    cuda_test.store("streamD", streamD);
-    cuda_test.store("grid", grid);
-
-    assert(err == cuda_test.cudaError_tval("err"));
-    assert(result == cuda_test.cufftResultval("result"));
-    assert(plan_1d == cuda_test.cufftHandleval("plan_1d"));
-    assert(plan_2d == cuda_test.cufftHandleval("plan_2d"));
-    assert(streamA == cuda_test.cudaStream_tval("streamA"));
-    assert(streamB == cuda_test.cudaStream_tval("streamB"));
-    assert(streamC == cuda_test.cudaStream_tval("streamC"));
-    assert(streamD == cuda_test.cudaStream_tval("streamD"));
-    assert(grid.x == cuda_test.dim3val("grid").x);
-    assert(grid.y== cuda_test.dim3val("grid").y);
-    assert(grid.y == cuda_test.dim3val("grid").y);
-
-    std::cout << "Cuda class checked, now checking Op class..." << '\n';
 
     // Now checking the Op class
     // Creating Op class to test with
@@ -751,7 +710,6 @@ void evolve_2d_test(){
 
     Wave wave;
     Op opr;
-    Cuda cupar;
 
     std::cout << "omegaX is: " << par.dval("omegaX") << '\n';
     std::cout << "x / yDim are: " << par.ival("xDim") << '\t' 
@@ -767,7 +725,7 @@ void evolve_2d_test(){
     */
     //************************************************************//
 
-    init_2d(opr, cupar, par, wave);
+    init_2d(opr, par, wave);
 
     // Re-establishing variables from parsed Grid class
     double dx = par.dval("dx");
@@ -797,7 +755,7 @@ void evolve_2d_test(){
     cufftDoubleComplex *wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
     cufftDoubleComplex *K_gpu = opr.cufftDoubleComplexval("K_gpu");
     cufftDoubleComplex *par_sum = wave.cufftDoubleComplexval("par_sum");
-    cudaError_t err = cupar.cudaError_tval("err");
+    cudaError_t err;
 
     std::cout << "variables re-established" << '\n';
     std::cout << read_wfc << '\n';
@@ -846,7 +804,7 @@ void evolve_2d_test(){
         }
     
         evolve_2d(wave, opr, par_sum,
-               gsteps, cupar, 0, par, buffer);
+               gsteps, 0, par, buffer);
         wfc = wave.cufftDoubleComplexval("wfc");
         wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
         cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*xDim*yDim,
@@ -903,7 +861,7 @@ void evolve_2d_test(){
         }
 
         evolve_2d(wave, opr, par_sum,
-               esteps, cupar, 1, par, buffer);
+               esteps, 1, par, buffer);
 
     }
 
@@ -932,7 +890,7 @@ void evolve_2d_test(){
 
     // Now we need som CUDA specific variables for the kernels later on...
     int threads = par.ival("threads");
-    dim3 grid = cupar.dim3val("grid");
+    dim3 grid = par.grid;
 
     // Momentum-space (p) wavefunction
     double2 *wfc_p = wfc;
@@ -948,7 +906,7 @@ void evolve_2d_test(){
     Energy_2 = wfc_gpu;
 
     // Plan for 2d FFT
-    cufftHandle plan_2d = cupar.cufftHandleval("plan_2d");
+    cufftHandle plan_2d = par.ival("plan_2d");
 
     std::cout << "allocating space on device..." << '\n';
 

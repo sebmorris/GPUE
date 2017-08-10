@@ -63,8 +63,7 @@ int isError(int result, char* c); //Checks to see if an error has occurred.
 * @param	threads Number of CUDA threads for operation
 * @return	0 for success. See CUDA failure codes in cuda.h for other values.
 */
-void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par,
-            Cuda &cupar);
+void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par);
 
 /**
 * @brief	Creates the optical lattice to match the vortex lattice constant
@@ -97,6 +96,6 @@ void optLatSetup(const std::shared_ptr<Vtx::Vortex> centre, const double* V,
 * @return	$\langle \Psi | H | \Psi \rangle$
 */
 double energy_angmom(double2 *V_op, double2 *K_op,                     
-                     double2 *gpuWfc, int gState, Grid &par, Cuda &cupar);
+                     double2 *gpuWfc, int gState, Grid &par);
 
 #endif

@@ -65,6 +65,7 @@ class Grid{
 
     // Here we keep the functions to store variables and access grid data
     public:
+        dim3 grid, threads;
 
         // placing grid parameters in public for now
         double *x, *y, *z, *xp, *yp, *zp;
@@ -121,40 +122,6 @@ class Grid{
         std::string Kfn, Vfn, Afn, Axfile, Ayfile, Azfile, Wfcfn;
 };
 typedef class Grid Grid;
-
-/**
- * @brief        Class to hold CUDA-specific variables and features
- * @ingroup      data
- */
-// I will not be using the unordered map for this one because the number of 
-// variables stored is small
-class Cuda{
-    private:
-        cudaError_t err;
-        cufftResult result;
-        std::unordered_map<std::string, cufftHandle> plan_map;
-        cudaStream_t streamA, streamB, streamC, streamD;
-        dim3 grid, threads;
-    public:
-
-        // Functions to store data
-        void store(std::string id, cudaError_t errin);
-        void store(std::string id, cufftResult resultin);
-        void store(std::string id, cufftHandle planin);
-        void store(std::string id, cudaStream_t streamin);
-        void store(std::string id, dim3 dim3in);
-        //void store(std::string id, int threadsin);
-
-        // Functions to retrieve data
-        cudaError_t cudaError_tval(std::string id);
-        cufftResult cufftResultval(std::string id);
-        cufftHandle cufftHandleval(std::string id);
-        cudaStream_t cudaStream_tval(std::string id);
-        dim3 dim3val(std::string id);
-        //int ival(std::string id);
-
-};
-typedef class Cuda Cuda;
 
 /**
  * @brief       class to hold all necessary information about the operators

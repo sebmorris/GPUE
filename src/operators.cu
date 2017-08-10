@@ -778,15 +778,12 @@ void generate_K(Grid &par){
     double gSize = par.dval("gSize");
     double mass = par.dval("mas");
 
-    dim3 threads = par.ival("threads");
-    dim3 grid = par.ival("grid");
-
     // Creating K to work with
     double *K, *K_gpu;
     K = (double*)malloc(sizeof(double)*gSize);
     cudaMalloc((void**) &K_gpu, sizeof(double)*gSize);
 
-    simple_K<<<grid, threads>>>(px_gpu, py_gpu, pz_gpu, mass, K_gpu);
+    simple_K<<<par.grid, par.threads>>>(px_gpu, py_gpu, pz_gpu, mass, K_gpu);
 
     cudaMemcpy(K, K_gpu, sizeof(double)*gSize, cudaMemcpyDeviceToHost);
     par.store("K",K);

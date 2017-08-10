@@ -1,7 +1,7 @@
 
 #include "../include/init.h"
 
-int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
+int init_2d(Op &opr, Grid &par, Wave &wave){
 
     // Setting functions for operators
     set_fns(par, opr, wave);
@@ -69,12 +69,12 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //std::cout << omegaX << '\t' << omegaY << '\n';
     //std::cout << "xDim is: " << xDim << '\t' <<  "yDim is: " << yDim << '\n';
 
-    cufftResult result = cupar.cufftResultval("result");
+    cufftResult result;
     cufftHandle plan_1d;
     cufftHandle plan_2d;
     cufftHandle plan_other2d;
 
-    dim3 grid = cupar.dim3val("grid");
+    dim3 grid = par.grid;
 
     std::string buffer;
     double Rxy; //Condensate scaling factor.
@@ -454,7 +454,6 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     par.store("atoms", N);
     par.store("xDim", xDim);
     par.store("yDim", yDim);
-    cupar.store("threads", threads);
     wave.store("wfc", wfc);
     opr.store("V_gpu", V_gpu);
     opr.store("EV_opt", EV_opt);
@@ -474,12 +473,13 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     opr.store("pAx_gpu", pAx_gpu);
     wave.store("par_sum", par_sum);
 
-    cupar.store("result", result);
-    cupar.store("plan_1d", plan_1d);
-    cupar.store("plan_2d", plan_2d);
-    cupar.store("plan_other2d", plan_other2d);
+    par.store("result", result);
+    par.store("plan_1d", plan_1d);
+    par.store("plan_2d", plan_2d);
+    par.store("plan_other2d", plan_other2d);
 
-    cupar.store("grid", grid);
+    par.threads = threads;
+    par.grid = grid;
 
     std::cout << "variables stored" << '\n';
 
@@ -487,7 +487,7 @@ int init_2d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
 }
 
 // initializing all variables for 3d
-int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
+int init_3d(Op &opr, Grid &par, Wave &wave){
 
     int max_threads = 128;
 
@@ -568,7 +568,7 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     //cufftHandle plan_1d;
     cufftHandle plan_3d;
 
-    dim3 grid = cupar.dim3val("grid");
+    dim3 grid = par.grid;
 
     std::string buffer;
 
@@ -1017,7 +1017,6 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     opr.store("pAz", pAz);
     opr.store("Energy_gpu", Energy_gpu);
     par.store("atoms", N);
-    cupar.store("threads", threads);
     wave.store("wfc", wfc);
     opr.store("V_gpu", V_gpu);
     opr.store("EV_opt", EV_opt);
@@ -1040,13 +1039,14 @@ int init_3d(Op &opr, Cuda &cupar, Grid &par, Wave &wave){
     opr.store("pAz_gpu", pAz_gpu);
     wave.store("par_sum", par_sum);
 
-    cupar.store("result", result);
-    cupar.store("plan_1d", plan_1d);
-    cupar.store("plan_3d", plan_3d);
-    cupar.store("plan_dim2", plan_dim2);
-    cupar.store("plan_dim3", plan_dim3);
+    par.store("result", result);
+    par.store("plan_1d", plan_1d);
+    par.store("plan_3d", plan_3d);
+    par.store("plan_dim2", plan_dim2);
+    par.store("plan_dim3", plan_dim3);
 
-    cupar.store("grid", grid);
+    par.threads = threads;
+    par.grid = grid;
 
     std::cout << "variables stored" << '\n';
 
@@ -1058,7 +1058,6 @@ int main(int argc, char **argv){
     Grid par = parseArgs(argc,argv);
     Wave wave;
     Op opr;
-    Cuda cupar;
 
     int device = par.ival("device");
     int dimnum = par.ival("dimnum");
@@ -1100,10 +1099,10 @@ int main(int argc, char **argv){
 
     // Initialization split between 2d and 3d
     if (dimnum == 2){
-        init_2d(opr, cupar, par, wave);
+        init_2d(opr, par, wave);
     }
     else if (dimnum == 3){
-        init_3d(opr, cupar, par, wave);
+        init_3d(opr, par, wave);
     }
 
     //std::cout << "initialized" << '\n';
@@ -1139,7 +1138,7 @@ int main(int argc, char **argv){
     cufftDoubleComplex *wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
     cufftDoubleComplex *K_gpu = opr.cufftDoubleComplexval("K_gpu");
     cufftDoubleComplex *par_sum = wave.cufftDoubleComplexval("par_sum");
-    cudaError_t err = cupar.cudaError_tval("err");
+    cudaError_t err;
     int gsize = xDim * yDim;
 
     // Special variables for the 3d case
@@ -1225,11 +1224,11 @@ int main(int argc, char **argv){
             opr.store("pAz_gpu", pAz_gpu);
 
             evolve_3d(wave, opr, par_sum,
-                      gsteps, cupar, 0, par, buffer);
+                      gsteps, 0, par, buffer);
         }
         if (dimnum == 2){
             evolve_2d(wave, opr, par_sum,
-                      gsteps, cupar, 0, par, buffer);
+                      gsteps,  0, par, buffer);
         }
         wfc = wave.cufftDoubleComplexval("wfc");
         wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
@@ -1309,11 +1308,11 @@ int main(int argc, char **argv){
             }
             opr.store("pAz_gpu", pAz_gpu);
             evolve_3d(wave, opr, par_sum,
-                      esteps, cupar, 1, par, buffer);
+                      esteps, 1, par, buffer);
         }
         if (dimnum == 2){
             evolve_2d(wave, opr, par_sum,
-                      esteps, cupar, 1, par, buffer);
+                      esteps, 1, par, buffer);
         }
         wfc = wave.cufftDoubleComplexval("wfc");
         wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
