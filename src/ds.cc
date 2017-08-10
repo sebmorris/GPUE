@@ -319,9 +319,6 @@ void Op::set_K_fn(std::string id){
     else if(id == "rotation_gauge_K"){
         K_fn = rotation_gauge_K;
     }
-    else if(id == "rotation_K_dimensionless"){
-        K_fn = rotation_K_dimensionless;
-    }
 }
 
 void Op::set_V_fn(std::string id){
@@ -336,9 +333,6 @@ void Op::set_V_fn(std::string id){
     }
     else if(id == "harmonic_gauge_V"){
         K_fn = harmonic_gauge_V;
-    }
-    else if(id == "harmonic_V_dimensionless"){
-        K_fn = harmonic_V_dimensionless;
     }
 }
 

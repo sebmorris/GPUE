@@ -288,14 +288,6 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
                     * exp( -0.5*( x[i]*x[i] + y[j]*y[j] ) )*(1+2*x[i]/sqrt(2));
                 wfc[(i*yDim + j)].y = 0;
             }
-            else if (par.bval("dimensionless")){
-                wfc[(i*yDim + j)].x = exp(-( pow((x[i]),2) +
-                                             pow((y[j]),2) ) ) *
-                                      cos(Phi[(i*yDim + j)]);
-                wfc[(i*yDim + j)].y = -exp(-( pow((x[i]),2) +
-                                              pow((y[j]),2) ) ) *
-                                          sin(Phi[(i*yDim + j)]);
-            }
             else if (par.bval("read_wfc") == true){
                 //wfc[(i*yDim + j)].x *= cos(Phi[(i*yDim + j)]);
                 //wfc[(i*yDim + j)].y *= sin(Phi[(i*yDim + j)]);
