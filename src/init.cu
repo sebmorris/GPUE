@@ -115,6 +115,8 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
     grid.x=xD;
     grid.y=yD;
     grid.z=zD;
+    par.grid = grid;
+    par.threads = threads;
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
     int i,j; //Used in for-loops for indexing
@@ -279,6 +281,16 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
     std::cout << Ax[256] << '\t' << Ay[0] << '\n';
     //#pragma omp parallel for private(j)
     #endif
+
+    par.store("gSize", xDim*yDim);
+    generate_p_space(par);
+    generate_K(par);
+    K = par.dsval("K");
+
+    generate_gauge(par);
+    Ax = par.dsval("Ax");
+    Ay = par.dsval("Ay");
+
     for( i=0; i < xDim; i++ ){
         for( j=0; j < yDim; j++ ){
             Phi[(i*yDim + j)] = fmod(l*atan2(y[j], x[i]),2*PI);
@@ -299,7 +311,7 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
             }
                 
             V[(i*yDim + j)] = opr.V_fn(par, opr, i, j, 0);
-            K[(i*yDim + j)] = opr.K_fn(par, opr, i, j, 0);
+            //K[(i*yDim + j)] = opr.K_fn(par, opr, i, j, 0);
 
             GV[(i*yDim + j)].x = exp( -V[(i*yDim + j)]*(gdt/(2*HBAR)));
             GK[(i*yDim + j)].x = exp( -K[(i*yDim + j)]*(gdt/HBAR));
@@ -308,10 +320,12 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
 
             // Ax and Ay will be calculated here but are used only for
             // debugging. They may be needed later for magnetic field calc
+/*
             if (par.Afn != "file"){
                 Ax[(i*yDim + j)] = opr.Ax_fn(par, opr, i, j, 0);
                 Ay[(i*yDim + j)] = opr.Ay_fn(par, opr, i, j, 0);
             }
+*/
 
             pAy[(i*yDim + j)] = pAy_fn(par, opr, i, j, 0);
             pAx[(i*yDim + j)] = pAx_fn(par, opr, i, j, 0);
@@ -393,7 +407,7 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
     //std::cout << "found result" << '\n';
     if(result != CUFFT_SUCCESS){
         printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan2d(%s ,%d, %d).\n", "plan_2d",
+        printf("Error: Could not execute cufftPlan2d(%s, %d, %d).\n", "plan_2d",
                 (unsigned int)xDim, (unsigned int)yDim);
         return -1;
     }

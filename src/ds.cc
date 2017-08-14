@@ -373,6 +373,34 @@ void Op::set_A_fns(std::string id){
     }
 }
 
+void Grid::set_A_fns(std::string id){
+    if (id == "rotation"){
+        Ax_fn = krotation_Ax;
+        Ay_fn = krotation_Ay;
+        Az_fn = kconstant_A;
+    }
+    else if (id == "constant"){
+        Ax_fn = kconstant_A;
+        Ay_fn = kconstant_A;
+        Az_fn = kconstant_A;
+    }
+    else if (id == "ring"){
+        Ax_fn = kconstant_A;
+        Ay_fn = kconstant_A;
+        Az_fn = kring_Az;
+    }
+    else if (id == "test"){
+        Ax_fn = ktest_Ax;
+        Ay_fn = ktest_Ay;
+        Az_fn = kconstant_A;
+    }
+    else if (id == "file"){
+        Ax_fn = nullptr;
+        Ay_fn = nullptr;
+        Az_fn = nullptr;
+    }
+}
+
 // Function to set functionPtrs without an unordered map
 void set_fns(Grid &par, Op &opr, Wave &wave){
 
@@ -386,6 +414,7 @@ void set_fns(Grid &par, Op &opr, Wave &wave){
     opr.set_V_fn(par.Vfn);
 
     // Afn
+    par.set_A_fns(par.Afn);
     opr.set_A_fns(par.Afn);
 
     // Wfcfn

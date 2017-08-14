@@ -51,6 +51,9 @@ class Grid{
     // Here we keep our variable map (unordered for performance)
     // and also grid information. Note that dx dy, and dz are in param_double
     private:
+        typedef void (*functionPtr)(double*, double*, double*, 
+                                    double,  double,  double, 
+                                    double, double, double*);
         std::unordered_map<std::string, int> param_int;
         std::unordered_map<std::string, double> param_double;
         std::unordered_map<std::string, double*> param_dstar;
@@ -66,6 +69,13 @@ class Grid{
     // Here we keep the functions to store variables and access grid data
     public:
         dim3 grid, threads;
+
+        // Map for function pointers and keys K and V
+        functionPtr K_fn;
+        functionPtr V_fn;
+        functionPtr Ax_fn;
+        functionPtr Ay_fn;
+        functionPtr Az_fn;
 
         // placing grid parameters in public for now
         double *x, *y, *z, *xp, *yp, *zp;
@@ -116,6 +126,9 @@ class Grid{
 
         // Function to print all available variables
         void print_map();
+
+        // function to set A functions
+        void set_A_fns(std::string id);
 
         // Key values for operators
         // Note that Vector potential only have a single string for x, y, z

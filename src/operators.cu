@@ -660,16 +660,28 @@ void generate_p_space(Grid &par){
     int zDim = par.ival("zDim");
     double xMax = par.dval("xMax");
     double yMax = par.dval("yMax");
-    double zMax = par.dval("zMax");
+    double zMax = 0;
+    if (par.ival("dimun") == 3){
+        zMax = par.dval("zMax");
+    }
     double pxMax = par.dval("pxMax");
     double pyMax = par.dval("pyMax");
-    double pzMax = par.dval("pzMax");
+    double pzMax = 0;
+    if (par.ival("dimun") == 3){
+        pzMax = par.dval("pzMax");
+    }
     double dx = par.dval("dx");
     double dy = par.dval("dy");
-    double dz = par.dval("dz");
+    double dz = 0;
+    if (par.ival("dimun") == 3){
+        pzMax = par.dval("dz");
+    }
     double dpx = par.dval("dpx");
     double dpy = par.dval("dpy");
-    double dpz = par.dval("dpz");
+    double dpz = 0;
+    if (par.ival("dimun") == 3){
+        pzMax = par.dval("dpz");
+    }
 
     double *x, *y, *z, *px, *py, *pz,
            *x_gpu, *y_gpu, *z_gpu, 
@@ -775,8 +787,8 @@ void generate_K(Grid &par){
     double *px_gpu = par.dsval("px_gpu");
     double *py_gpu = par.dsval("py_gpu");
     double *pz_gpu = par.dsval("pz_gpu");
-    double gSize = par.dval("gSize");
-    double mass = par.dval("mas");
+    double gSize = par.ival("gSize");
+    double mass = par.dval("mass");
 
     // Creating K to work with
     double *K, *K_gpu;
@@ -801,4 +813,136 @@ __global__ void simple_K(double *xp, double *yp, double *zp, double mass,
     unsigned int zid = blockDim.z*blockIdx.z + threadIdx.z;
     K[gid] = (HBAR*HBAR/(2*mass))*(xp[xid]*xp[xid] + yp[yid]*yp[yid]
                                   + zp[zid]*zp[zid]);
+}
+
+// Function to generate game fields
+void generate_gauge(Grid &par){
+
+    int gSize = par.ival("gSize");
+    int dimnum = par.ival("dimnum");
+
+    double *Ax, *Ay, *Az, *Ax_gpu, *Ay_gpu, *Az_gpu;
+    double *x_gpu = par.dsval("x_gpu");
+    double *y_gpu = par.dsval("y_gpu");
+    double *z_gpu;
+    if (dimnum == 3){
+        double *z_gpu = par.dsval("z_gpu");
+    }
+
+    double xMax = par.dval("xMax");
+    double yMax = par.dval("yMax");
+    double zMax;
+    if (dimnum == 3){
+        double zMax = par.dval("zMax");
+    }
+    double omega = par.dval("omega");
+    double fudge = par.dval("fudge");
+
+    Ax = (double *)malloc(sizeof(double)*gSize);
+    Ay = (double *)malloc(sizeof(double)*gSize);
+    if (dimnum == 3){
+        Az = (double *)malloc(sizeof(double)*gSize);
+    }
+
+    cudaMalloc((void**) &Ax_gpu, sizeof(double)*gSize);
+    cudaMalloc((void**) &Ay_gpu, sizeof(double)*gSize);
+    if (dimnum == 3){
+        cudaMalloc((void**) &Az_gpu, sizeof(double)*gSize);
+    }
+
+    if (par.Afn == "file"){
+        file_A(par.Axfile, Ax, omega);
+        cudaMemcpy(Ax_gpu, Ax, sizeof(double)*gSize, cudaMemcpyHostToDevice);
+
+        file_A(par.Ayfile, Ay, omega);
+        cudaMemcpy(Ay_gpu, Ay, sizeof(double)*gSize, cudaMemcpyHostToDevice);
+
+        if (dimnum == 3){
+            file_A(par.Azfile, Az, omega);
+            cudaMemcpy(Az_gpu,Az,sizeof(double)*gSize,cudaMemcpyHostToDevice);
+        }
+
+        std::cout << "finished reading Ax / Ay from file" << '\n';
+    }
+    else{
+        par.Ax_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
+                                             xMax, yMax, zMax, 
+                                             omega, fudge, Ax_gpu);
+        par.Ay_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
+                                             xMax, yMax, zMax, 
+                                             omega, fudge, Ay_gpu);
+        if (dimnum == 3){
+            par.Az_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
+                                                 xMax, yMax, zMax, 
+                                                 omega, fudge, Az_gpu);
+        }
+    }
+    cudaMemcpy(Ax, Ax_gpu, sizeof(double)*gSize,cudaMemcpyDeviceToHost);
+    cudaMemcpy(Ay, Ay_gpu, sizeof(double)*gSize,cudaMemcpyDeviceToHost);
+    par.store("Ax", Ax);
+    par.store("Ay", Ay);
+    par.store("Ax_gpu", Ax_gpu);
+    par.store("Ay_gpu", Ay_gpu);
+
+    if(dimnum == 3){
+        cudaMemcpy(Az, Az_gpu, sizeof(double)*gSize,cudaMemcpyDeviceToHost);
+        par.store("Az", Az);
+        par.store("Az_gpu", Az_gpu);
+    }
+}
+
+// constant Kernel A
+__global__ void kconstant_A(double *x, double *y, double *z,
+                            double xMax, double yMax, double zMax,
+                            double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    A[gid] = 0;        
+}
+
+// Kernel for simple rotational case, Ax
+__global__ void krotation_Ax(double *x, double *y, double *z,
+                             double xMax, double yMax, double zMax,
+                             double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    A[gid] = -y[yid] * omega;
+}
+
+// Kernel for simple rotational case, Ay
+__global__ void krotation_Ay(double *x, double *y, double *z,
+                             double xMax, double yMax, double zMax,
+                             double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    A[gid] = x[xid] * omega;
+}
+
+// kernel for a simple vortex ring
+__global__ void kring_Az(double *x, double *y, double *z,
+                         double xMax, double yMax, double zMax,
+                         double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+
+    double rad = sqrt(x[xid]*x[xid] + y[yid]*y[yid]);
+
+    A[gid] = omega * exp(-rad*rad / (0.0001*xMax)) * 0.01;
+}
+
+// testing kernel Ax
+__global__ void ktest_Ax(double *x, double *y, double *z,
+                         double xMax, double yMax, double zMax,
+                         double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int yid = blockDim.y*blockIdx.x + threadIdx.x;
+    A[gid] = (sin(y[yid] * 50000)+1) * yMax * omega;
+}
+
+// testing kernel Ay
+__global__ void ktest_Ay(double *x, double *y, double *z,
+                         double xMax, double yMax, double zMax,
+                         double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    A[gid] = 0;
 }
