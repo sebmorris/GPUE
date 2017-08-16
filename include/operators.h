@@ -365,4 +365,13 @@ __global__ void ktest_Ax(double *x, double *y, double *z,
 __global__ void kring_Az(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
                          double omega, double fudge, double *A);
+
+
+// Function to generate V
+void generate_V(Grid &par);
+
+// Kernel to generate harmonic V
+__global__ void kharmonic_V(double *x, double *y, double *z, double *items,
+                            double *Ax, double *Ay, double *Az, double *V);
+
 #endif

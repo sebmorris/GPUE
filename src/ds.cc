@@ -373,7 +373,7 @@ void Op::set_A_fns(std::string id){
     }
 }
 
-void Grid::set_A_fns(std::string id){
+void Grid::set_A_fn(std::string id){
     if (id == "rotation"){
         Ax_fn = krotation_Ax;
         Ay_fn = krotation_Ay;
@@ -401,6 +401,15 @@ void Grid::set_A_fns(std::string id){
     }
 }
 
+void Grid::set_V_fn(std::string id){
+    if (id == "2d"){
+        V_fn = kharmonic_V;
+    }
+    else if(id == "3d"){
+        V_fn = kharmonic_V;
+    }
+}
+
 // Function to set functionPtrs without an unordered map
 void set_fns(Grid &par, Op &opr, Wave &wave){
 
@@ -412,9 +421,10 @@ void set_fns(Grid &par, Op &opr, Wave &wave){
 
     // Vfn
     opr.set_V_fn(par.Vfn);
+    par.set_V_fn(par.Vfn);
 
     // Afn
-    par.set_A_fns(par.Afn);
+    par.set_A_fn(par.Afn);
     opr.set_A_fns(par.Afn);
 
     // Wfcfn

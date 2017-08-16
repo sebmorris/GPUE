@@ -946,3 +946,83 @@ __global__ void ktest_Ay(double *x, double *y, double *z,
     int gid = getGid3d3d();
     A[gid] = 0;
 }
+
+// function to generate V
+void generate_V(Grid &par){
+
+    int gSize = par.ival("gSize");
+    int dimnum = par.ival("dimnum");
+
+    double *x_gpu = par.dsval("x_gpu");
+    double *y_gpu = par.dsval("y_gpu");
+    double *z_gpu;
+    if (dimnum == 3){
+        z_gpu = par.dsval("z_gpu");
+    }
+    double *Ax_gpu = par.dsval("Ax_gpu");
+    double *Ay_gpu = par.dsval("Ay_gpu");
+    double *Az_gpu = par.dsval("Az_gpu");
+
+    double *items;
+    int item_size = 14;
+    items = (double*)malloc(sizeof(double)*item_size);
+    for (int i = 0; i < item_size; ++i){
+        items[0] = 0;
+    }
+    items[0] = par.dval("xMax");
+    items[1] = par.dval("yMax");
+    if (dimnum == 3){
+        items[2] = par.dval("zMax");
+    }
+
+    items[3] = par.dval("omegaX");
+    items[4] = par.dval("omegaY");
+    if (dimnum == 3){
+        items[5] = par.dval("omegaZ");
+    }
+
+    items[6] = par.dval("xOffset");
+    items[7] = par.dval("yOffset");
+    if (dimnum == 3){
+        items[8] = par.dval("zoffset");
+    }
+
+    items[9] = par.dval("mass");
+    items[10] = par.dval("gammaY");
+    items[11] = 1.0; // For gammaZ
+    items[12] = par.dval("fudge");
+    items[13] = 0.0; // For time
+
+    double fudge = par.dval("fudge");
+
+    double *V, *V_gpu;
+
+    V = (double *)malloc(sizeof(double)*gSize);
+
+    cudaMalloc((void **) &V_gpu, sizeof(double)*gSize);
+
+    par.V_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, items,
+                                        Ax_gpu, Ay_gpu, Az_gpu, V_gpu);
+
+    cudaMemcpy(&V_gpu, V, sizeof(double)*gSize, cudaMemcpyDeviceToHost);
+
+    par.store("V",V);
+    par.store("V_gpu",V_gpu);
+    
+}
+
+__global__ void kharmonic_V(double *x, double *y, double *z, double* items,
+                            double *Ax, double *Ay, double *Az, double *V){
+
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    int zid = blockDim.z*blockIdx.z + threadIdx.z;
+
+    double V_x = items[3]*(x[xid]+items[6]);
+    double V_y = items[10]*items[5]*(y[yid]+items[7]);
+    double V_z = items[11]*items[6]*(z[zid]+items[8]);
+
+    V[gid] = 0.5*items[9]*((V_x*V_x + V_y*V_y + V_z*V_z)
+             +Ax[gid]*Ax[gid] + Ay[gid]*Ay[gid] + Az[gid]*Az[gid]);
+}

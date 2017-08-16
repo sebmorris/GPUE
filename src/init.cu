@@ -291,6 +291,9 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
     Ax = par.dsval("Ax");
     Ay = par.dsval("Ay");
 
+    generate_V(par);
+    V = par.dsval("V");
+
     for( i=0; i < xDim; i++ ){
         for( j=0; j < yDim; j++ ){
             Phi[(i*yDim + j)] = fmod(l*atan2(y[j], x[i]),2*PI);
@@ -310,7 +313,7 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
                           wfc[(i*xDim + j)].y*wfc[(i*yDim + j)].y);
             }
                 
-            V[(i*yDim + j)] = opr.V_fn(par, opr, i, j, 0);
+            //V[(i*yDim + j)] = opr.V_fn(par, opr, i, j, 0);
             //K[(i*yDim + j)] = opr.K_fn(par, opr, i, j, 0);
 
             GV[(i*yDim + j)].x = exp( -V[(i*yDim + j)]*(gdt/(2*HBAR)));
