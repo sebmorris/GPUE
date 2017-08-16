@@ -687,13 +687,14 @@ void generate_p_space(Grid &par){
            *x_gpu, *y_gpu, *z_gpu, 
            *px_gpu, *py_gpu, *pz_gpu;
 
+    x = (double *) malloc(sizeof(double) * xDim);
+    y = (double *) malloc(sizeof(double) * yDim);
+    z = (double *) malloc(sizeof(double) * zDim);
+    px = (double *) malloc(sizeof(double) * xDim);
+    py = (double *) malloc(sizeof(double) * yDim);
+    pz = (double *) malloc(sizeof(double) * zDim);
+
     if (dimnum == 2){
-        x = (double *) malloc(sizeof(double) * xDim);
-        y = (double *) malloc(sizeof(double) * yDim);
-        z = (double *) malloc(sizeof(double) * zDim);
-        px = (double *) malloc(sizeof(double) * xDim);
-        py = (double *) malloc(sizeof(double) * yDim);
-        pz = (double *) malloc(sizeof(double) * zDim);
 
         for(int i=0; i<xDim/2; ++i){
             x[i] = -xMax + i*dx;
@@ -712,17 +713,13 @@ void generate_p_space(Grid &par){
 
         }
 
-        z[0] = 0;
-        pz[0] = 0;
+        for(int i = 0; i < zDim; ++i){
+            z[i] = 0;
+            pz[i] = 0;
+        }
 
     }
     else if(dimnum == 3){
-        x = (double *) malloc(sizeof(double) * xDim);
-        y = (double *) malloc(sizeof(double) * yDim);
-        z = (double *) malloc(sizeof(double) * zDim);
-        px = (double *) malloc(sizeof(double) * xDim);
-        py = (double *) malloc(sizeof(double) * yDim);
-        pz = (double *) malloc(sizeof(double) * zDim);
         for(int i=0; i<xDim/2; ++i){
             x[i] = -xMax + i*dx;
             x[i + (xDim/2)] = i*dx;
@@ -840,15 +837,11 @@ void generate_gauge(Grid &par){
 
     Ax = (double *)malloc(sizeof(double)*gSize);
     Ay = (double *)malloc(sizeof(double)*gSize);
-    if (dimnum == 3){
-        Az = (double *)malloc(sizeof(double)*gSize);
-    }
+    Az = (double *)malloc(sizeof(double)*gSize);
 
     cudaMalloc((void**) &Ax_gpu, sizeof(double)*gSize);
     cudaMalloc((void**) &Ay_gpu, sizeof(double)*gSize);
-    if (dimnum == 3){
-        cudaMalloc((void**) &Az_gpu, sizeof(double)*gSize);
-    }
+    cudaMalloc((void**) &Az_gpu, sizeof(double)*gSize);
 
     if (par.Afn == "file"){
         file_A(par.Axfile, Ax, omega);
@@ -876,19 +869,24 @@ void generate_gauge(Grid &par){
                                                  xMax, yMax, zMax, 
                                                  omega, fudge, Az_gpu);
         }
+        else{
+            kconstant_A<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
+                                                   xMax, yMax, zMax, 
+                                                   omega, fudge, Az_gpu);
+        }
     }
     cudaMemcpy(Ax, Ax_gpu, sizeof(double)*gSize,cudaMemcpyDeviceToHost);
     cudaMemcpy(Ay, Ay_gpu, sizeof(double)*gSize,cudaMemcpyDeviceToHost);
+    cudaMemcpy(Az, Az_gpu, sizeof(double)*gSize,cudaMemcpyDeviceToHost);
+
     par.store("Ax", Ax);
     par.store("Ay", Ay);
+    par.store("Az", Az);
+
     par.store("Ax_gpu", Ax_gpu);
     par.store("Ay_gpu", Ay_gpu);
+    par.store("Az_gpu", Az_gpu);
 
-    if(dimnum == 3){
-        cudaMemcpy(Az, Az_gpu, sizeof(double)*gSize,cudaMemcpyDeviceToHost);
-        par.store("Az", Az);
-        par.store("Az_gpu", Az_gpu);
-    }
 }
 
 // constant Kernel A
@@ -955,17 +953,16 @@ void generate_V(Grid &par){
 
     double *x_gpu = par.dsval("x_gpu");
     double *y_gpu = par.dsval("y_gpu");
-    double *z_gpu;
-    if (dimnum == 3){
-        z_gpu = par.dsval("z_gpu");
-    }
+    double *z_gpu = par.dsval("z_gpu");
     double *Ax_gpu = par.dsval("Ax_gpu");
     double *Ay_gpu = par.dsval("Ay_gpu");
     double *Az_gpu = par.dsval("Az_gpu");
 
-    double *items;
+    double *items, *items_gpu;
     int item_size = 14;
     items = (double*)malloc(sizeof(double)*item_size);
+    cudaMalloc((void**) &items_gpu, sizeof(double)*item_size);
+
     for (int i = 0; i < item_size; ++i){
         items[0] = 0;
     }
@@ -981,10 +978,13 @@ void generate_V(Grid &par){
         items[5] = par.dval("omegaZ");
     }
 
-    items[6] = par.dval("xOffset");
-    items[7] = par.dval("yOffset");
+    items[6] = par.dval("x0_shift");
+    items[7] = par.dval("y0_shift");
     if (dimnum == 3){
         items[8] = par.dval("zoffset");
+    }
+    else{
+        items[8] = 0.0;
     }
 
     items[9] = par.dval("mass");
@@ -992,6 +992,9 @@ void generate_V(Grid &par){
     items[11] = 1.0; // For gammaZ
     items[12] = par.dval("fudge");
     items[13] = 0.0; // For time
+
+    cudaMemcpy(items_gpu, items, sizeof(double)*item_size,
+               cudaMemcpyHostToDevice);
 
     double fudge = par.dval("fudge");
 
@@ -1001,13 +1004,15 @@ void generate_V(Grid &par){
 
     cudaMalloc((void **) &V_gpu, sizeof(double)*gSize);
 
-    par.V_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, items,
+    par.V_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, items_gpu,
                                         Ax_gpu, Ay_gpu, Az_gpu, V_gpu);
 
-    cudaMemcpy(&V_gpu, V, sizeof(double)*gSize, cudaMemcpyDeviceToHost);
+    cudaMemcpy(V, V_gpu, sizeof(double)*gSize, cudaMemcpyDeviceToHost);
 
     par.store("V",V);
     par.store("V_gpu",V_gpu);
+    par.store("items", items);
+    par.store("items_gpu", items_gpu);
     
 }
 
@@ -1019,10 +1024,11 @@ __global__ void kharmonic_V(double *x, double *y, double *z, double* items,
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
 
+    double xOffset = items[6];
     double V_x = items[3]*(x[xid]+items[6]);
-    double V_y = items[10]*items[5]*(y[yid]+items[7]);
-    double V_z = items[11]*items[6]*(z[zid]+items[8]);
+    double V_y = items[10]*items[4]*(y[yid]+items[7]);
+    double V_z = items[11]*items[5]*(z[zid]+items[8]);
 
     V[gid] = 0.5*items[9]*((V_x*V_x + V_y*V_y + V_z*V_z)
-             +Ax[gid]*Ax[gid] + Ay[gid]*Ay[gid] + Az[gid]*Az[gid]);
+             + Ax[gid]*Ax[gid] + Ay[gid]*Ay[gid] + Az[gid]*Az[gid]);
 }
