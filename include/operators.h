@@ -368,10 +368,27 @@ __global__ void kring_Az(double *x, double *y, double *z,
 
 
 // Function to generate V
-void generate_V(Grid &par);
+void generate_fields(Grid &par);
 
 // Kernel to generate harmonic V
 __global__ void kharmonic_V(double *x, double *y, double *z, double *items,
                             double *Ax, double *Ay, double *Az, double *V);
 
+// Kernel to generate toroidal V (3d)
+__global__ void ktorus_V(double *x, double *y, double *z, double *items,
+                         double *Ax, double *Ay, double *Az, double *V);
+
+__global__ void kstd_wfc(double *x, double *y, double *z, double *items,
+                         double winding, double *phi, double2 *wfc);
+
+__global__ void ktorus_wfc(double *x, double *y, double *z, double *items,
+                           double winding, double *phi, double2 *wfc);
+
+__global__ void aux_fields(double *V, double *K, double gdt, double dt,
+                           double* Ax, double *Ay, double* Az,
+                           double *px, double *py, double *pz,
+                           double* pAx, double* pAy, double* pAz,
+                           double2* GV, double2* EV, double2* GK, double2* EK,
+                           double2* GpAx, double2* GpAy, double2* GpAz,
+                           double2* EpAx, double2* EpAy, double2* EpAz);
 #endif

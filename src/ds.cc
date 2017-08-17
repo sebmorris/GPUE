@@ -401,9 +401,21 @@ void Grid::set_A_fn(std::string id){
     }
 }
 
+void Grid::set_wfc_fn(std::string id){
+    if (id == "2d" || id == "3d"){
+        wfc_fn = kstd_wfc;
+    }
+    else if(id == "torus"){
+        wfc_fn = ktorus_wfc;
+    }
+}
+
 void Grid::set_V_fn(std::string id){
     if (id == "2d"){
         V_fn = kharmonic_V;
+    }
+    else if (id == "torus"){
+        V_fn = ktorus_V;
     }
     else if(id == "3d"){
         V_fn = kharmonic_V;
@@ -429,6 +441,7 @@ void set_fns(Grid &par, Op &opr, Wave &wave){
 
     // Wfcfn
     wave.set_wfc_fn(par.Wfcfn);
+    par.set_wfc_fn(par.Wfcfn);
 
 }
 

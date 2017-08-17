@@ -56,6 +56,8 @@ class Grid{
                                      double, double, double*);
         typedef void (*functionPtrV)(double*, double*, double*, double*,
                                      double*, double*, double*, double*);
+        typedef void (*functionPtrwfc)(double*, double*, double*, 
+                                       double*, double, double*, double2*);
         std::unordered_map<std::string, int> param_int;
         std::unordered_map<std::string, double> param_double;
         std::unordered_map<std::string, double*> param_dstar;
@@ -74,9 +76,8 @@ class Grid{
 
         // Map for function pointers and keys K and V
         functionPtrV V_fn;
-        functionPtrA Ax_fn;
-        functionPtrA Ay_fn;
-        functionPtrA Az_fn;
+        functionPtrA Ax_fn, Ay_fn, Az_fn;
+        functionPtrwfc wfc_fn;
 
         // placing grid parameters in public for now
         double *x, *y, *z, *xp, *yp, *zp;
@@ -133,6 +134,9 @@ class Grid{
 
         // function to set V functions
         void set_V_fn(std::string id);
+
+        // function to set V functions
+        void set_wfc_fn(std::string id);
 
         // Key values for operators
         // Note that Vector potential only have a single string for x, y, z

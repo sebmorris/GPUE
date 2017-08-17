@@ -283,71 +283,34 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
     #endif
 
     par.store("gSize", xDim*yDim);
-    generate_p_space(par);
-    generate_K(par);
+    generate_fields(par);
     K = par.dsval("K");
-
-    generate_gauge(par);
     Ax = par.dsval("Ax");
     Ay = par.dsval("Ay");
-
-    generate_V(par);
     V = par.dsval("V");
+
+    pAx = par.dsval("pAx");
+    pAy = par.dsval("pAy");
+    //pAz = par.dsval("pAz");
+
+    GpAx = par.cufftDoubleComplexval("GpAx");
+    GpAy = par.cufftDoubleComplexval("GpAy");
+    //GpAz = par.cufftDoubleComplexval("GpAz");
+    EpAx = par.cufftDoubleComplexval("EpAx");
+    EpAy = par.cufftDoubleComplexval("EpAy");
+    //EpAz = par.cufftDoubleComplexval("EpAz");
+
+    GV = par.cufftDoubleComplexval("GV");
+    EV = par.cufftDoubleComplexval("EV");
+    GK = par.cufftDoubleComplexval("GK");
+    EK = par.cufftDoubleComplexval("EK");
+
+    wfc = par.cufftDoubleComplexval("wfc");
 
     for( i=0; i < xDim; i++ ){
         for( j=0; j < yDim; j++ ){
-            Phi[(i*yDim + j)] = fmod(l*atan2(y[j], x[i]),2*PI);
-
-            if (par.bval("unit_test")){
-                wfc[(i*yDim + j)].x =  (1/sqrt(2))*pow(1/PI,0.5)
-                    * exp( -0.5*( x[i]*x[i] + y[j]*y[j] ) )*(1+2*x[i]/sqrt(2));
-                wfc[(i*yDim + j)].y = 0;
-            }
-            else if (par.bval("read_wfc") == true){
-                //wfc[(i*yDim + j)].x *= cos(Phi[(i*yDim + j)]);
-                //wfc[(i*yDim + j)].y *= sin(Phi[(i*yDim + j)]);
-            }
-            else{
-                wfc[(i*yDim + j)] = wave.Wfc_fn(par,Phi[(i*yDim + j)], i, j, 0);
-                sum+=sqrt(wfc[(i*xDim + j)].x*wfc[(i*yDim + j)].x + 
-                          wfc[(i*xDim + j)].y*wfc[(i*yDim + j)].y);
-            }
-                
-            //V[(i*yDim + j)] = opr.V_fn(par, opr, i, j, 0);
-            //K[(i*yDim + j)] = opr.K_fn(par, opr, i, j, 0);
-
-            GV[(i*yDim + j)].x = exp( -V[(i*yDim + j)]*(gdt/(2*HBAR)));
-            GK[(i*yDim + j)].x = exp( -K[(i*yDim + j)]*(gdt/HBAR));
-            GV[(i*yDim + j)].y = 0.0;
-            GK[(i*yDim + j)].y = 0.0;
-
-            // Ax and Ay will be calculated here but are used only for
-            // debugging. They may be needed later for magnetic field calc
-/*
-            if (par.Afn != "file"){
-                Ax[(i*yDim + j)] = opr.Ax_fn(par, opr, i, j, 0);
-                Ay[(i*yDim + j)] = opr.Ay_fn(par, opr, i, j, 0);
-            }
-*/
-
-            pAy[(i*yDim + j)] = pAy_fn(par, opr, i, j, 0);
-            pAx[(i*yDim + j)] = pAx_fn(par, opr, i, j, 0);
-
-            GpAx[(i*yDim + j)].x = exp(-pAx[(i*yDim + j)]*gdt);
-            GpAx[(i*yDim + j)].y = 0;
-            GpAy[(i*yDim + j)].x = exp(-pAy[(i*yDim + j)]*gdt);
-            GpAy[(i*yDim + j)].y = 0;
-
-            EV[(i*yDim + j)].x=cos( -V[(i*yDim + j)]*(dt/(2*HBAR)));
-            EV[(i*yDim + j)].y=sin( -V[(i*yDim + j)]*(dt/(2*HBAR)));
-            EK[(i*yDim + j)].x=cos( -K[(i*yDim + j)]*(dt/HBAR));
-            EK[(i*yDim + j)].y=sin( -K[(i*yDim + j)]*(dt/HBAR));
-
-            EpAy[(i*yDim + j)].x=cos(-pAy[(i*yDim + j)]*dt);
-            EpAy[(i*yDim + j)].y=sin(-pAy[(i*yDim + j)]*dt);
-            EpAx[(i*yDim + j)].x=cos(-pAx[(i*yDim + j)]*dt);
-            EpAx[(i*yDim + j)].y=sin(-pAx[(i*yDim + j)]*dt);
-
+            sum+=sqrt(wfc[(i*xDim + j)].x*wfc[(i*yDim + j)].x + 
+                      wfc[(i*xDim + j)].y*wfc[(i*yDim + j)].y);
         }
     }
 
@@ -391,7 +354,8 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
     if (par.bval("read_wfc") == false){
-        sum=sqrt(sum*dx*dy);
+        //sum=sqrt(sum*dx*dy);
+        sum=1;
         //#pragma omp parallel for reduction(+:sum) private(j)
         for (i = 0; i < xDim; i++){
             for (j = 0; j < yDim; j++){
