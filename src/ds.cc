@@ -53,7 +53,8 @@ cufftHandle generate_plan_other3d(Grid &par, int axis){
 
     // Along first dimension (z)
     if (axis == 0){
-        result = cufftPlan1d(&plan_fft1d, xDim, CUFFT_Z2Z, yDim*xDim);
+        result = cufftPlan1d(&plan_fft1d, xDim, CUFFT_Z2Z, yDim*zDim);
+        std::cout << "zDim is: " << zDim << '\n';
 /*
         int batch = xDim*yDim;
         int rank = 1;

@@ -50,7 +50,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("kill_idx", -1);
     par.store("DX",0.0);
     par.store("mask_2d", 1.5e-4);
-    par.store("box_size", 2.5e-5);
+    par.store("box_size", -0.01);
     par.store("found_sobel", false);
     par.store("energy_calc", false);
     par.Afn = "rotation";
@@ -366,6 +366,7 @@ Grid parseArgs(int argc, char** argv){
                         std::cout << "Finding file for Az..." << '\n';
                         par.Azfile = filecheck("src/Azgauge");
                     }
+                    par.store("box_size",2.5e-5);
                 }
                 if (dimnum == 2){
                     par.store("zDim", 1);
@@ -395,82 +396,6 @@ Grid parseArgs(int argc, char** argv){
                     }
                 }
 
-                // If the dynamic gauge field is chosen, we need to read it in
-                // from a file and if there is no file, read it from cin
-                if (strcmp(optarg, "dynamic") == 0){
-                    std::string filename = "src/gauge.cfg";
-                    std::string Axstring, Aystring, Azstring, line;
-
-                    // checking if src/gauge.cfg exists
-                    struct stat buffer;
-                    if (stat(filename.c_str(), &buffer) ==0){
-                        std::cout << "dynamic gauge fields have been chosen, " 
-                                  << "attempting to read from gauge.cfg..."
-                                  << '\n';
-                        std::ifstream infile(filename);
-                        int count = 0;
-                        while (std::getline(infile, line)){
-                            if (count == 0){
-                                Axstring = line;
-                                std::cout << Axstring << '\n';
-    
-                                // Now we need to strip the start of the string
-                                // before the "="
-                                int eqpos = Axstring.find("=") + 1;
-                                Axstring = Axstring.substr(eqpos);
-                            }
-                            if (count == 1){
-                                Aystring = line;
-                                std::cout << Aystring << '\n';
-    
-                                // Now we need to strip the start of the string
-                                // before the "="
-                                int eqpos = Aystring.find("=") + 1;
-                                Aystring = Aystring.substr(eqpos);
-                            }
-                            if (count == 2){
-                                Azstring = line;
-                                std::cout << Azstring << '\n';
-    
-                                // Now we need to strip the start of the string
-                                // before the "="
-                                int eqpos = Azstring.find("=") + 1;
-                                Azstring = Azstring.substr(eqpos);
-                            }
-                            count++;
-                        }
-                    }
-                    else {
-                        std::cout << "Could not find src/gauge.cfg, please "
-                                  << "enter gauge fields manually. If you do "
-                                  << "not intend to use Az, please set it to 0"
-                                  << '\n';
-                        std::cout << "Ax = ";
-                        std::cin >> Axstring;
-                        std::cout << "Ay = ";
-                        std::cin >> Aystring;
-                        std::cout << "Az = ";
-                        std::cin >> Azstring;
-                    }
-
-                    // Now we hav Ax,y,zstring, we just need to store them
-                    Axstring.erase(remove_if(Axstring.begin(), Axstring.end(),
-                                             isspace),
-                                   Axstring.end());
-                    Aystring.erase(remove_if(Aystring.begin(), Aystring.end(),
-                                             isspace),
-                                   Aystring.end());
-                    Azstring.erase(remove_if(Azstring.begin(), Azstring.end(),
-                                             isspace),
-                                   Azstring.end());
-
-                    std::cout << Axstring << '\n' << Aystring << '\n' 
-                              << Azstring << '\n';
-                    par.store("Axstring",Axstring);
-                    par.store("Aystring",Aystring);
-                    par.store("Azstring",Azstring);
-                    
-                }
                 par.Afn = field;
                 //exit(0);
                 break;
@@ -520,6 +445,10 @@ Grid parseArgs(int argc, char** argv){
     // Setting variables
     if (stat(par.sval("data_dir").c_str(), &st) == -1) {
         mkdir(par.sval("data_dir").c_str(), 0700);
+    }
+
+    if (par.ival("dimnum") == 2){
+        par.store("zDim", 1);
     }
 
 

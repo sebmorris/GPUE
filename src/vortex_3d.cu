@@ -477,7 +477,7 @@ void find_edges(Grid &par, Wave &wave,
     dim3 grid = par.grid;
     dim3 threads = par.threads;
 
-    double2 *wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
+    double2 *wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");

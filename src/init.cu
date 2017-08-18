@@ -1,24 +1,24 @@
 
 #include "../include/init.h"
 
-int init_2d(Op &opr, Grid &par, Wave &wave){
+int init(Op &opr, Grid &par, Wave &wave){
 
-    // Setting functions for operators
     set_fns(par, opr, wave);
-    //opr.set_fns();
-    //wave.set_fns();
-
-    int max_threads = 128;
 
     // Re-establishing variables from parsed Grid class
     // Initializes uninitialized variables to 0 values
     std::string data_dir = par.sval("data_dir");
+    int dimnum = par.ival("dimnum");
     int N = par.ival("atoms");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
     bool write_file = par.bval("write_file");
     dim3 threads;
     unsigned int gSize = xDim*yDim;
+    if (dimnum == 3){
+        gSize *= zDim;
+    }
     double omega = par.dval("omega");
     double gdt = par.dval("gdt");
     double dt = par.dval("dt");
@@ -27,105 +27,38 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
     double omegaZ = par.dval("omegaZ");
     double gammaY = par.dval("gammaY"); //Aspect ratio of trapping geometry.
     double l = par.dval("winding");
-    double *x;
-    double *y;
-    double *xp;
-    double *yp;
+    double box_size = par.dval("box_size");
     double *Energy;
     double *r;
-    double *V;
     double *V_opt;
-    double *Phi;
-    double *Phi_gpu;
-    double *K;
-    double *pAy;
-    double *pAx;
-    double *Ax;
-    double *Ay;
     double *Bz;
-    double *pAy_gpu;
-    double *pAx_gpu;
     double *Energy_gpu;
     cufftDoubleComplex *wfc;
     if (par.bval("read_wfc") == true){
-        wfc = wave.cufftDoubleComplexval("wfc");
+        wfc = par.cufftDoubleComplexval("wfc");
     }
-    cufftDoubleComplex *V_gpu;
     cufftDoubleComplex *EV_opt;
     cufftDoubleComplex *wfc_backup;
-    cufftDoubleComplex *GK;
-    cufftDoubleComplex *GV;
-    cufftDoubleComplex *GpAx;
-    cufftDoubleComplex *GpAy;
-    cufftDoubleComplex *EV;
-    cufftDoubleComplex *EK;
-    cufftDoubleComplex *EpAy;
-    cufftDoubleComplex *EpAx;
     cufftDoubleComplex *EappliedField;
-    cufftDoubleComplex *wfc_gpu;
-    cufftDoubleComplex *K_gpu;
     cufftDoubleComplex *par_sum;
+    cudaMalloc((void**) &par_sum, sizeof(double2)*gSize);
 
-    //std::cout << omegaX << '\t' << omegaY << '\n';
-    //std::cout << "xDim is: " << xDim << '\t' <<  "yDim is: " << yDim << '\n';
-
+    std::cout << "gSize is: " << gSize << '\n';
     cufftResult result;
     cufftHandle plan_1d;
     cufftHandle plan_2d;
+    cufftHandle plan_3d;
     cufftHandle plan_other2d;
-
-    dim3 grid = par.grid;
 
     std::string buffer;
     double Rxy; //Condensate scaling factor.
-    double a0x, a0y; //Harmonic oscillator length in x and y directions
+    double a0x, a0y, a0z; //Harmonic oscillator length in x and y directions
 
-    int xD = 1, yD = 1, zD = 1;
+    generate_grid(par);
 
-    if (xDim <= max_threads){
-        threads.x = xDim;
-        threads.y = 1;
-        threads.z = 1;
-
-        xD = 1;
-        yD = yDim;
-        zD = 1;
-    }
-    else{
-        int count = 0;
-        int dim_tmp = xDim;
-        while (dim_tmp > max_threads){
-            count++;
-            dim_tmp /= 2;
-        }
-
-        std::cout << "count is: " << count << '\n';
-
-        threads.x = dim_tmp;
-        threads.y = 1;
-        threads.z = 1;
-        xD = pow(2,count);
-        yD = yDim;
-        zD = 1;
-    }
-
-    std::cout << "threads in x are: " << threads.x << '\n';
-    std::cout << "dimensions are: " << xD << '\t' << yD << '\t' << zD << '\n';
-
-    grid.x=xD;
-    grid.y=yD;
-    grid.z=zD;
-    par.grid = grid;
-    par.threads = threads;
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
     int i,j; //Used in for-loops for indexing
-
-/*
-    double xOffset, yOffset;
-    xOffset=0.0;//5.0e-6;
-    yOffset=0.0;//5.0e-6;
-*/
 
     double mass = 1.4431607e-25; //Rb 87 mass, kg
     par.store("mass",mass);
@@ -136,502 +69,34 @@ int init_2d(Op &opr, Grid &par, Wave &wave){
 
     a0x = sqrt(HBAR/(2*mass*omegaX));
     a0y = sqrt(HBAR/(2*mass*omegaY));
-    par.store("a0x",a0x);
-    par.store("a0y",a0y);
-
-    //std::cout << "a0x and y are: " << a0x << '\t' << a0y << '\n';
-
-    //std::cout << N << '\t' << a_s << '\t' << mass << '\t' << omegaZ << '\n';
-
-    // Let's go ahead and define the gDensConst here
-    // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
-    double gDenConst = N*4*HBAR*HBAR*PI*(4.67e-9/mass)
-                       *sqrt(mass*(omegaZ)/(2*PI*HBAR));
-    par.store("gDenConst", gDenConst);
-
-    Rxy = pow(15,0.2)*pow(N*a_s*sqrt(mass*omegaZ/HBAR),0.2);
-    par.store("Rxy",Rxy);
-    double bec_length = sqrt( HBAR/(mass*sqrt( omegaX*omegaX *
-                                               ( 1 - omega*omega) ) ));
-
-    //std::cout << "Rxy is: " << Rxy << '\n';
-    double xMax = 6*Rxy*a0x; //10*bec_length; //6*Rxy*a0x;
-    double yMax = 6*Rxy*a0y; //10*bec_length;
-    par.store("xMax",xMax);
-    par.store("yMax",yMax);
-
-    double pxMax, pyMax;
-    pxMax = (PI/xMax)*(xDim>>1);
-    pyMax = (PI/yMax)*(yDim>>1);
-    par.store("pyMax",pyMax);
-    par.store("pxMax",pxMax);
-
-    double dx = xMax/(xDim>>1);
-    double dy = yMax/(yDim>>1);
-    par.store("dx",dx);
-    par.store("dy",dy);
-    par.store("dz",0.0);
-
-    double dpx, dpy;
-    dpx = PI/(xMax);
-    dpy = PI/(yMax);
-    //std::cout << "yMax is: " << yMax << '\t' << "xMax is: " << xMax << '\n';
-    //std::cout << "dpx and dpy are:" << '\n';
-    //std::cout << dpx << '\t' << dpy << '\n';
-    par.store("dpx",dpx);
-    par.store("dpy",dpy);
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    //double *x,*y,*xp,*yp;
-    x = (double *) malloc(sizeof(double) * xDim);
-    y = (double *) malloc(sizeof(double) * yDim);
-    xp = (double *) malloc(sizeof(double) * xDim);
-    yp = (double *) malloc(sizeof(double) * yDim);
-
-    /*
-     * R-space and K-space grids
-     */
-    //std::cout << "dx and dy are: " << '\n';
-    //std::cout << dx << '\t' << dy << '\n';
-
-    // creating x,y,xp,yp
-    for(i=0; i<xDim/2; ++i){
-        x[i] = -xMax + i*dx;
-        x[i + (xDim/2)] = i*dx;
-
-        xp[i] = i*dpx;
-        xp[i + (xDim/2)] = -pxMax + i*dpx;
-
-    }
-    for(i=0; i<yDim/2; ++i){
-        y[i] = -yMax + i*dy;
-        y[i + (yDim/2)] = i*dy;
-
-        yp[i] = i*dpy;
-        yp[i + (yDim/2)] = -pyMax + i*dpy;
-
-    }
-
-    par.store("x", x);
-    par.store("y", y);
-    par.store("xp", xp);
-    par.store("yp", yp);
-
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    /* Initialise wavefunction, momentum, position, angular momentum,
-       imaginary and real-time evolution operators . */
-    Energy = (double*) malloc(sizeof(double) * gSize);
-    r = (double *) malloc(sizeof(double) * gSize);
-    Phi = (double *) malloc(sizeof(double) * gSize);
-    if (par.bval("read_wfc") == false){
-        wfc = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    }
-    wfc_backup = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
-                                               (gSize/threads.x));
-    K = (double *) malloc(sizeof(double) * gSize);
-    V = (double *) malloc(sizeof(double) * gSize);
-    V_opt = (double *) malloc(sizeof(double) * gSize);
-    GK = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    GV = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    GpAx = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    GpAy = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EK = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EV = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EV_opt = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    pAy = (double *) malloc(sizeof(double) * gSize);
-    pAx = (double *) malloc(sizeof(double) * gSize);
-    Ax = (double *) malloc(sizeof(double) * gSize);
-    Ay = (double *) malloc(sizeof(double) * gSize);
-    Bz = (double *) malloc(sizeof(double) * gSize);
-    EpAy = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EpAx = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
-                                                         gSize);
-
-    /* Initialise wfc, EKp, and EVr buffers on GPU */
-    cudaMalloc((void**) &Energy_gpu, sizeof(double) * gSize);
-    cudaMalloc((void**) &wfc_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &Phi_gpu, sizeof(double) * gSize);
-    cudaMalloc((void**) &K_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &V_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &pAy_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &pAx_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &par_sum, sizeof(cufftDoubleComplex) * (gSize/threads.x));
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    // Setting Ax, and Ay if from file
-    if (par.Afn == "file"){
-        file_A(par.Axfile, Ax, omega);
-        opr.store("Ax",Ax);
-        file_A(par.Ayfile, Ay, omega);
-        opr.store("Ay", Ay);
-        std::cout << "finished reading Ax / Ay from file" << '\n';
-    }
-    #ifdef __linux
-    int cores = omp_get_num_procs();
-    par.store("Cores_Total",cores);
-
-    // Assuming dev system specifics (Xeon with HT -> cores detected / 2)
-    par.store("Cores_Max",cores/2);
-    omp_set_num_threads(cores/2);
-
-    std::cout << Ax[256] << '\t' << Ay[0] << '\n';
-    //#pragma omp parallel for private(j)
-    #endif
-
-    par.store("gSize", xDim*yDim);
-    generate_fields(par);
-    K = par.dsval("K");
-    Ax = par.dsval("Ax");
-    Ay = par.dsval("Ay");
-    V = par.dsval("V");
-
-    pAx = par.dsval("pAx");
-    pAy = par.dsval("pAy");
-    //pAz = par.dsval("pAz");
-
-    GpAx = par.cufftDoubleComplexval("GpAx");
-    GpAy = par.cufftDoubleComplexval("GpAy");
-    //GpAz = par.cufftDoubleComplexval("GpAz");
-    EpAx = par.cufftDoubleComplexval("EpAx");
-    EpAy = par.cufftDoubleComplexval("EpAy");
-    //EpAz = par.cufftDoubleComplexval("EpAz");
-
-    GV = par.cufftDoubleComplexval("GV");
-    EV = par.cufftDoubleComplexval("EV");
-    GK = par.cufftDoubleComplexval("GK");
-    EK = par.cufftDoubleComplexval("EK");
-
-    wfc = par.cufftDoubleComplexval("wfc");
-
-    for( i=0; i < xDim; i++ ){
-        for( j=0; j < yDim; j++ ){
-            sum+=sqrt(wfc[(i*xDim + j)].x*wfc[(i*yDim + j)].x + 
-                      wfc[(i*xDim + j)].y*wfc[(i*yDim + j)].y);
-        }
-    }
-
-    Bz = curl2d(par, Ax, Ay);
-
-    if (write_file){
-        std::cout << "writing initial variables to file..." << '\n';
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-        //hdfWriteDouble(xDim, V, 0, "V_0"); //HDF COMING SOON!
-        //hdfWriteComplex(xDim, wfc, 0, "wfc_0");
-        //FileIO::writeOutDouble(buffer, data_dir + "V_opt",V_opt,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "V",V,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "K",K,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "pAy",pAy,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "pAx",pAx,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Ax",Ax,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Ay",Ay,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,xDim*yDim,0);
-        FileIO::writeOut(buffer, data_dir + "WFC",wfc,xDim*yDim,0);
-        FileIO::writeOut(buffer, data_dir + "EpAy",EpAy,xDim*yDim,0);
-        FileIO::writeOut(buffer, data_dir + "EpAx",EpAx,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Phi",Phi,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "r",r,xDim*yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "x",x,xDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "y",y,yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "px",xp,xDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "py",yp,yDim,0);
-        FileIO::writeOut(buffer, data_dir + "GK",GK,xDim*yDim,0);
-        FileIO::writeOut(buffer, data_dir + "GV",GV,xDim*yDim,0);
-        FileIO::writeOut(buffer, data_dir + "GpAx",GpAx,xDim*yDim,0);
-        FileIO::writeOut(buffer, data_dir + "GpAy",GpAy,xDim*yDim,0);
-    }
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    //std::cout << "wrote initial variables" << '\n';
-
-    //free(V);
-    //free(K); free(r); free(Phi);
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    if (par.bval("read_wfc") == false){
-        //sum=sqrt(sum*dx*dy);
-        sum=1;
-        //#pragma omp parallel for reduction(+:sum) private(j)
-        for (i = 0; i < xDim; i++){
-            for (j = 0; j < yDim; j++){
-                wfc[(i*yDim + j)].x = (wfc[(i*yDim + j)].x)/(sum);
-                wfc[(i*yDim + j)].y = (wfc[(i*yDim + j)].y)/(sum);
-            }
-        }
-    }
-
-    //std::cout << "modified wfc" << '\n';
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    //std::cout << "xDim is: " << xDim << '\t' << "yDim is: " << yDim << '\n';
-    //std::cout << "plan_2d is: " << plan_2d << '\n';
-    result = cufftPlan2d(&plan_2d, xDim, yDim, CUFFT_Z2Z);
-    //std::cout << "found result" << '\n';
-    if(result != CUFFT_SUCCESS){
-        printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan2d(%s, %d, %d).\n", "plan_2d",
-                (unsigned int)xDim, (unsigned int)yDim);
-        return -1;
-    }
-
-    plan_other2d = generate_plan_other2d(par);
-
-    result = cufftPlan1d(&plan_1d, xDim, CUFFT_Z2Z, yDim);
-    if(result != CUFFT_SUCCESS){
-        printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan1d(%s ,%d ,%d ).\n",
-               "plan_1d", (unsigned int)xDim, (unsigned int)yDim);
-        return -1;
-    }
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    //std::cout << GV[0].x << '\t' << GK[0].x << '\t'
-    //          << pAy[0] << '\t' << pAx[0] << '\n';
-
-    //std::cout << "storing variables..." << '\n';
-
-    // Storing variables that have been initialized
-    // Re-establishing variables from parsed Grid class
-    // Initializes uninitialized variables to 0 values
-    par.store("omega", omega);
-    par.store("gdt", gdt);
-    par.store("dt", dt);
-    par.store("omegaX", omegaX);
-    par.store("omegaY", omegaY);
-    par.store("omegaZ", omegaZ);
-    par.store("dx", dx);
-    par.store("dy", dy);
-    par.store("xMax", xMax);
-    par.store("yMax", yMax);
-    par.store("winding", l);
-    par.store("x", x);
-    par.store("y", y);
-    par.store("xp", xp);
-    par.store("yp", yp);
-    wave.store("Energy", Energy);
-    wave.store("r", r);
-    opr.store("V", V);
-    opr.store("V_opt", V_opt);
-    wave.store("Phi", Phi);
-    wave.store("Phi_gpu", Phi_gpu);
-    opr.store("K", K);
-    opr.store("pAy", pAy);
-    opr.store("pAx", pAx);
-    opr.store("Energy_gpu", Energy_gpu);
-    par.store("atoms", N);
-    par.store("xDim", xDim);
-    par.store("yDim", yDim);
-    wave.store("wfc", wfc);
-    opr.store("V_gpu", V_gpu);
-    opr.store("EV_opt", EV_opt);
-    wave.store("wfc_backup", wfc_backup);
-    opr.store("GK", GK);
-    opr.store("GV", GV);
-    opr.store("GpAx", GpAx);
-    opr.store("GpAy", GpAy);
-    opr.store("EV", EV);
-    opr.store("EK", EK);
-    opr.store("EpAy", EpAy);
-    opr.store("EpAx", EpAx);
-    opr.store("EappliedField", EappliedField);
-    wave.store("wfc_gpu", wfc_gpu);
-    opr.store("K_gpu", K_gpu);
-    opr.store("pAy_gpu", pAy_gpu);
-    opr.store("pAx_gpu", pAx_gpu);
-    wave.store("par_sum", par_sum);
-
-    par.store("result", result);
-    par.store("plan_1d", plan_1d);
-    par.store("plan_2d", plan_2d);
-    par.store("plan_other2d", plan_other2d);
-
-    par.threads = threads;
-    par.grid = grid;
-
-    std::cout << "variables stored" << '\n';
-
-    return 0;
-}
-
-// initializing all variables for 3d
-int init_3d(Op &opr, Grid &par, Wave &wave){
-
-    int max_threads = 128;
-
-    // Setting functions for operators
-    set_fns(par, opr, wave);
-    //opr.set_fns();
-    //wave.set_fns();
-
-    // Re-establishing variables from parsed Grid class
-    // Initializes uninitialized variables to 0 values
-    std::string data_dir = par.sval("data_dir");
-    int N = par.ival("atoms");
-    int xDim = par.ival("xDim");
-    int yDim = par.ival("yDim");
-    int zDim = par.ival("zDim");
-    dim3 threads(max_threads,1,1);
-    bool write_file = par.bval("write_file");
-    unsigned int gSize = xDim*yDim*zDim;
-    double omega = par.dval("omega");
-    double gdt = par.dval("gdt");
-    double dt = par.dval("dt");
-    double omegaX = par.dval("omegaX");
-    double omegaY = par.dval("omegaY");
-    double omegaZ = par.dval("omegaZ");
-    double box_size = par.dval("box_size");
-    double gammaY = par.dval("gammaY"); //Aspect ratio of trapping geometry.
-    double l = par.dval("winding");
-    double *x;
-    double *y;
-    double *z;
-    double *xp;
-    double *yp;
-    double *zp;
-    double *Energy;
-    double *r;
-    double *V;
-    double *V_opt;
-    double *Phi;
-    double *Phi_gpu;
-    double *K;
-    double *pAy;
-    double *pAx;
-    double *pAz;
-    double *Ax;
-    double *Ay;
-    double *Az;
-    double *pAy_gpu;
-    double *pAx_gpu;
-    double *pAz_gpu;
-    double *Energy_gpu;
-    cufftDoubleComplex *wfc;
-    if (par.bval("read_wfc") == true){
-        wfc = wave.cufftDoubleComplexval("wfc");
-    }
-    cufftDoubleComplex *V_gpu;
-    cufftDoubleComplex *EV_opt;
-    cufftDoubleComplex *wfc_backup;
-    cufftDoubleComplex *GK;
-    cufftDoubleComplex *GV;
-    cufftDoubleComplex *GpAx;
-    cufftDoubleComplex *GpAy;
-    cufftDoubleComplex *GpAz;
-    cufftDoubleComplex *EV;
-    cufftDoubleComplex *EK;
-    cufftDoubleComplex *EpAy;
-    cufftDoubleComplex *EpAx;
-    cufftDoubleComplex *EpAz;
-    cufftDoubleComplex *EappliedField;
-    cufftDoubleComplex *wfc_gpu;
-    cufftDoubleComplex *K_gpu;
-    cufftDoubleComplex *par_sum;
-
-    //std::cout << omegaX << '\t' << omegaY << '\n';
-    //std::cout << "xDim is: " << xDim << '\t' <<  "yDim is: " << yDim << '\t'
-    //          << "zDim is: " << zDim << '\n';
-
-    cufftResult result;
-    //cufftHandle plan_1d;
-    cufftHandle plan_3d;
-
-    dim3 grid = par.grid;
-
-    std::string buffer;
-
-    double Rxy; //Condensate scaling factor.
-    double a0x, a0y, a0z; //Harmonic oscillator length in x and y directions
-
-    int xD = 1, yD = 1, zD = 1;
-
-    if (xDim <= max_threads){
-        threads.x = xDim;
-        threads.y = 1;
-        threads.z = 1;
-
-        xD = 1;
-        yD = yDim;
-        zD = zDim;
-    }
-    else{
-        int count = 0;
-        int dim_tmp = xDim;
-        while (dim_tmp > max_threads){
-            count++;
-            dim_tmp /= 2;
-        }
-
-        std::cout << "count is: " << count << '\n';
-
-        threads.x = dim_tmp;
-        threads.y = 1;
-        threads.z = 1;
-        xD = pow(2,count);
-        yD = yDim;
-        zD = zDim;
-    }
-
-    std::cout << "threads in x are: " << threads.x << '\n';
-    std::cout << "dimensions are: " << xD << '\t' << yD << '\t' << zD << '\n';
-
-    grid.x=xD;
-    grid.y=yD;
-    grid.z=zD;
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    int i, j, k; //Used in for-loops for indexing
-
-/*
-    double xOffset, yOffset;
-    xOffset=0.0;//5.0e-6;
-    yOffset=0.0;//5.0e-6;
-*/
-
-    double mass = 1.4431607e-25; //Rb 87 mass, kg
-    par.store("mass",mass);
-    double a_s = 4.76e-9;
-    par.store("a_s",a_s);
-
-    // Let's go ahead and define the gDensConst here
-    // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
-    double gDenConst = N*4*HBAR*HBAR*PI*(4.76e-9/mass);
-    par.store("gDenConst", gDenConst);
-
-
-    double sum = 0.0;
-
-    a0x = pow(HBAR/(2*mass*omegaX), 0.5);
-    a0y = pow(HBAR/(2*mass*omegaY), 0.5);
-    a0z = pow(HBAR/(2*mass*omegaZ), 0.5);
+    a0z = sqrt(HBAR/(2*mass*omegaY));
     par.store("a0x",a0x);
     par.store("a0y",a0y);
     par.store("a0z",a0z);
 
-    //std::cout << "a0x and y are: " << a0x << '\t' << a0y << '\n';
-
-    //std::cout << N << '\t' << a_s << '\t' << mass << '\t' << omegaZ << '\n';
+    // Let's go ahead and define the gDensConst here
+    // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
+    double gDenConst = N*4*HBAR*HBAR*PI*(4.67e-9/mass);
+    if (dimnum == 2){
+        gDenConst*= sqrt(mass*(omegaZ)/(2*PI*HBAR));
+    }
+    par.store("gDenConst", gDenConst);
 
     Rxy = pow(15,0.2)*pow(N*a_s*sqrt(mass*omegaZ/HBAR),0.2);
     par.store("Rxy",Rxy);
-    double bec_length = sqrt( HBAR/(mass*sqrt( omegaX*omegaX *
-                                               ( 1 - omega*omega) ) ));
 
     //std::cout << "Rxy is: " << Rxy << '\n';
-    double xMax = box_size;
-    double yMax = box_size;
-    double zMax = box_size;
-/*
-    double xMax = 10*bec_length;//6*Rxy*a0x; //6*Rxy*a0x;
-    double yMax = 10*bec_length;//6*Rxy*a0y;
-    double zMax = 10*bec_length;//6*Rxy*a0z;
-*/
+    double xMax, yMax, zMax;
+    if (box_size > 0){
+        xMax = box_size;
+        yMax = box_size;
+        zMax = box_size;
+    }
+    else{
+        xMax = 6*Rxy*a0x;
+        yMax = 6*Rxy*a0y;
+        zMax = 6*Rxy*a0z;
+    }
     par.store("xMax",xMax);
     par.store("yMax",yMax);
     par.store("zMax",zMax);
@@ -664,100 +129,17 @@ int init_3d(Op &opr, Grid &par, Wave &wave){
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
-    //double *x,*y,*xp,*yp;
-    x = (double *) malloc(sizeof(double) * xDim);
-    y = (double *) malloc(sizeof(double) * yDim);
-    z = (double *) malloc(sizeof(double) * zDim);
-    xp = (double *) malloc(sizeof(double) * xDim);
-    yp = (double *) malloc(sizeof(double) * yDim);
-    zp = (double *) malloc(sizeof(double) * zDim);
-
-    /*
-     * R-space and K-space grids
-     */
-    //std::cout << "dx and dy are: " << '\n';
-    //std::cout << dx << '\t' << dy << '\n';
-    // creating x,y,z,xp,yp,zp
-    for(i=0; i<xDim/2; ++i){
-        x[i] = -xMax + i*dx;
-        x[i + (xDim/2)] = i*dx;
-
-        xp[i] = i*dpx;
-        xp[i + (xDim/2)] = -pxMax + i*dpx;
-
-    }
-    for(i=0; i<yDim/2; ++i){
-        y[i] = -yMax + i*dy;
-        y[i + (yDim/2)] = i*dy;
-
-        yp[i] = i*dpy;
-        yp[i + (yDim/2)] = -pyMax + i*dpy;
-
-    }
-    for(i=0; i<zDim/2; ++i){
-        z[i] = -zMax + i*dz;
-        z[i + (zDim/2)] = i*dz;
-
-        zp[i] = i*dpz;
-        zp[i + (zDim/2)] = -pzMax + i*dpz;
-
-    }
-
-    par.store("x", x);
-    par.store("y", y);
-    par.store("z", z);
-    par.store("xp", xp);
-    par.store("yp", yp);
-    par.store("zp", zp);
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
     /* Initialise wavefunction, momentum, position, angular momentum,
        imaginary and real-time evolution operators . */
     Energy = (double*) malloc(sizeof(double) * gSize);
     r = (double *) malloc(sizeof(double) * gSize);
-    Phi = (double *) malloc(sizeof(double) * gSize);
-    if (par.bval("read_wfc") == false){
-        wfc = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    }
-    wfc_backup = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
-                                               (gSize/threads.x));
-    K = (double *) malloc(sizeof(double) * gSize);
-    V = (double *) malloc(sizeof(double) * gSize);
     V_opt = (double *) malloc(sizeof(double) * gSize);
-    GK = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    GV = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    GpAx = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    GpAy = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    GpAz = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EK = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EV = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
     EV_opt = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    pAy = (double *) malloc(sizeof(double) * gSize);
-    pAx = (double *) malloc(sizeof(double) * gSize);
-    pAz = (double *) malloc(sizeof(double) * gSize);
-    Ax = (double *) malloc(sizeof(double) * gSize);
-    Ay = (double *) malloc(sizeof(double) * gSize);
-    Az = (double *) malloc(sizeof(double) * gSize);
-    EpAy = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EpAx = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    EpAz = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
+    Bz = (double *) malloc(sizeof(double) * gSize);
     EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
                                                          gSize);
 
-    /* Initialise wfc, EKp, and EVr buffers on GPU */
-    cudaMalloc((void**) &Energy_gpu, sizeof(double) * gSize);
-    cudaMalloc((void**) &wfc_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &Phi_gpu, sizeof(double) * gSize);
-    cudaMalloc((void**) &K_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &V_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &pAy_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &pAx_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &pAz_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void**) &par_sum, sizeof(cufftDoubleComplex)*(gSize/threads.x));
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    //std::cout << "all variables malloc'd" << '\n';
 
     #ifdef __linux
     int cores = omp_get_num_procs();
@@ -766,164 +148,98 @@ int init_3d(Op &opr, Grid &par, Wave &wave){
     // Assuming dev system specifics (Xeon with HT -> cores detected / 2)
     par.store("Cores_Max",cores/2);
     omp_set_num_threads(cores/2);
-    //std::cout << "GAMMAY IS: " << gammaY << '\n';
-    //#pragma omp parallel for private(k)
+
+    //#pragma omp parallel for private(j)
     #endif
-    int index;
-    // Setting Ax, Ay, and Az if from file
-    if (par.Afn == "file"){
-        file_A(par.Axfile, Ax, omega);
-        opr.store("Ax",Ax);
 
-        file_A(par.Ayfile, Ay, omega);
-        opr.store("Ay", Ay);
+    par.store("gSize", xDim*yDim*zDim);
+    generate_fields(par);
+    double *K = par.dsval("K");
+    double *Ax = par.dsval("Ax");
+    double *Ay = par.dsval("Ay");
+    double *Az = par.dsval("Az");
+    double *V = par.dsval("V");
 
-        file_A(par.Azfile, Az, omega);
-        opr.store("Az", Az);
+    double *pAx = par.dsval("pAx");
+    double *pAy = par.dsval("pAy");
+    //pAz = par.dsval("pAz");
 
-        std::cout << "finished reading Ax / Ay / Az from file" << '\n';
-    }
-    for( i=0; i < xDim; i++ ){
-        for( j=0; j < yDim; j++ ){
-            for( k=0; k < zDim; k++ ){
-                index = (i * yDim * zDim) + (j * zDim) + k;
-                if (par.Afn == "rotation"){
-                    Phi[index] = fmod(l*atan2(y[j], x[i]),2*PI);
-                }
-                else if (par.Vfn == "torus"){
-                    double xOffset = par.dval("x0_shift");
-                    double yOffset = par.dval("y0_shift");
-                    double rMax = par.dval("xMax");
-                    double fudge = par.dval("fudge");
-                    double x_loc = x[i] - xOffset;
-                    double y_loc = y[j] - yOffset;
-                    double radius = sqrt(x_loc*x_loc + y_loc*y_loc)
-                                    - 0.5*rMax*fudge;
-                    Phi[index] = fmod(l*atan2(z[k], radius),2*PI);
-                }
-                else{
-                    Phi[index] = 0.0;
-                }
+    double2 *GpAx = par.cufftDoubleComplexval("GpAx");
+    double2 *GpAy = par.cufftDoubleComplexval("GpAy");
+    double2 *GpAz = par.cufftDoubleComplexval("GpAz");
+    double2 *EpAx = par.cufftDoubleComplexval("EpAx");
+    double2 *EpAy = par.cufftDoubleComplexval("EpAy");
+    double2 *EpAz = par.cufftDoubleComplexval("EpAz");
 
-                if (par.bval("read_wfc") != true){
-                    wfc[index] = wave.Wfc_fn(par, Phi[index],i,j,k);
-                    sum+=sqrt(wfc[index].x*wfc[index].x + 
-                              wfc[index].y*wfc[index].y);
-                }
-                
-                V[index] = opr.V_fn(par, opr, i, j, k);
-                K[index] = opr.K_fn(par, opr, i, j, k);
-    
-                GV[index].x = exp( -V[index]*(gdt/(2*HBAR)));
-                GK[index].x = exp( -K[index]*(gdt/HBAR));
-                GV[index].y = 0.0;
-                GK[index].y = 0.0;
+    double2 *GV = par.cufftDoubleComplexval("GV");
+    double2 *EV = par.cufftDoubleComplexval("EV");
+    double2 *GK = par.cufftDoubleComplexval("GK");
+    double2 *EK = par.cufftDoubleComplexval("EK");
 
-                // Ax and Ay will be calculated here but are used only for
-                // debugging. They may be needed later for magnetic field calc
-                if (par.Afn != "file"){
-                    Ax[index] = opr.Ax_fn(par, opr, i, j, k);
-                    Ay[index] = opr.Ay_fn(par, opr, i, j, k);
-                    Az[index] = opr.Az_fn(par, opr, i, j, k);
-                }
-                
-                pAy[index] = pAy_fn(par, opr, i, j, k);
-                pAx[index] = pAx_fn(par, opr, i, j, k);
-                pAz[index] = pAz_fn(par, opr, i, j, k);
-    
-                GpAx[index].x = exp(-pAx[index]*gdt);
-                GpAx[index].y = 0;
-                GpAy[index].x = exp(-pAy[index]*gdt);
-                GpAy[index].y = 0;
-                GpAz[index].x = exp(-pAz[index]*gdt);
-                GpAz[index].y = 0;
+    wfc = par.cufftDoubleComplexval("wfc");
 
-                EV[index].x=cos( -V[index]*(dt/(2*HBAR)));
-                EV[index].y=sin( -V[index]*(dt/(2*HBAR)));
-                EK[index].x=cos( -K[index]*(dt/HBAR));
-                EK[index].y=sin( -K[index]*(dt/HBAR));
-
-                EpAy[index].x=cos(-pAy[index]*dt);
-                EpAy[index].y=sin(-pAy[index]*dt);
-                EpAx[index].x=cos(-pAx[index]*dt);
-                EpAx[index].y=sin(-pAx[index]*dt);
-                EpAz[index].x=cos(-pAz[index]*dt);
-                EpAz[index].y=sin(-pAz[index]*dt);
-
-            }
-        }
+    int index = 0;
+    for( i=0; i < gSize; i++ ){
+        sum+=sqrt(wfc[i].x*wfc[i].x + wfc[i].y*wfc[i].y);
     }
 
     if (write_file){
-        // Calculating the curl 
-        std::cout << "Calculating the 3d curl..." << '\n';
-        double *Bx = curl3d_x(par, Ax, Ay, Az);
-        double *By = curl3d_y(par, Ax, Ay, Az);
-        double *Bz = curl3d_z(par, Ax, Ay, Az);
-        std::cout << "Finished calculating Curl" << '\n';
-
+        if (dimnum == 2){
+            Bz = curl2d(par, Ax, Ay);
+        }
+        if (dimnum == 3){
+            std::cout << "Calculating the 3d curl..." << '\n';
+                    double *Bx = curl3d_x(par, Ax, Ay, Az);
+                    double *By = curl3d_y(par, Ax, Ay, Az);
+                    double *Bz = curl3d_z(par, Ax, Ay, Az);
+                    std::cout << "Finished calculating Curl" << '\n';
+        }
         std::cout << "writing initial variables to file..." << '\n';
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
         //hdfWriteDouble(xDim, V, 0, "V_0"); //HDF COMING SOON!
         //hdfWriteComplex(xDim, wfc, 0, "wfc_0");
-        //FileIO::writeOutDouble(buffer, data_dir + "V_opt",V_opt,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "V",V,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "K",K,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "pAy",pAy,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "pAx",pAx,gSize,0);
-        FileIO::writeOutDouble(buffer, data_dir + "pAz",pAz,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Ax",Ax,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Ay",Ay,gSize,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Az",Az,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
-        FileIO::writeOutDouble(buffer, data_dir + "By",By,gSize,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Bx",By,gSize,0);
+        if (dimnum == 3){
+            FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+            FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+        }
         FileIO::writeOut(buffer, data_dir + "WFC",wfc,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAy",EpAy,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAx",EpAx,gSize,0);
-        FileIO::writeOut(buffer, data_dir + "EpAz",EpAz,gSize,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Phi",Phi,gSize,0);
-        FileIO::writeOutDouble(buffer, data_dir + "r",r,gSize,0);
-        FileIO::writeOutDouble(buffer, data_dir + "x",x,xDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "y",y,yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "z",z,zDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "px",xp,xDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "py",yp,yDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "pz",zp,zDim,0);
         FileIO::writeOut(buffer, data_dir + "GK",GK,gSize,0);
         FileIO::writeOut(buffer, data_dir + "GV",GV,gSize,0);
         FileIO::writeOut(buffer, data_dir + "GpAx",GpAx,gSize,0);
         FileIO::writeOut(buffer, data_dir + "GpAy",GpAy,gSize,0);
-        FileIO::writeOut(buffer, data_dir + "GpAz",GpAz,gSize,0);
     }
 
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
-    //std::cout << "wrote initial variables" << '\n';
-
-    //free(V);
-    free(K); free(r); free(Phi);
-
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
-
     if (par.bval("read_wfc") == false){
-        sum=sqrt(sum*dx*dy*dz);
+        //sum=sqrt(sum*dx*dy);
+        sum=1;
         //#pragma omp parallel for reduction(+:sum) private(j)
         for (i = 0; i < xDim; i++){
             for (j = 0; j < yDim; j++){
-                for (k = 0; k < zDim; k++){
-                    index = i * yDim * zDim + j * zDim + k;
-                    wfc[index].x = (wfc[index].x)/(sum);
-                    wfc[index].y = (wfc[index].y)/(sum);
-                }
+                wfc[(i*yDim + j)].x = (wfc[(i*yDim + j)].x)/(sum);
+                wfc[(i*yDim + j)].y = (wfc[(i*yDim + j)].y)/(sum);
             }
         }
     }
 
-    //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
+    result = cufftPlan2d(&plan_2d, xDim, yDim, CUFFT_Z2Z);
+    if(result != CUFFT_SUCCESS){
+        printf("Result:=%d\n",result);
+        printf("Error: Could not execute cufftPlan2d(%s, %d, %d).\n", "plan_2d",
+                (unsigned int)xDim, (unsigned int)yDim);
+        return -1;
+    }
 
-    //std::cout << "xDim is: " << xDim << '\t' << "yDim is: " << yDim << '\n';
-    //std::cout << "plan_2d is: " << plan_2d << '\n';
+    plan_other2d = generate_plan_other2d(par);
+
     result = cufftPlan3d(&plan_3d, xDim, yDim, zDim, CUFFT_Z2Z);
     //std::cout << "found result" << '\n';
     if(result != CUFFT_SUCCESS){
@@ -934,20 +250,9 @@ int init_3d(Op &opr, Grid &par, Wave &wave){
         return -1;
     }
 
-    cufftHandle plan_1d = generate_plan_other3d(par, 0);
+    plan_1d = generate_plan_other3d(par, 0);
     cufftHandle plan_dim2 = generate_plan_other3d(par, 1);
     cufftHandle plan_dim3 = generate_plan_other3d(par, 2);
-
-/*
-    result = cufftPlan1d(&plan_1d, xDim, CUFFT_Z2Z, yDim);
-    if(result != CUFFT_SUCCESS){
-        printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan1d(%s ,%d ,%d , %d).\n",
-               "plan_1d", (unsigned int)xDim, (unsigned int)yDim,
-                          (unsigned int)zDim);
-        return -1;
-    }
-*/
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
@@ -959,67 +264,23 @@ int init_3d(Op &opr, Grid &par, Wave &wave){
     // Storing variables that have been initialized
     // Re-establishing variables from parsed Grid class
     // Initializes uninitialized variables to 0 values
-    par.store("omega", omega);
-    par.store("gdt", gdt);
-    par.store("dt", dt);
-    par.store("omegaX", omegaX);
-    par.store("omegaY", omegaY);
-    par.store("omegaZ", omegaZ);
-    par.store("dx", dx);
-    par.store("dy", dy);
-    par.store("dz", dz);
-    par.store("xMax", xMax);
-    par.store("yMax", yMax);
-    par.store("zMax", zMax);
-    par.store("winding", l);
-    par.store("x", x);
-    par.store("y", y);
-    par.store("z", z);
-    par.store("xp", xp);
-    par.store("yp", yp);
-    par.store("zp", zp);
-    wave.store("Energy", Energy);
-    wave.store("r", r);
-    opr.store("V", V);
-    opr.store("V_opt", V_opt);
-    wave.store("Phi", Phi);
-    wave.store("Phi_gpu", Phi_gpu);
-    opr.store("K", K);
-    opr.store("pAy", pAy);
-    opr.store("pAx", pAx);
-    opr.store("pAz", pAz);
-    opr.store("Energy_gpu", Energy_gpu);
-    par.store("atoms", N);
-    wave.store("wfc", wfc);
-    opr.store("V_gpu", V_gpu);
-    opr.store("EV_opt", EV_opt);
-    wave.store("wfc_backup", wfc_backup);
-    opr.store("GK", GK);
-    opr.store("GV", GV);
-    opr.store("GpAx", GpAx);
-    opr.store("GpAy", GpAy);
-    opr.store("GpAz", GpAz);
-    opr.store("EV", EV);
-    opr.store("EK", EK);
-    opr.store("EpAy", EpAy);
-    opr.store("EpAx", EpAx);
-    opr.store("EpAz", EpAz);
-    opr.store("EappliedField", EappliedField);
-    wave.store("wfc_gpu", wfc_gpu);
-    opr.store("K_gpu", K_gpu);
-    opr.store("pAy_gpu", pAy_gpu);
-    opr.store("pAx_gpu", pAx_gpu);
-    opr.store("pAz_gpu", pAz_gpu);
-    wave.store("par_sum", par_sum);
+    par.store("Energy", Energy);
+    par.store("r", r);
+    par.store("Energy_gpu", Energy_gpu);
+    par.store("wfc", wfc);
+    par.store("EV_opt", EV_opt);
+    par.store("V_opt", V_opt);
+    par.store("wfc_backup", wfc_backup);
+    par.store("EappliedField", EappliedField);
+    par.store("par_sum", par_sum);
 
     par.store("result", result);
     par.store("plan_1d", plan_1d);
+    par.store("plan_2d", plan_2d);
+    par.store("plan_other2d", plan_other2d);
     par.store("plan_3d", plan_3d);
     par.store("plan_dim2", plan_dim2);
     par.store("plan_dim3", plan_dim3);
-
-    par.threads = threads;
-    par.grid = grid;
 
     std::cout << "variables stored" << '\n';
 
@@ -1064,19 +325,13 @@ int main(int argc, char **argv){
         std::string infilei = par.sval("infilei");
         printf("Loading wavefunction...");
         wfc=FileIO::readIn(infile,infilei,gSize);
-        wave.store("wfc",wfc);
+        par.store("wfc",wfc);
         printf("Wavefunction loaded.\n");
         //std::string data_dir = par.sval("data_dir");
         //FileIO::writeOut(buffer, data_dir + "WFC_CHECK",wfc,gSize,0);
     }
 
-    // Initialization split between 2d and 3d
-    if (dimnum == 2){
-        init_2d(opr, par, wave);
-    }
-    else if (dimnum == 3){
-        init_3d(opr, par, wave);
-    }
+    init(opr, par, wave);
 
     //std::cout << "initialized" << '\n';
 
@@ -1088,29 +343,29 @@ int main(int argc, char **argv){
     double dy = par.dval("dy");
     double *x = par.dsval("x");
     double *y = par.dsval("y");
-    double *V_opt = opr.dsval("V_opt");
-    double *pAy = opr.dsval("pAy");
-    double *pAx = opr.dsval("pAx");
-    double *pAy_gpu = opr.dsval("pAy_gpu");
-    double *pAx_gpu = opr.dsval("pAx_gpu");
-    double *pAz_gpu = nullptr;
+    double *V_opt = par.dsval("V_opt");
+    double *pAy = par.dsval("pAy");
+    double *pAx = par.dsval("pAx");
+    double *pAy_gpu;
+    double *pAx_gpu;
+    double *pAz_gpu;
     int gsteps = par.ival("gsteps");
     int esteps = par.ival("esteps");
-    cufftDoubleComplex *wfc = wave.cufftDoubleComplexval("wfc");
-    cufftDoubleComplex *V_gpu = opr.cufftDoubleComplexval("V_gpu");
-    cufftDoubleComplex *GK = opr.cufftDoubleComplexval("GK");
-    cufftDoubleComplex *GV = opr.cufftDoubleComplexval("GV");
-    cufftDoubleComplex *GpAx = opr.cufftDoubleComplexval("GpAx");
-    cufftDoubleComplex *GpAy = opr.cufftDoubleComplexval("GpAy");
+    cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
+    cufftDoubleComplex *V_gpu;
+    cufftDoubleComplex *GK = par.cufftDoubleComplexval("GK");
+    cufftDoubleComplex *GV = par.cufftDoubleComplexval("GV");
+    cufftDoubleComplex *GpAx = par.cufftDoubleComplexval("GpAx");
+    cufftDoubleComplex *GpAy = par.cufftDoubleComplexval("GpAy");
     cufftDoubleComplex *GpAz = nullptr;
-    cufftDoubleComplex *EV = opr.cufftDoubleComplexval("EV");
-    cufftDoubleComplex *EK = opr.cufftDoubleComplexval("EK");
-    cufftDoubleComplex *EpAy = opr.cufftDoubleComplexval("EpAy");
-    cufftDoubleComplex *EpAx = opr.cufftDoubleComplexval("EpAx");
+    cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
+    cufftDoubleComplex *EK = par.cufftDoubleComplexval("EK");
+    cufftDoubleComplex *EpAy = par.cufftDoubleComplexval("EpAy");
+    cufftDoubleComplex *EpAx = par.cufftDoubleComplexval("EpAx");
     cufftDoubleComplex *EpAz = nullptr;
-    cufftDoubleComplex *wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
-    cufftDoubleComplex *K_gpu = opr.cufftDoubleComplexval("K_gpu");
-    cufftDoubleComplex *par_sum = wave.cufftDoubleComplexval("par_sum");
+    cufftDoubleComplex *wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
+    cufftDoubleComplex *K_gpu;
+    cufftDoubleComplex *par_sum = par.cufftDoubleComplexval("par_sum");
     cudaError_t err;
     int gsize = xDim * yDim;
 
@@ -1118,12 +373,16 @@ int main(int argc, char **argv){
     if (dimnum == 3){
         double dz = par.dval("dz");
         double *z = par.dsval("z");
-        double *pAz = opr.dsval("pAz");
-        double *pAz_gpu = opr.dsval("pAz_gpu");
-        cufftDoubleComplex *GpAz = opr.cufftDoubleComplexval("GpAz");
-        cufftDoubleComplex *EpAz = opr.cufftDoubleComplexval("EpAz");
+        double *pAz = par.dsval("pAz");
+        cufftDoubleComplex *GpAz = par.cufftDoubleComplexval("GpAz");
+        cufftDoubleComplex *EpAz = par.cufftDoubleComplexval("EpAz");
         gsize = xDim*yDim*zDim;
     }
+    cudaMalloc((void**) &V_gpu, sizeof(double2)*gsize);
+    cudaMalloc((void**) &K_gpu, sizeof(double2)*gsize);
+    cudaMalloc((void**) &pAx_gpu, sizeof(double2)*gsize);
+    cudaMalloc((void**) &pAy_gpu, sizeof(double2)*gsize);
+    cudaMalloc((void**) &pAz_gpu, sizeof(double2)*gsize);
 
     std::cout << "variables re-established" << '\n';
     //std::cout << read_wfc << '\n';
@@ -1172,21 +431,20 @@ int main(int argc, char **argv){
             std::cout << "ERROR: Could not copy wfc_gpu to device" << '\n';
             exit(1);
         }
-        opr.store("pAx", pAx);
-        opr.store("pAy", pAy);
-        opr.store("GK", GK);
-        opr.store("GV", GV);
-        wave.store("wfc", wfc);
-        opr.store("K_gpu", K_gpu);
-        opr.store("V_gpu", V_gpu);
-        wave.store("wfc_gpu", wfc_gpu);
-        opr.store("pAy_gpu", pAy_gpu);
-        opr.store("pAx_gpu", pAx_gpu);
+        par.store("pAx", pAx);
+        par.store("pAy", pAy);
+        par.store("GK", GK);
+        par.store("GV", GV);
+        par.store("wfc", wfc);
+        par.store("K_gpu", K_gpu);
+        par.store("V_gpu", V_gpu);
+        par.store("wfc_gpu", wfc_gpu);
+        par.store("pAy_gpu", pAy_gpu);
+        par.store("pAx_gpu", pAx_gpu);
 
         // Special cases for 3d
         if (dimnum == 3){
-            pAz_gpu = opr.dsval("pAz_gpu");
-            GpAz = opr.cufftDoubleComplexval("GpAz");
+            GpAz = par.cufftDoubleComplexval("GpAz");
             err=cudaMemcpy(pAz_gpu, GpAz, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
 
@@ -1194,7 +452,7 @@ int main(int argc, char **argv){
                 std::cout << "ERROR: Could not copy pAz_gpu to device" << '\n';
                 exit(1);
             }
-            opr.store("pAz_gpu", pAz_gpu);
+            par.store("pAz_gpu", pAz_gpu);
 
             evolve_3d(wave, opr, par_sum,
                       gsteps, 0, par, buffer);
@@ -1203,20 +461,14 @@ int main(int argc, char **argv){
             evolve_2d(wave, opr, par_sum,
                       gsteps,  0, par, buffer);
         }
-        wfc = wave.cufftDoubleComplexval("wfc");
-        wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
+        wfc = par.cufftDoubleComplexval("wfc");
+        wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
         cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*gsize,
                    cudaMemcpyDeviceToHost);
     }
 
     std::cout << GV[0].x << '\t' << GK[0].x << '\t'
               << pAy[0] << '\t' << pAx[0] << '\n';
-
-    //free(GV); free(GK); free(pAy); free(pAx);
-
-    // Re-initializing wfc after evolution
-    //wfc = wave.cufftDoubleComplexval("wfc");
-    //wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
 
     std::cout << "evolution started..." << '\n';
     std::cout << "esteps: " << esteps << '\n';
@@ -1258,28 +510,28 @@ int main(int argc, char **argv){
             exit(1);
         }
 
-        opr.store("pAx", pAx);
-        opr.store("pAy", pAy);
-        opr.store("EK", EK);
-        opr.store("EV", EV);
-        wave.store("wfc", wfc);
-        opr.store("K_gpu", K_gpu);
-        opr.store("V_gpu", V_gpu);
-        wave.store("wfc_gpu", wfc_gpu);
-        opr.store("pAy_gpu", pAy_gpu);
-        opr.store("pAx_gpu", pAx_gpu);
+        par.store("pAx", pAx);
+        par.store("pAy", pAy);
+        par.store("EK", EK);
+        par.store("EV", EV);
+        par.store("wfc", wfc);
+        par.store("K_gpu", K_gpu);
+        par.store("V_gpu", V_gpu);
+        par.store("wfc_gpu", wfc_gpu);
+        par.store("pAy_gpu", pAy_gpu);
+        par.store("pAx_gpu", pAx_gpu);
         FileIO::writeOutDouble(buffer, data_dir + "V_opt",V_opt,gsize,0);
         // Special variables / instructions for 3d case
         if (dimnum == 3){
-            pAz_gpu = opr.dsval("pAz_gpu");
-            EpAz = opr.cufftDoubleComplexval("EpAz");
+            pAz_gpu = par.dsval("pAz_gpu");
+            EpAz = par.cufftDoubleComplexval("EpAz");
             err=cudaMemcpy(pAz_gpu, EpAz, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
             if(err!=cudaSuccess){
                 std::cout << "ERROR: Could not copy pAz_gpu to device" << '\n';
                 exit(1);
             }
-            opr.store("pAz_gpu", pAz_gpu);
+            par.store("pAz_gpu", pAz_gpu);
             evolve_3d(wave, opr, par_sum,
                       esteps, 1, par, buffer);
         }
@@ -1287,8 +539,8 @@ int main(int argc, char **argv){
             evolve_2d(wave, opr, par_sum,
                       esteps, 1, par, buffer);
         }
-        wfc = wave.cufftDoubleComplexval("wfc");
-        wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
+        wfc = par.cufftDoubleComplexval("wfc");
+        wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
     }
     std::cout << "done evolving" << '\n';
     free(EV); free(EK); free(EpAy); free(EpAx);

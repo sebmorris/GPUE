@@ -661,26 +661,26 @@ void generate_p_space(Grid &par){
     double xMax = par.dval("xMax");
     double yMax = par.dval("yMax");
     double zMax = 0;
-    if (par.ival("dimun") == 3){
+    if (dimnum == 3){
         zMax = par.dval("zMax");
     }
     double pxMax = par.dval("pxMax");
     double pyMax = par.dval("pyMax");
     double pzMax = 0;
-    if (par.ival("dimun") == 3){
+    if (dimnum == 3){
         pzMax = par.dval("pzMax");
     }
     double dx = par.dval("dx");
     double dy = par.dval("dy");
     double dz = 0;
-    if (par.ival("dimun") == 3){
-        pzMax = par.dval("dz");
+    if (dimnum == 3){
+        dz = par.dval("dz");
     }
     double dpx = par.dval("dpx");
     double dpy = par.dval("dpy");
     double dpz = 0;
-    if (par.ival("dimun") == 3){
-        pzMax = par.dval("dpz");
+    if (dimnum == 3){
+        dpz = par.dval("dpz");
     }
 
     double *x, *y, *z, *px, *py, *pz,
@@ -994,7 +994,7 @@ void generate_fields(Grid &par){
     items[6] = par.dval("x0_shift");
     items[7] = par.dval("y0_shift");
     if (dimnum == 3){
-        items[8] = par.dval("zoffset");
+        items[8] = par.dval("z0_shift");
     }
     else{
         items[8] = 0.0;
@@ -1130,8 +1130,8 @@ void generate_fields(Grid &par){
     par.store("items_gpu", items_gpu);
     par.store("wfc", wfc);
     par.store("wfc_gpu", wfc_gpu);
-    par.store("phi", phi);
-    par.store("phi_gpu", phi_gpu);
+    par.store("Phi", phi);
+    par.store("Phi_gpu", phi_gpu);
 
     par.store("GV",GV);
     par.store("EV",EV);
@@ -1273,4 +1273,84 @@ __global__ void aux_fields(double *V, double *K, double gdt, double dt,
     EpAy[gid].y=sin(-pAy[gid]*dt);
     EpAx[gid].x=cos(-pAx[gid]*dt);
     EpAx[gid].y=sin(-pAx[gid]*dt);
+}
+
+// Function to generate grids and treads for 2d and 3d cases
+void generate_grid(Grid& par){
+
+    int max_threads = 128;
+    int dimnum = par.ival("dimnum");
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+    int xD = 1, yD = 1, zD = 1;
+
+    if (dimnum == 2){
+        if (xDim <= max_threads){
+            par.threads.x = xDim;
+            par.threads.y = 1;
+            par.threads.z = 1;
+    
+            xD = 1;
+            yD = yDim;
+            zD = 1;
+        }
+        else{
+            int count = 0;
+            int dim_tmp = xDim;
+            while (dim_tmp > max_threads){
+                count++;
+                dim_tmp /= 2;
+            }
+    
+            std::cout << "count is: " << count << '\n';
+    
+            par.threads.x = dim_tmp;
+            par.threads.y = 1;
+            par.threads.z = 1;
+            xD = pow(2,count);
+            yD = yDim;
+            zD = 1;
+        }
+
+    }
+    else if (dimnum == 3){
+
+        if (xDim <= max_threads){
+            par.threads.x = xDim;
+            par.threads.y = 1;
+            par.threads.z = 1;
+    
+            xD = 1;
+            yD = yDim;
+            zD = zDim;
+        }
+        else{
+            int count = 0;
+            int dim_tmp = xDim;
+            while (dim_tmp > max_threads){
+                count++;
+                dim_tmp /= 2;
+            }
+    
+            std::cout << "count is: " << count << '\n';
+    
+            par.threads.x = dim_tmp;
+            par.threads.y = 1;
+            par.threads.z = 1;
+            xD = pow(2,count);
+            yD = yDim;
+            zD = zDim;
+        }
+    
+    }
+    par.grid.x=xD;
+    par.grid.y=yD;
+    par.grid.z=zD;
+
+    std::cout << "threads in x are: " << par.threads.x << '\n';
+    std::cout << "dimensions are: " << par.grid.x << '\t' 
+                                    << par.grid.y << '\t' 
+                                    << par.grid.z << '\n';
+
 }

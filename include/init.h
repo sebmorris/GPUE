@@ -52,16 +52,6 @@
  * @param	Grid class
  * @param	Wave class
  */
-int init_2d(Op &opr, Grid &par, Wave &wave);
-
- /**
- * @brief       Initializes data structures
- * @ingroup     data
- * @param       Operator class
- * @param       Cuda class
- * @param       Grid class
- * @param       Wave class
- */
-int init_3d(Op &opr, Grid &par, Wave &wave);
+int init(Op &opr, Grid &par, Wave &wave);
 
 #endif

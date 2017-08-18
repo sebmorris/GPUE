@@ -24,12 +24,12 @@ void evolve_2d(Wave &wave, Op &opr,
     double mask_2d = par.dval("mask_2d");
     double *x = par.dsval("x");
     double *y = par.dsval("y");
-    double *V = opr.dsval("V");
-    double *V_opt = opr.dsval("V_opt");
-    double *Phi = wave.dsval("Phi");
-    double *gpu1dpAx = opr.dsval("pAx_gpu");
-    double *gpu1dpAy = opr.dsval("pAy_gpu");
-    double *Phi_gpu = wave.dsval("Phi_gpu");
+    double *V = par.dsval("V");
+    double *V_opt = par.dsval("V_opt");
+    double *Phi = par.dsval("Phi");
+    double *gpu1dpAx = par.dsval("pAx_gpu");
+    double *gpu1dpAy = par.dsval("pAy_gpu");
+    double *Phi_gpu = par.dsval("Phi_gpu");
     int kick_it = par.ival("kick_it");
     bool write_it = par.bval("write_it");
     bool graph = par.bval("graph");
@@ -45,14 +45,14 @@ void evolve_2d(Wave &wave, Op &opr,
     int charge = par.ival("charge");
     int x0_shift = par.dval("x0_shift");
     int y0_shift = par.dval("y0_shift");
-    cufftDoubleComplex *EV = opr.cufftDoubleComplexval("EV");
-    cufftDoubleComplex *wfc = wave.cufftDoubleComplexval("wfc");
-    cufftDoubleComplex *EV_opt = opr.cufftDoubleComplexval("EV_opt");
-    cufftDoubleComplex *gpuWfc = wave.cufftDoubleComplexval("wfc_gpu");
+    cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
+    cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
+    cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
+    cufftDoubleComplex *gpuWfc = par.cufftDoubleComplexval("wfc_gpu");
     cufftDoubleComplex *K_gpu =
-        opr.cufftDoubleComplexval("K_gpu");
+        par.cufftDoubleComplexval("K_gpu");
     cufftDoubleComplex *V_gpu =
-        opr.cufftDoubleComplexval("V_gpu");
+        par.cufftDoubleComplexval("V_gpu");
 
     std::cout << x[0] << '\t' << EV[0].x << '\t' << wfc[0].x << '\t'
               << EV_opt[0].x << '\t' << '\n';
@@ -609,8 +609,8 @@ void evolve_2d(Wave &wave, Op &opr,
     // std::cout << "finished evolution" << '\n';
     // Storing wavefunctions for later
     //std::cout << gpuWfc[0].x << '\t' << gpuWfc[0].y << '\n';
-    wave.store("wfc", wfc);
-    wave.store("wfc_gpu", gpuWfc);
+    par.store("wfc", wfc);
+    par.store("wfc_gpu", gpuWfc);
 
 /*
     par.store("omega", omega);
@@ -627,16 +627,16 @@ void evolve_2d(Wave &wave, Op &opr,
     par.store("laser_power", laser_power);
     par.store("x", x);
     par.store("y", y);
-    opr.store("V", V);
-    opr.store("V_opt", V_opt);
-    wave.store("Phi", Phi);
-    opr.store("pAx_gpu", gpu1dpAx);
-    opr.store("pAy_gpu", gpu1dpAy);
-    wave.store("Phi_gpu", Phi_gpu);
-    opr.store("EV", EV);
-    //opr.store("V_gpu", V_gpu);
-    //opr.store("K_gpu", K_gpu);
-    opr.store("EV_opt", EV_opt);
+    par.store("V", V);
+    par.store("V_opt", V_opt);
+    par.store("Phi", Phi);
+    par.store("pAx_gpu", gpu1dpAx);
+    par.store("pAy_gpu", gpu1dpAy);
+    par.store("Phi_gpu", Phi_gpu);
+    par.store("EV", EV);
+    //par.store("V_gpu", V_gpu);
+    //par.store("K_gpu", K_gpu);
+    par.store("EV_opt", EV_opt);
 
     // getting data from Cuda class
     par.store("result", result);
@@ -677,13 +677,13 @@ void evolve_3d(Wave &wave, Op &opr,
     double *x = par.dsval("x");
     double *y = par.dsval("y");
     double *z = par.dsval("z");
-    double *V = opr.dsval("V");
-    double *V_opt = opr.dsval("V_opt");
-    double *Phi = wave.dsval("Phi");
-    double *gpu1dpAx = opr.dsval("pAx_gpu");
-    double *gpu1dpAy = opr.dsval("pAy_gpu");
-    double *gpu1dpAz = opr.dsval("pAz_gpu");
-    double *Phi_gpu = wave.dsval("Phi_gpu");
+    double *V = par.dsval("V");
+    double *V_opt = par.dsval("V_opt");
+    double *Phi = par.dsval("Phi");
+    double *gpu1dpAx = par.dsval("pAx_gpu");
+    double *gpu1dpAy = par.dsval("pAy_gpu");
+    double *gpu1dpAz = par.dsval("pAz_gpu");
+    double *Phi_gpu = par.dsval("Phi_gpu");
     bool write_it = par.bval("write_it");
     bool graph = par.bval("graph");
     int N = par.ival("atoms");
@@ -697,14 +697,14 @@ void evolve_3d(Wave &wave, Op &opr,
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
     int gridSize = xDim * yDim * zDim;
-    cufftDoubleComplex *EV = opr.cufftDoubleComplexval("EV");
-    cufftDoubleComplex *wfc = wave.cufftDoubleComplexval("wfc");
-    cufftDoubleComplex *EV_opt = opr.cufftDoubleComplexval("EV_opt");
-    cufftDoubleComplex *gpuWfc = wave.cufftDoubleComplexval("wfc_gpu");
+    cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
+    cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
+    cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
+    cufftDoubleComplex *gpuWfc = par.cufftDoubleComplexval("wfc_gpu");
     cufftDoubleComplex *K_gpu =
-        opr.cufftDoubleComplexval("K_gpu");
+        par.cufftDoubleComplexval("K_gpu");
     cufftDoubleComplex *V_gpu =
-        opr.cufftDoubleComplexval("V_gpu");
+        par.cufftDoubleComplexval("V_gpu");
 
     std::cout << x[0] << '\t' << EV[0].x << '\t' << wfc[0].x << '\t'
               << EV_opt[0].x << '\t' << '\n';
@@ -1119,8 +1119,8 @@ void evolve_3d(Wave &wave, Op &opr,
     // std::cout << "finished evolution" << '\n';
     // Storing wavefunctions for later
     //std::cout << gpuWfc[0].x << '\t' << gpuWfc[0].y << '\n';
-    wave.store("wfc", wfc);
-    wave.store("wfc_gpu", gpuWfc);
+    par.store("wfc", wfc);
+    par.store("wfc_gpu", gpuWfc);
 /*
 
     par.store("omega", omega);
@@ -1137,16 +1137,16 @@ void evolve_3d(Wave &wave, Op &opr,
     par.store("laser_power", laser_power);
     par.store("x", x);
     par.store("y", y);
-    opr.store("V", V);
-    opr.store("V_opt", V_opt);
-    wave.store("Phi", Phi);
-    opr.store("pAx_gpu", gpu1dpAx);
-    opr.store("pAy_gpu", gpu1dpAy);
-    wave.store("Phi_gpu", Phi_gpu);
-    opr.store("EV", EV);
-    //opr.store("V_gpu", V_gpu);
-    //opr.store("K_gpu", K_gpu);
-    opr.store("EV_opt", EV_opt);
+    par.store("V", V);
+    par.store("V_opt", V_opt);
+    par.store("Phi", Phi);
+    par.store("pAx_gpu", gpu1dpAx);
+    par.store("pAy_gpu", gpu1dpAy);
+    par.store("Phi_gpu", Phi_gpu);
+    par.store("EV", EV);
+    //par.store("V_gpu", V_gpu);
+    //par.store("K_gpu", K_gpu);
+    par.store("EV_opt", EV_opt);
 
     // getting data from Cuda class
     par.store("result", result);

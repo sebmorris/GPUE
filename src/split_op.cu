@@ -128,7 +128,7 @@ void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
     double dx = par.dval("dx");
     double dy = par.dval("dy");
     double dt = par.dval("dt");
-    cufftDoubleComplex *EV_opt = opr.cufftDoubleComplexval("EV_opt");
+    cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
     int i,j;
     double sepMin = Tracker::vortSepAvg(vArray,centre);
     sepMin = sepMin*(1 + sepMinEpsilon);
@@ -186,9 +186,9 @@ void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
     }
 
     // Storing changed variables
-    opr.store("EV_opt", EV_opt);
-    opr.store("V", V);
-    opr.store("V_opt",v_opt);
+    par.store("EV_opt", EV_opt);
+    par.store("V", V);
+    par.store("V_opt",v_opt);
 }
 
 /**
@@ -289,8 +289,8 @@ void delta_define(double *x, double *y, double x0, double y0, double *delta,
                   Grid &par, Op &opr){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
-    cufftDoubleComplex *EV_opt = opr.cufftDoubleComplexval("EV_opt");
-    double *V = opr.dsval("V");
+    cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
+    double *V = par.dsval("V");
     double dx = par.dval("dx");
     double dt = par.dval("dt");
 

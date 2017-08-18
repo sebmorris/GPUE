@@ -725,7 +725,7 @@ void evolve_2d_test(){
     */
     //************************************************************//
 
-    init_2d(opr, par, wave);
+    init(opr, par, wave);
 
     // Re-establishing variables from parsed Grid class
     double dx = par.dval("dx");
