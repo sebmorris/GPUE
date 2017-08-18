@@ -69,7 +69,7 @@ int init(Op &opr, Grid &par, Wave &wave){
 
     a0x = sqrt(HBAR/(2*mass*omegaX));
     a0y = sqrt(HBAR/(2*mass*omegaY));
-    a0z = sqrt(HBAR/(2*mass*omegaY));
+    a0z = sqrt(HBAR/(2*mass*omegaZ));
     par.store("a0x",a0x);
     par.store("a0y",a0y);
     par.store("a0z",a0z);
@@ -112,6 +112,9 @@ int init(Op &opr, Grid &par, Wave &wave){
     double dx = xMax/(xDim>>1);
     double dy = yMax/(yDim>>1);
     double dz = zMax/(zDim>>1);
+    if (dimnum == 2){
+        dz = 1;
+    }
     par.store("dx",dx);
     par.store("dy",dy);
     par.store("dz",dz);
@@ -204,29 +207,30 @@ int init(Op &opr, Grid &par, Wave &wave){
         FileIO::writeOutDouble(buffer, data_dir + "pAx",pAx,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Ax",Ax,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Ay",Ay,gSize,0);
+        FileIO::writeOutDouble(buffer, data_dir + "Az",Az,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
         if (dimnum == 3){
             FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
             FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
         }
         FileIO::writeOut(buffer, data_dir + "WFC",wfc,gSize,0);
+        FileIO::writeOut(buffer, data_dir + "EpAz",EpAz,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAy",EpAy,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAx",EpAx,gSize,0);
         FileIO::writeOut(buffer, data_dir + "GK",GK,gSize,0);
         FileIO::writeOut(buffer, data_dir + "GV",GV,gSize,0);
         FileIO::writeOut(buffer, data_dir + "GpAx",GpAx,gSize,0);
         FileIO::writeOut(buffer, data_dir + "GpAy",GpAy,gSize,0);
+        FileIO::writeOut(buffer, data_dir + "GpAz",GpAz,gSize,0);
     }
 
     if (par.bval("read_wfc") == false){
-        //sum=sqrt(sum*dx*dy);
-        sum=1;
+        sum=sqrt(sum*dx*dy*dz);
+        //sum=1;
         //#pragma omp parallel for reduction(+:sum) private(j)
-        for (i = 0; i < xDim; i++){
-            for (j = 0; j < yDim; j++){
-                wfc[(i*yDim + j)].x = (wfc[(i*yDim + j)].x)/(sum);
-                wfc[(i*yDim + j)].y = (wfc[(i*yDim + j)].y)/(sum);
-            }
+        for (i = 0; i < gSize; i++){
+                wfc[i].x = (wfc[i].x)/(sum);
+                wfc[i].y = (wfc[i].y)/(sum);
         }
     }
 

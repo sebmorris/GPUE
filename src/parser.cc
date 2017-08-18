@@ -366,7 +366,7 @@ Grid parseArgs(int argc, char** argv){
                         std::cout << "Finding file for Az..." << '\n';
                         par.Azfile = filecheck("src/Azgauge");
                     }
-                    par.store("box_size",2.5e-5);
+                    par.store("box_size", 2.5e-5);
                 }
                 if (dimnum == 2){
                     par.store("zDim", 1);
