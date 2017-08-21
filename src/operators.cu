@@ -804,7 +804,7 @@ void generate_K(Grid &par){
 __global__ void simple_K(double *xp, double *yp, double *zp, double mass,
                          double *K){
 
-    unsigned int gid = getGid3d3d();
+    unsigned int gid = getGid3d3d_init();
     unsigned int xid = blockDim.x*blockIdx.x + threadIdx.x;
     unsigned int yid = blockDim.y*blockIdx.y + threadIdx.y;
     unsigned int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -831,6 +831,12 @@ void generate_gauge(Grid &par){
     double zMax;
     if (dimnum == 3){
         double zMax = par.dval("zMax");
+    }
+    double omegaX = par.dval("omegaX");
+    double omegaY = par.dval("omegaY");
+    double omegaZ;
+    if (dimnum == 3){
+        double omegaZ = par.dval("omegaZ");
     }
     double omega = par.dval("omega");
     double fudge = par.dval("fudge");
@@ -860,18 +866,22 @@ void generate_gauge(Grid &par){
     else{
         par.Ax_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
                                              xMax, yMax, zMax, 
+                                             omegaX, omegaY, omegaZ, 
                                              omega, fudge, Ax_gpu);
         par.Ay_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
                                              xMax, yMax, zMax, 
+                                             omegaX, omegaY, omegaZ, 
                                              omega, fudge, Ay_gpu);
         if (dimnum == 3){
             par.Az_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
                                                  xMax, yMax, zMax, 
+                                                 omegaX, omegaY, omegaZ, 
                                                  omega, fudge, Az_gpu);
         }
         else{
             kconstant_A<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
                                                    xMax, yMax, zMax, 
+                                                   omegaX, omegaY, omegaZ, 
                                                    omega, fudge, Az_gpu);
         }
     }
@@ -892,34 +902,38 @@ void generate_gauge(Grid &par){
 // constant Kernel A
 __global__ void kconstant_A(double *x, double *y, double *z,
                             double xMax, double yMax, double zMax,
+                            double omegaX, double omegaY, double omegaZ,
                             double omega, double fudge, double *A){
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     A[gid] = 0;        
 }
 
 // Kernel for simple rotational case, Ax
 __global__ void krotation_Ax(double *x, double *y, double *z,
                              double xMax, double yMax, double zMax,
+                             double omegaX, double omegaY, double omegaZ,
                              double omega, double fudge, double *A){
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
-    A[gid] = -y[yid] * omega;
+    A[gid] = -y[yid] * omega * omegaX;
 }
 
 // Kernel for simple rotational case, Ay
 __global__ void krotation_Ay(double *x, double *y, double *z,
                              double xMax, double yMax, double zMax,
+                             double omegaX, double omegaY, double omegaZ,
                              double omega, double fudge, double *A){
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
-    A[gid] = x[xid] * omega;
+    A[gid] = x[xid] * omega * omegaY;
 }
 
 // kernel for a simple vortex ring
 __global__ void kring_Az(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
+                         double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A){
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
 
@@ -931,8 +945,9 @@ __global__ void kring_Az(double *x, double *y, double *z,
 // testing kernel Ax
 __global__ void ktest_Ax(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
+                         double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A){
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int yid = blockDim.y*blockIdx.x + threadIdx.x;
     A[gid] = (sin(y[yid] * 50000)+1) * yMax * omega;
 }
@@ -940,8 +955,9 @@ __global__ void ktest_Ax(double *x, double *y, double *z,
 // testing kernel Ay
 __global__ void ktest_Ay(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
+                         double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A){
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     A[gid] = 0;
 }
 
@@ -977,7 +993,7 @@ void generate_fields(Grid &par){
     cudaMalloc((void**) &items_gpu, sizeof(double)*item_size);
 
     for (int i = 0; i < item_size; ++i){
-        items[0] = 0;
+        items[i] = 0;
     }
     items[0] = par.dval("xMax");
     items[1] = par.dval("yMax");
@@ -1161,7 +1177,7 @@ void generate_fields(Grid &par){
 __global__ void kharmonic_V(double *x, double *y, double *z, double* items,
                             double *Ax, double *Ay, double *Az, double *V){
 
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -1172,14 +1188,14 @@ __global__ void kharmonic_V(double *x, double *y, double *z, double* items,
     double V_z = items[11]*items[5]*(z[zid]+items[8]);
 
     V[gid] = 0.5*items[9]*((V_x*V_x + V_y*V_y + V_z*V_z)
-             + Ax[gid]*Ax[gid] + Ay[gid]*Ay[gid] + Az[gid]*Az[gid]);
+             + (Ax[gid]*Ax[gid] + Ay[gid]*Ay[gid] + Az[gid]*Az[gid]));
 }
 
 // kernel for simple 3d torus trapping potential
 __global__ void ktorus_V(double *x, double *y, double *z, double* items,
                          double *Ax, double *Ay, double *Az, double *V){
 
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -1198,7 +1214,7 @@ __global__ void ktorus_V(double *x, double *y, double *z, double* items,
 __global__ void kstd_wfc(double *x, double *y, double *z, double *items,
                          double winding, double *phi, double2 *wfc){
 
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -1219,7 +1235,7 @@ __global__ void kstd_wfc(double *x, double *y, double *z, double *items,
 __global__ void ktorus_wfc(double *x, double *y, double *z, double *items,
                            double winding, double *phi, double2 *wfc){
 
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -1240,7 +1256,7 @@ __global__ void aux_fields(double *V, double *K, double gdt, double dt,
                            double2* GV, double2* EV, double2* GK, double2* EK,
                            double2* GpAx, double2* GpAy, double2* GpAz,
                            double2* EpAx, double2* EpAy, double2* EpAz){
-    int gid = getGid3d3d();
+    int gid = getGid3d3d_init();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -1269,6 +1285,8 @@ __global__ void aux_fields(double *V, double *K, double gdt, double dt,
     EK[gid].x=cos( -K[gid]*(dt/HBAR));
     EK[gid].y=sin( -K[gid]*(dt/HBAR));
 
+    EpAz[gid].x=cos(-pAz[gid]*dt);
+    EpAz[gid].y=sin(-pAz[gid]*dt);
     EpAy[gid].x=cos(-pAy[gid]*dt);
     EpAy[gid].y=sin(-pAy[gid]*dt);
     EpAx[gid].x=cos(-pAx[gid]*dt);

@@ -7,12 +7,10 @@
 *-----------------------------------------------------------------------------*/
 
 // I didn't know where to place these functions for now, so the'll be here
-cufftHandle generate_plan_other2d(Grid &par){
+void generate_plan_other2d(cufftHandle *plan_fft1d, Grid &par){
     // We need a number of propertied for this fft / transform
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
-
-    cufftHandle plan_fft1d;
 
     int batch = yDim;
     int rank = 1;
@@ -26,7 +24,7 @@ cufftHandle generate_plan_other2d(Grid &par){
 
     cufftResult result;
 
-    result = cufftPlanMany(&plan_fft1d, rank, n, inembed, istride, 
+    result = cufftPlanMany(plan_fft1d, rank, n, inembed, istride, 
                            idist, onembed, ostride, odist, 
                            CUFFT_Z2Z, batch);
 
@@ -34,27 +32,23 @@ cufftHandle generate_plan_other2d(Grid &par){
         printf("Result:=%d\n",result);
         printf("Error: Could not execute cufftPlanfft1d(%s ,%d ,%d ).\n", 
                "plan_1d", (unsigned int)xDim, (unsigned int)yDim);
-        return -1;
+        exit(1);
     }
-
-    return plan_fft1d;
 
 }
 
 // other plan for 3d case
 // Note that we have 3 cases to deal with here: x, y, and z
-cufftHandle generate_plan_other3d(Grid &par, int axis){
+void generate_plan_other3d(cufftHandle *plan_fft1d, Grid &par, int axis){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
 
     cufftResult result;
-    cufftHandle plan_fft1d;
 
     // Along first dimension (z)
     if (axis == 0){
-        result = cufftPlan1d(&plan_fft1d, xDim, CUFFT_Z2Z, yDim*zDim);
-        std::cout << "zDim is: " << zDim << '\n';
+        result = cufftPlan1d(plan_fft1d, xDim, CUFFT_Z2Z, yDim*zDim);
 /*
         int batch = xDim*yDim;
         int rank = 1;
@@ -66,7 +60,7 @@ cufftHandle generate_plan_other3d(Grid &par, int axis){
         int istride = 1;
         int ostride = 1;
     
-        result = cufftPlanMany(&plan_fft1d, rank, n, inembed, istride, 
+        result = cufftPlanMany(plan_fft1d, rank, n, inembed, istride, 
                                idist, onembed, ostride, odist, 
                                CUFFT_Z2Z, batch);
 */
@@ -85,10 +79,10 @@ cufftHandle generate_plan_other3d(Grid &par, int axis){
         int istride = yDim;
         int ostride = yDim;
     
-        result = cufftPlanMany(&plan_fft1d, rank, n, inembed, istride, 
+        result = cufftPlanMany(plan_fft1d, rank, n, inembed, istride, 
                                idist, onembed, ostride, odist, 
                                CUFFT_Z2Z, batch);
-        //result = cufftPlan2d(&plan_fft1d, xDim, yDim, CUFFT_Z2Z);
+        //result = cufftPlan2d(plan_fft1d, xDim, yDim, CUFFT_Z2Z);
         
     }
 
@@ -105,7 +99,7 @@ cufftHandle generate_plan_other3d(Grid &par, int axis){
         int istride = xDim*yDim;
         int ostride = xDim*yDim;
     
-        result = cufftPlanMany(&plan_fft1d, rank, n, inembed, istride, 
+        result = cufftPlanMany(plan_fft1d, rank, n, inembed, istride, 
                                idist, onembed, ostride, odist, 
                                CUFFT_Z2Z, batch);
     }
@@ -114,10 +108,9 @@ cufftHandle generate_plan_other3d(Grid &par, int axis){
         printf("Result:=%d\n",result);
         printf("Error: Could not execute cufftPlan3d(%s ,%d ,%d ).\n", 
                "plan_1d", (unsigned int)xDim, (unsigned int)yDim);
-        return -1;
+        exit(1);
     }
 
-    return plan_fft1d;
 }
 
 

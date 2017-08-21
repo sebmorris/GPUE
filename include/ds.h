@@ -53,6 +53,7 @@ class Grid{
     private:
         typedef void (*functionPtrA)(double*, double*, double*, 
                                      double,  double,  double, 
+                                     double,  double,  double, 
                                      double, double, double*);
         typedef void (*functionPtrV)(double*, double*, double*, double*,
                                      double*, double*, double*, double*);
@@ -216,8 +217,8 @@ typedef class Wave Wave;
 * AUX
 *-----------------------------------------------------------------------------*/
 // I didn't know where to place these functions for now, so the'll be here
-cufftHandle generate_plan_other2d(Grid &par);
-cufftHandle generate_plan_other3d(Grid &par, int axis);
+void generate_plan_other2d(cufftHandle *plan_fft1d, Grid &par);
+void generate_plan_other3d(cufftHandle *plan_fft1d, Grid &par, int axis);
 
 void set_fns(Grid &par, Op &opr, Wave &wave);
 

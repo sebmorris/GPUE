@@ -339,31 +339,37 @@ void generate_gauge(Grid &par);
 // constant Kernel A
 __global__ void kconstant_A(double *x, double *y, double *z,
                             double xMax, double yMax, double zMax,
+                            double omegaX, double omegaY, double omegaZ,
                             double omega, double fudge, double *A);
 
 // Kernel for simple rotational case, Ax
 __global__ void krotation_Ax(double *x, double *y, double *z,
                              double xMax, double yMax, double zMax,
+                             double omegaX, double omegaY, double omegaZ,
                              double omega, double fudge, double *A);
 
 // Kernel for simple rotational case, Ay
 __global__ void krotation_Ay(double *x, double *y, double *z,
                              double xMax, double yMax, double zMax,
+                             double omegaX, double omegaY, double omegaZ,
                              double omega, double fudge, double *A);
 
 // Kernel for testing Ay
 __global__ void ktest_Ay(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
+                         double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A);
 
 // Kernel for testing Ax
 __global__ void ktest_Ax(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
+                         double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A);
 
 // Kernel for simple vortex ring
 __global__ void kring_Az(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
+                         double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A);
 
 

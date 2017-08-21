@@ -14,6 +14,15 @@ __device__ unsigned int getGid3d3d(){
     return threadId;
 }
 
+__device__ unsigned int getGid3d3d_init(){
+    int blockId = blockIdx.z + blockIdx.y * gridDim.z
+                  + gridDim.z * gridDim.y * blockIdx.x;
+    int threadId = blockId * (blockDim.x * blockDim.y * blockDim.z)
+                   + (threadIdx.y * blockDim.z)
+                   + (threadIdx.x * (blockDim.z * blockDim.y)) + threadIdx.z;
+    return threadId;
+}
+
 // Function to convert a double* to double2*
 __global__ void make_cufftDoubleComplex(double *in, double2 *out){
     int gid = getGid3d3d();

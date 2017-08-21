@@ -27,8 +27,8 @@ void evolve_2d(Wave &wave, Op &opr,
     double *V = par.dsval("V");
     double *V_opt = par.dsval("V_opt");
     double *Phi = par.dsval("Phi");
-    double *gpu1dpAx = par.dsval("pAx_gpu");
-    double *gpu1dpAy = par.dsval("pAy_gpu");
+    double2 *gpu1dpAx = par.cufftDoubleComplexval("pAx_gpu");
+    double2 *gpu1dpAy = par.cufftDoubleComplexval("pAy_gpu");
     double *Phi_gpu = par.dsval("Phi_gpu");
     int kick_it = par.ival("kick_it");
     bool write_it = par.bval("write_it");
@@ -678,11 +678,10 @@ void evolve_3d(Wave &wave, Op &opr,
     double *y = par.dsval("y");
     double *z = par.dsval("z");
     double *V = par.dsval("V");
-    double *V_opt = par.dsval("V_opt");
     double *Phi = par.dsval("Phi");
-    double *gpu1dpAx = par.dsval("pAx_gpu");
-    double *gpu1dpAy = par.dsval("pAy_gpu");
-    double *gpu1dpAz = par.dsval("pAz_gpu");
+    double2 *gpu1dpAx = par.cufftDoubleComplexval("pAx_gpu");
+    double2 *gpu1dpAy = par.cufftDoubleComplexval("pAy_gpu");
+    double2 *gpu1dpAz = par.cufftDoubleComplexval("pAz_gpu");
     double *Phi_gpu = par.dsval("Phi_gpu");
     bool write_it = par.bval("write_it");
     bool graph = par.bval("graph");
@@ -690,24 +689,18 @@ void evolve_3d(Wave &wave, Op &opr,
     int printSteps = par.ival("printSteps");
     bool nonlin = par.bval("gpe");
     bool lz = par.bval("corotating");
-    std::cout << "COROTATING IS: " << lz << '\n';
     bool ramp = par.bval("ramp");
     int ramp_type = par.ival("ramp_type");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
     int gridSize = xDim * yDim * zDim;
-    cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
     cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
-    cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
     cufftDoubleComplex *gpuWfc = par.cufftDoubleComplexval("wfc_gpu");
     cufftDoubleComplex *K_gpu =
         par.cufftDoubleComplexval("K_gpu");
     cufftDoubleComplex *V_gpu =
         par.cufftDoubleComplexval("V_gpu");
-
-    std::cout << x[0] << '\t' << EV[0].x << '\t' << wfc[0].x << '\t'
-              << EV_opt[0].x << '\t' << '\n';
 
     // getting data from Cuda class
     cufftResult result;
@@ -728,7 +721,7 @@ void evolve_3d(Wave &wave, Op &opr,
               << dt << '\t' << omegaX << '\t' << omegaY << '\t'
               << mass << '\t' << dx << '\t' << dy << '\t' << interaction << '\t'
               << laser_power << '\t' << N << '\t' << xDim << '\t'
-              << yDim << '\n';
+              << yDim << '\t' << zDim << '\n';;
 
 
     clock_t begin, end;
@@ -1138,15 +1131,12 @@ void evolve_3d(Wave &wave, Op &opr,
     par.store("x", x);
     par.store("y", y);
     par.store("V", V);
-    par.store("V_opt", V_opt);
     par.store("Phi", Phi);
     par.store("pAx_gpu", gpu1dpAx);
     par.store("pAy_gpu", gpu1dpAy);
     par.store("Phi_gpu", Phi_gpu);
-    par.store("EV", EV);
     //par.store("V_gpu", V_gpu);
     //par.store("K_gpu", K_gpu);
-    par.store("EV_opt", EV_opt);
 
     // getting data from Cuda class
     par.store("result", result);

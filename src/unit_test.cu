@@ -37,7 +37,7 @@ void fft_test();
 void test_all(){
     std::cout << "Starting unit tests..." << '\n';
     parameter_test();
-    parser_test();
+    //parser_test();
     //evolve_2d_test();
     grid_test2d();
     grid_test3d();
@@ -67,10 +67,11 @@ void fft_test(){
     par.store("yDim", yDim);
     par.store("zDim", zDim);
 
+    cufftHandle plan_x, plan_y, plan_z;
     // Now creating the plans
-    cufftHandle plan_x = generate_plan_other3d(par, 0);
-    cufftHandle plan_y = generate_plan_other3d(par, 1);
-    cufftHandle plan_z = generate_plan_other3d(par, 2);
+    generate_plan_other3d(&plan_x, par, 0);
+    generate_plan_other3d(&plan_y, par, 1);
+    generate_plan_other3d(&plan_z, par, 2);
 
     // And the result / error
     cudaError_t err;
