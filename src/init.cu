@@ -889,7 +889,7 @@ int main(int argc, char **argv){
         init(opr, par, wave);
     }
     else{
-        //init_3d(opr, par2, wave);
+        //init_3d(opr, par, wave);
         init(opr, par, wave);
     }
 

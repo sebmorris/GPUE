@@ -15,12 +15,15 @@ __device__ unsigned int getGid3d3d(){
 }
 
 __device__ unsigned int getGid3d3d_init(){
+    return getGid3d3d();
+/*
     int blockId = blockIdx.z + blockIdx.y * gridDim.z
                   + gridDim.z * gridDim.y * blockIdx.x;
     int threadId = blockId * (blockDim.x * blockDim.y * blockDim.z)
                    + (threadIdx.y * blockDim.z)
                    + (threadIdx.x * (blockDim.z * blockDim.y)) + threadIdx.z;
     return threadId;
+*/
 }
 
 // Function to convert a double* to double2*
