@@ -78,7 +78,7 @@ int init(Op &opr, Grid &par, Wave &wave){
 
     // Let's go ahead and define the gDensConst here
     // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
-    double gDenConst = N*4*HBAR*HBAR*PI*(4.67e-9/mass);
+    double gDenConst = N*4*HBAR*HBAR*PI*(a_s/mass);
     if (dimnum == 2){
         gDenConst*= sqrt(mass*(omegaZ)/(2*PI*HBAR));
     }
@@ -434,7 +434,7 @@ int init_3d(Op &opr, Grid &par, Wave &wave){
 
     // Let's go ahead and define the gDensConst here
     // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
-    double gDenConst = N*4*HBAR*HBAR*PI*(4.76e-9/mass);
+    double gDenConst = N*4*HBAR*HBAR*PI*(a_s/mass);
     par.store("gDenConst", gDenConst);
 
 
