@@ -52,6 +52,6 @@
  * @param	Grid class
  * @param	Wave class
  */
-int init(Op &opr, Grid &par, Wave &wave);
+int init(Grid &par);
 
 #endif

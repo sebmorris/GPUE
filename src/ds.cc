@@ -113,6 +113,23 @@ void generate_plan_other3d(cufftHandle *plan_fft1d, Grid &par, int axis){
 
 }
 
+// Function to set functionPtrs without an unordered map
+void set_fns(Grid &par){
+
+    // There are 3 different function distributions to keep in mind:
+    // Vfn, Afn, wfcfn
+
+    // Vfn
+    par.set_V_fn(par.Vfn);
+
+    // Afn
+    par.set_A_fn(par.Afn);
+
+    // Wfcfn
+    par.set_wfc_fn(par.Wfcfn);
+
+}
+
 
 /*----------------------------------------------------------------------------//
 * GRID
@@ -263,110 +280,6 @@ void Grid::print_map(){
     }
 }
 
-/*----------------------------------------------------------------------------//
-* OP
-*-----------------------------------------------------------------------------*/
-
-
-// Functions to store data in the Op class
-void Op::store(std::string id, const double *paramCD){
-    Op_cdstar[id] = paramCD;
-}
-
-void Op::store(std::string id, double *data){
-    Op_dstar[id] = data;
-}
-
-void Op::store(std::string id, cufftDoubleComplex *data){
-    Op_cdc[id] = data;
-}
-
-// Functions to retrieve data from the Op class
-double *Op::dsval(std::string id){
-    auto it = Op_dstar.find(id);
-    if (it == Op_dstar.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_dstar." << '\n';
-        assert(it != Op_dstar.end());
-    }
-    return it->second;
-}
-
-cufftDoubleComplex *Op::cufftDoubleComplexval(std::string id){
-    auto it = Op_cdc.find(id);
-    if (it == Op_cdc.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Op::Op_cdc." << '\n';
-        assert(it != Op_cdc.end());
-    }
-    return it->second;
-}
-
-// Function to set the K function for simulation based on distribution selected
-void Op::set_K_fn(std::string id){
-    if (id == "rotation_K"){
-        K_fn = rotation_K;
-    }
-    else if(id == "rotation_K3d"){
-        K_fn = rotation_K3d;
-    }
-    else if(id == "rotation_gauge_K"){
-        K_fn = rotation_gauge_K;
-    }
-}
-
-void Op::set_V_fn(std::string id){
-    if (id == "2d"){
-        V_fn = harmonic_V;
-    }
-    else if(id == "torus"){
-        V_fn = torus_V;
-    }
-    else if(id == "3d"){
-        V_fn = harmonic_V3d;
-    }
-    else if(id == "harmonic_gauge_V"){
-        K_fn = harmonic_gauge_V;
-    }
-}
-
-void Op::set_A_fns(std::string id){
-    // 3d functions first
-    if (id == "rotation"){
-        Ax_fn = rotation_Ax;
-        Ay_fn = rotation_Ay;
-        Az_fn = rotation_Az;
-    }
-    else if (id == "constant"){
-        Ax_fn = constant_A;
-        Ay_fn = constant_A;
-        Az_fn = constant_A;
-    }
-    else if (id == "ring"){
-        Ax_fn = constant_A;
-        Ay_fn = constant_A;
-        Az_fn = ring_Az;
-    }
-
-    else if (id == "fiber2d"){
-        Ax_fn = fiber2d_Ax;
-        Ay_fn = fiber2d_Ay;
-        Az_fn = constant_A;
-    }
-    else if (id == "test"){
-        Ax_fn = test_Ax;
-        Ay_fn = test_Ay;
-        Az_fn = constant_A;
-    }
-
-    // If reading from file, these will be set later
-    else if (id == "file"){
-        Ax_fn = nullptr;
-        Ay_fn = nullptr;
-        Az_fn = nullptr;
-    }
-}
-
 void Grid::set_A_fn(std::string id){
     if (id == "rotation"){
         Ax_fn = krotation_Ax;
@@ -415,88 +328,3 @@ void Grid::set_V_fn(std::string id){
         V_fn = kharmonic_V;
     }
 }
-
-// Function to set functionPtrs without an unordered map
-void set_fns(Grid &par, Op &opr, Wave &wave){
-
-    // There are 3 different function distributions to keep in mind:
-    // Kfn, Vfn, Afn, wfcfn
-
-    // Kfn
-    opr.set_K_fn(par.Kfn);
-
-    // Vfn
-    opr.set_V_fn(par.Vfn);
-    par.set_V_fn(par.Vfn);
-
-    // Afn
-    par.set_A_fn(par.Afn);
-    opr.set_A_fns(par.Afn);
-
-    // Wfcfn
-    wave.set_wfc_fn(par.Wfcfn);
-    par.set_wfc_fn(par.Wfcfn);
-
-}
-
-/*----------------------------------------------------------------------------//
-* WAVE
-*-----------------------------------------------------------------------------*/
-
-// Functions to store data in the Wave class
-void Wave::store(std::string id, double *data){
-    Wave_dstar[id] = data;
-}
-
-void Wave::store(std::string id, cufftDoubleComplex *data){
-    Wave_cdc[id] = data;
-}
-
-// Functions to retrieve data from the Wave class
-double *Wave::dsval(std::string id){
-    auto it = Wave_dstar.find(id);
-    if (it == Wave_dstar.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Wave::Wave_dstar." << '\n';
-        assert(it != Wave_dstar.end());
-    }
-    return it->second;
-}
-
-cufftDoubleComplex *Wave::cufftDoubleComplexval(std::string id){
-    auto it = Wave_cdc.find(id);
-    if (it == Wave_cdc.end()){
-        std::cout << "ERROR: could not find string " << id 
-                  << " in Wave::Wave_cdc." << '\n';
-        assert(it != Wave_cdc.end());
-    }
-    return it->second;
-}
-
-// Function to set functionPtr for wfc
-void Wave::set_wfc_fn(std::string id){
-    if (id == "2d"){
-        Wfc_fn = standard_wfc_2d;
-    }
-    else if(id == "3d"){
-        Wfc_fn = standard_wfc_3d;
-    }
-    else if(id == "torus"){
-        Wfc_fn = torus_wfc;
-    }
-}
-
-/*----------------------------------------------------------------------------//
-* MISC
-*-----------------------------------------------------------------------------*/
-
-/*
-// Template function to print all values in map
-template <typename T> void print_map(std::unordered_map<std::string, T> map){
-    std::cout << "Contents of map are: " << '\n';
-    std::cout << "key: " << '\t' << "element: " << '\n';
-    for (auto element : map){
-        std::cout << element.first << '\t' << element.second << '\n';
-    }
-}
-*/

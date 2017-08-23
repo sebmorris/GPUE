@@ -1,8 +1,8 @@
 #include "../include/evolution.h"
 
-void evolve_2d(Wave &wave, Op &opr,
+void evolve_2d(Grid &par,
                cufftDoubleComplex *gpuParSum, int numSteps,
-               unsigned int gstate, Grid &par,
+               unsigned int gstate,
                std::string buffer){
 
     // Re-establishing variables from parsed Grid class
@@ -224,7 +224,7 @@ void evolve_2d(Wave &wave, Op &opr,
                                     vortCoords->getVortices(),
                                     vort_angle + PI * angle_sweep / 180.0,
                                     laser_power * HBAR * sqrt(omegaX * omegaY),
-                                    V_opt, x, y, par, opr);
+                                    V_opt, x, y, par);
 
 
 			}
@@ -653,9 +653,9 @@ void evolve_2d(Wave &wave, Op &opr,
 *        Kicking will also be hard to do... Though not impossible, I suppose.
 *-----------------------------------------------------------------------------*/
 
-void evolve_3d(Wave &wave, Op &opr,
+void evolve_3d(Grid &par,
                cufftDoubleComplex *gpuParSum, int numSteps,
-               unsigned int gstate, Grid &par,
+               unsigned int gstate,
                std::string buffer){
 
     // Re-establishing variables from parsed Grid class
@@ -805,7 +805,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     double* edges = (double *)malloc(sizeof(double)*gridSize);
 
                     // calling the kernel to find the edges
-                    find_edges(par, wave, wfc, edges);
+                    find_edges(par, wfc, edges);
 
                     // Now we need to output everything
                     if ( write_it){
@@ -916,7 +916,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
                     result = cufftExecZ2Z(plan_1d,gpuWfc,gpuWfc,CUFFT_INVERSE);
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d, gpuWfc);
@@ -932,7 +932,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
 
                     for (int i = 0; i < yDim; i++){
                         //size = xDim * zDim;
@@ -949,7 +949,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
 
                     result = cufftExecZ2Z(plan_dim3,gpuWfc,gpuWfc,
                                           CUFFT_INVERSE);
@@ -966,7 +966,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
   
                     result = cufftExecZ2Z(plan_dim3,gpuWfc,gpuWfc,
                                           CUFFT_INVERSE);
@@ -984,7 +984,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
 
                     for (int i = 0; i < yDim; i++){
                         //size = xDim * zDim;
@@ -1000,7 +1000,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
                     result = cufftExecZ2Z(plan_1d,gpuWfc,gpuWfc,CUFFT_INVERSE);
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d, gpuWfc);
@@ -1013,7 +1013,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
                     result = cufftExecZ2Z(plan_1d,gpuWfc,gpuWfc,CUFFT_INVERSE);
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d, gpuWfc);
@@ -1028,7 +1028,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
 
                     for (int i = 0; i < yDim; i++){
                         result = cufftExecZ2Z(plan_dim2,
@@ -1045,7 +1045,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
 
                     result = cufftExecZ2Z(plan_dim3,gpuWfc,gpuWfc,
                                           CUFFT_INVERSE);
@@ -1062,7 +1062,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
 
                     result = cufftExecZ2Z(plan_dim3,gpuWfc,gpuWfc,
                                           CUFFT_INVERSE);
@@ -1079,7 +1079,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
 
                     for (int i = 0; i < yDim; i++){
                         result = cufftExecZ2Z(plan_dim2,
@@ -1094,7 +1094,7 @@ void evolve_3d(Wave &wave, Op &opr,
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d,gpuWfc);
                     cMult<<<grid,threads>>>(gpuWfc,
-                        (cufftDoubleComplex*) gpu1dpAz, gpuWfc);
+                        (cufftDoubleComplex*) gpu1dpAy, gpuWfc);
                     result = cufftExecZ2Z(plan_1d,gpuWfc,gpuWfc,CUFFT_INVERSE);
                     scalarMult<<<grid,threads>>>(gpuWfc,
                                                  renorm_factor_1d, gpuWfc);

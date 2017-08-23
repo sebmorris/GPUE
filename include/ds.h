@@ -145,81 +145,8 @@ class Grid{
 };
 typedef class Grid Grid;
 
-/**
- * @brief       class to hold all necessary information about the operators
- * @ingroup     data
- */
-class Op{
-    private:
-        typedef double (*functionPtr)(Grid&, Op&, int, int, int);
-        std::unordered_map<std::string, double*> Op_dstar;
-        std::unordered_map<std::string, const double*> Op_cdstar;
-        std::unordered_map<std::string, cufftDoubleComplex*> Op_cdc;
-        //K_fns.emplace("rotation_K", rotation_K);
-        //V_fns["harmonic_V"] = harmonic_V;
-        // double *V, *V_opt, *K, *xPy, *yPx, *xPy_gpu, *yPx_gpu;
-        //cufftDoubleComplex *GK,*GV_half,*GV,*EK,*EV,*EV_opt,*GxPy,*GyPx,
-        //                   *ExPy,*EyPx,*EappliedField,*K_gpu,*V_gpu;
-
-    public:
-        // Functions to store data
-        void store(std::string id, const double *data);
-        void store(std::string id, double *data);
-        void store(std::string id, cufftDoubleComplex *data);
-
-        // Functions to retrieve data
-        double *dsval(std::string id);
-        cufftDoubleComplex *cufftDoubleComplexval(std::string id);
-
-        // Map for function pointers and keys K and V
-        functionPtr K_fn;
-        functionPtr V_fn;
-        functionPtr Ax_fn;
-        functionPtr Ay_fn;
-        functionPtr Az_fn;
-
-        void set_K_fn(std::string id);
-        void set_V_fn(std::string id);
-        void set_A_fns(std::string id);
-
-        // Function to set K and V function pointers
-
-};
-typedef class Op Op;
-
-/**
- * @brief       class to hold all necessary information about the wavefunction
- * @ingroup     data
- */
-class Wave{
-    private:
-        typedef cufftDoubleComplex (*functionPtr)(Grid&, double, int, int, int);
-        std::unordered_map<std::string, double*> Wave_dstar;
-        std::unordered_map<std::string, cufftDoubleComplex*> Wave_cdc;
-        //double *Energy, *energy_gpu, *r, *Phi, *Phi_gpu;
-        //cufftDoubleComplex *wfc, *wfc0, *wfc_backup, *wfc_gpu, *par_sum;
-    public:
-
-        // functions to store data
-        void store(std::string id, double *data);
-        void store(std::string id, cufftDoubleComplex *data);
-
-        // Functions to retrieve data
-        double *dsval(std::string id);
-        cufftDoubleComplex *cufftDoubleComplexval(std::string id);
-
-        functionPtr Wfc_fn;
-        void set_wfc_fn(std::string id);
-};
-typedef class Wave Wave;
-
-/*----------------------------------------------------------------------------//
-* AUX
-*-----------------------------------------------------------------------------*/
-// I didn't know where to place these functions for now, so the'll be here
 void generate_plan_other2d(cufftHandle *plan_fft1d, Grid &par);
 void generate_plan_other3d(cufftHandle *plan_fft1d, Grid &par, int axis);
-
-void set_fns(Grid &par, Op &opr, Wave &wave);
+void set_fns(Grid &par);
 
 #endif

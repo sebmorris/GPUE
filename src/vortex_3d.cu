@@ -468,7 +468,7 @@ void transfer_sobel(Grid &par){
 }
 
 // function to transform a wavefunction to a field of edges
-void find_edges(Grid &par, Wave &wave, 
+void find_edges(Grid &par,
                 double2* wfc, double* edges){
 
     // for this, we simply need to take our sobel 3d sobel filter,

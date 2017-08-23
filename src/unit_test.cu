@@ -481,26 +481,6 @@ void parameter_test(){
 
     std::cout << "Grid class checked, now checking the Cuda class..." << '\n';
 
-    // Now checking the Op class
-    // Creating Op class to test with
-    Op op_test;
-    op_test.store("dstar_var",dstar_var);
-    op_test.store("cdc_var",cdc_var);
-
-    assert(dstar_var == op_test.dsval("dstar_var"));
-    assert(cdc_var == op_test.cufftDoubleComplexval("cdc_var"));
-
-    std::cout << "Op class checked, now checking Wave class..." << '\n';
-
-    // Now checking the Op class
-    // Creating Op class to test with
-    Wave wave_test; 
-    wave_test.store("dstar_var",dstar_var);
-    wave_test.store("cdc_var",cdc_var);
-
-    assert(dstar_var == wave_test.dsval("dstar_var"));
-    assert(cdc_var == wave_test.cufftDoubleComplexval("cdc_var"));
-
     std::cout << "All data structures checked" << '\n';
 
 }
@@ -709,9 +689,6 @@ void evolve_2d_test(){
     Grid par;
     par = parseArgs(fake_argc, fake_argv);
 
-    Wave wave;
-    Op opr;
-
     std::cout << "omegaX is: " << par.dval("omegaX") << '\n';
     std::cout << "x / yDim are: " << par.ival("xDim") << '\t' 
               << par.ival("yDim") << '\n';
@@ -726,36 +703,36 @@ void evolve_2d_test(){
     */
     //************************************************************//
 
-    init(opr, par, wave);
+    init(par);
 
     // Re-establishing variables from parsed Grid class
     double dx = par.dval("dx");
     double dy = par.dval("dy");
     double *x = par.dsval("x");
     double *y = par.dsval("y");
-    double *V_opt = opr.dsval("V_opt");
-    double *pAy = opr.dsval("pAy");
-    double *pAx = opr.dsval("pAx");
-    double *pAy_gpu = opr.dsval("pAy_gpu");
-    double *pAx_gpu = opr.dsval("pAx_gpu");
+    double *V_opt = par.dsval("V_opt");
+    double *pAy = par.dsval("pAy");
+    double *pAx = par.dsval("pAx");
+    double *pAy_gpu = par.dsval("pAy_gpu");
+    double *pAx_gpu = par.dsval("pAx_gpu");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     bool read_wfc = par.bval("read_wfc");
     int gsteps = par.ival("gsteps");
     int esteps = par.ival("esteps");
-    cufftDoubleComplex *wfc = wave.cufftDoubleComplexval("wfc");
-    cufftDoubleComplex *V_gpu = opr.cufftDoubleComplexval("V_gpu");
-    cufftDoubleComplex *GK = opr.cufftDoubleComplexval("GK");
-    cufftDoubleComplex *GV = opr.cufftDoubleComplexval("GV");
-    cufftDoubleComplex *EV = opr.cufftDoubleComplexval("EV");
-    cufftDoubleComplex *EK = opr.cufftDoubleComplexval("EK");
-    cufftDoubleComplex *EpAy = opr.cufftDoubleComplexval("EpAy");
-    cufftDoubleComplex *EpAx = opr.cufftDoubleComplexval("EpAx");
-    cufftDoubleComplex *GpAx = opr.cufftDoubleComplexval("GpAx");
-    cufftDoubleComplex *GpAy = opr.cufftDoubleComplexval("GpAy");
-    cufftDoubleComplex *wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
-    cufftDoubleComplex *K_gpu = opr.cufftDoubleComplexval("K_gpu");
-    cufftDoubleComplex *par_sum = wave.cufftDoubleComplexval("par_sum");
+    cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
+    cufftDoubleComplex *V_gpu = par.cufftDoubleComplexval("V_gpu");
+    cufftDoubleComplex *GK = par.cufftDoubleComplexval("GK");
+    cufftDoubleComplex *GV = par.cufftDoubleComplexval("GV");
+    cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
+    cufftDoubleComplex *EK = par.cufftDoubleComplexval("EK");
+    cufftDoubleComplex *EpAy = par.cufftDoubleComplexval("EpAy");
+    cufftDoubleComplex *EpAx = par.cufftDoubleComplexval("EpAx");
+    cufftDoubleComplex *GpAx = par.cufftDoubleComplexval("GpAx");
+    cufftDoubleComplex *GpAy = par.cufftDoubleComplexval("GpAy");
+    cufftDoubleComplex *wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
+    cufftDoubleComplex *K_gpu = par.cufftDoubleComplexval("K_gpu");
+    cufftDoubleComplex *par_sum = par.cufftDoubleComplexval("par_sum");
     cudaError_t err;
 
     std::cout << "variables re-established" << '\n';
@@ -804,10 +781,9 @@ void evolve_2d_test(){
             exit(1);
         }
     
-        evolve_2d(wave, opr, par_sum,
-               gsteps, 0, par, buffer);
-        wfc = wave.cufftDoubleComplexval("wfc");
-        wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
+        evolve_2d(par, par_sum, gsteps, 0, buffer);
+        wfc = par.cufftDoubleComplexval("wfc");
+        wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
         cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*xDim*yDim,
                    cudaMemcpyDeviceToHost);
     }
@@ -818,8 +794,8 @@ void evolve_2d_test(){
     //free(GV); free(GK); free(pAy); free(pAx);
 
     // Re-initializing wfc after evolution
-    wfc = wave.cufftDoubleComplexval("wfc");
-    wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
+    wfc = par.cufftDoubleComplexval("wfc");
+    wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
 
     std::cout << "evolution started..." << '\n';
     std::cout << "esteps: " << esteps << '\n';
@@ -861,8 +837,8 @@ void evolve_2d_test(){
             exit(1);
         }
 
-        evolve_2d(wave, opr, par_sum,
-               esteps, 1, par, buffer);
+        evolve_2d(par, par_sum,
+               esteps, 1, buffer);
 
     }
 
@@ -877,17 +853,17 @@ void evolve_2d_test(){
 
     // We first need to grab the wavefunctions from the evolve_2d function
     // After evolution
-    wfc = wave.cufftDoubleComplexval("wfc");
-    wfc_gpu = wave.cufftDoubleComplexval("wfc_gpu");
+    wfc = par.cufftDoubleComplexval("wfc");
+    wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
     unsigned int gSize = xDim * yDim;
 
     // Now to grab K and V, note that these are different than the values used 
     // for K / V_gpu or for E / G K / V in the evolve_2d function
     // The additional 0 in the gpu variable name indicate this (sorry)
-    double *K_0_gpu = opr.dsval("K");
-    double *K = opr.dsval("K");
-    double *V_0_gpu = opr.dsval("V");
-    double *V = opr.dsval("V");
+    double *K_0_gpu = par.dsval("K");
+    double *K = par.dsval("K");
+    double *V_0_gpu = par.dsval("V");
+    double *V = par.dsval("V");
 
     // Now we need som CUDA specific variables for the kernels later on...
     int threads = par.ival("threads");

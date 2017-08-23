@@ -121,7 +121,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
 void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
                  std::vector<std::shared_ptr<Vtx::Vortex>> &vArray, double theta_opt,
                  double intensity, double* v_opt, const double *x, const double *y,
-                 Grid &par, Op &opr){
+                 Grid &par){
     std::string data_dir = par.sval("data_dir");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
@@ -286,7 +286,7 @@ double energy_angmom(double2 *V_op, double2 *K_op,
 
 // Creates narrow Gaussian "delta" peaks for vortex kicking
 void delta_define(double *x, double *y, double x0, double y0, double *delta,
-                  Grid &par, Op &opr){
+                  Grid &par){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
