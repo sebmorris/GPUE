@@ -644,11 +644,44 @@ void generate_fields(Grid &par){
     cudaMemcpy(pAz, pAz_gpu, sizeof(double)*gSize, cudaMemcpyDeviceToHost);
 
     // Storing variables
+    cudaFree(items_gpu);
+    //cudaFree(phi_gpu);
+    cudaFree(GV_gpu);
+    cudaFree(EV_gpu);
+    cudaFree(GK_gpu);
+    cudaFree(EK_gpu);
+
+    cudaFree(pAx_gpu);
+    cudaFree(pAy_gpu);
+    cudaFree(pAz_gpu);
+
+    cudaFree(GpAx_gpu);
+    cudaFree(GpAy_gpu);
+    cudaFree(GpAz_gpu);
+
+    cudaFree(EpAx_gpu);
+    cudaFree(EpAy_gpu);
+    cudaFree(EpAz_gpu);
+
+    cudaFree(Ax_gpu);
+    cudaFree(Ay_gpu);
+    cudaFree(Az_gpu);
+
+    cudaFree(x_gpu);
+    cudaFree(y_gpu);
+    cudaFree(z_gpu);
+
+    cudaFree(px_gpu);
+    cudaFree(py_gpu);
+    cudaFree(pz_gpu);
+
+    cudaFree(K_gpu);
+    cudaFree(V_gpu);
 
     par.store("V",V);
     par.store("V_gpu",V_gpu);
     par.store("items", items);
-    par.store("items_gpu", items_gpu);
+    //par.store("items_gpu", items_gpu);
     par.store("wfc", wfc);
     par.store("wfc_gpu", wfc_gpu);
     par.store("Phi", phi);
@@ -658,10 +691,10 @@ void generate_fields(Grid &par){
     par.store("EV",EV);
     par.store("GK",GK);
     par.store("EK",EK);
-    par.store("GV_gpu",GV_gpu);
-    par.store("EV_gpu",EV_gpu);
-    par.store("GK_gpu",GK_gpu);
-    par.store("EK_gpu",EK_gpu);
+    //par.store("GV_gpu",GV_gpu);
+    //par.store("EV_gpu",EV_gpu);
+    //par.store("GK_gpu",GK_gpu);
+    //par.store("EK_gpu",EK_gpu);
 
     par.store("GpAx",GpAx);
     par.store("EpAx",EpAx);
@@ -673,9 +706,9 @@ void generate_fields(Grid &par){
     par.store("pAx",pAx);
     par.store("pAy",pAy);
     par.store("pAz",pAz);
-    par.store("pAx_gpu",pAx_gpu);
-    par.store("pAy_gpu",pAy_gpu);
-    par.store("pAz_gpu",pAz_gpu);
+    //par.store("pAx_gpu",pAx_gpu);
+    //par.store("pAy_gpu",pAy_gpu);
+    //par.store("pAz_gpu",pAz_gpu);
     
 }
 

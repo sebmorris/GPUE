@@ -81,7 +81,6 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
               << "grid.x is: " << grid_tmp.x << '\t'
               << "threads.x are: " << threads.x << '\n';
 */
-
     dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
         if(grid_tmp.x == gsize){
