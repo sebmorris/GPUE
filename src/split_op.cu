@@ -83,7 +83,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
 */
     dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
-        if(grid_tmp.x == gsize){
+        if(pass == 0){
             multipass<<<block,threads,threads.x*sizeof(double2)>>>(&gpuWfc[0],
                 &gpuParSum[0],pass);
         }
@@ -100,8 +100,8 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     multipass<<<1,thread_tmp,thread_tmp.x*sizeof(double2)>>>(&gpuParSum[0],
                                                            &gpuParSum[0], pass);
 
-/*
     // Writing out in the parSum Function (not recommended, for debugging)
+/*
     double2 *sum;
     sum = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex)*gsize / threads.x);
     cudaMemcpy(sum,gpuParSum,sizeof(cufftDoubleComplex)*gsize/threads.x,

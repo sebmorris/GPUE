@@ -679,7 +679,7 @@ void generate_fields(Grid &par){
     cudaFree(V_gpu);
 
     par.store("V",V);
-    par.store("V_gpu",V_gpu);
+    //par.store("V_gpu",V_gpu);
     par.store("items", items);
     //par.store("items_gpu", items_gpu);
     par.store("wfc", wfc);
@@ -834,12 +834,15 @@ __global__ void aux_fields(double *V, double *K, double gdt, double dt,
 // Function to generate grids and treads for 2d and 3d cases
 void generate_grid(Grid& par){
 
-    int max_threads = 128;
     int dimnum = par.ival("dimnum");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
     int xD = 1, yD = 1, zD = 1;
+    int max_threads = 256;
+    if (xDim < max_threads){
+        max_threads = xDim;
+    }
 
     if (dimnum == 2){
         if (xDim <= max_threads){
