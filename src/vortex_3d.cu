@@ -465,6 +465,8 @@ void transfer_sobel(Grid &par){
 
     }
 
+    par.store("found_sobel",true);
+
 }
 
 // function to transform a wavefunction to a field of edges
@@ -495,6 +497,7 @@ void find_edges(Grid &par,
 
     // Now we need to grab the Sobel operators
     if (par.bval("found_sobel") == false){
+        std::cout << "Finding sobel filters" << '\n';
         find_sobel(par);
     }
 
@@ -551,6 +554,14 @@ void find_edges(Grid &par,
     // Copying edges back
     cudaMemcpy(edges, edges_gpu, sizeof(double) * gSize, 
                cudaMemcpyDeviceToHost);
+
+    // Now we have to free all the variables
+    cudaFree(gradient_x_fft);
+    cudaFree(gradient_y_fft);
+    cudaFree(gradient_z_fft);
+    cudaFree(density_d);
+    cudaFree(density_d2);
+    cudaFree(edges_gpu);
 
     // Method to find edges based on window approach -- more efficient, 
     // but difficult to implement
