@@ -813,6 +813,8 @@ void evolve_3d(Grid &par,
                                                edges, gridSize, i);
                     }
 
+                    free(edges);
+
                     fileName = "wfc_ev";
                     break;
                 }

@@ -485,49 +485,49 @@ void find_edges(Grid &par,
     int zDim = par.ival("zDim");
     int gSize = xDim * yDim * zDim;
 
-    // First, we need to generate the wfc_density
-    //double *density = (double *)malloc(sizeof(double)*gSize);
-    
-    // copying density to device for cuda-fication
-    double *density_d;
-    cudaMalloc((void**) &density_d, sizeof(double) * gSize);
-
-    // now to perform the complexMagnitudeSquared operation
-    complexMagnitudeSquared<<<grid,threads>>>(wfc_gpu, density_d);
+    double *density_d, *edges_gpu;
+    double2 *density_d2, *gradient_x_fft, *gradient_y_fft, *gradient_z_fft;
 
     // Now we need to grab the Sobel operators
     if (par.bval("found_sobel") == false){
         std::cout << "Finding sobel filters" << '\n';
         find_sobel(par);
+
+        cudaMalloc((void**) &density_d, sizeof(double) * gSize);
+        cudaMalloc((void**) &gradient_x_fft, sizeof(double2) * gSize);
+        cudaMalloc((void**) &gradient_y_fft, sizeof(double2) * gSize);
+        cudaMalloc((void**) &gradient_z_fft, sizeof(double2) * gSize);
+        cudaMalloc((void**) &density_d2, sizeof(double2) * gSize);
+        cudaMalloc((void**) &edges_gpu, sizeof(double) * gSize);
     }
+    else{
+        density_d = par.dsval("density_d");
+        edges_gpu = par.dsval("edges_gpu");
+        gradient_x_fft = par.cufftDoubleComplexval("gradient_x_fft");
+        gradient_y_fft = par.cufftDoubleComplexval("gradient_y_fft");
+        gradient_z_fft = par.cufftDoubleComplexval("gradient_z_fft");
+        density_d2 = par.cufftDoubleComplexval("density_d2");
+    }
+
+    cufftHandle plan_3d = par.ival("plan_3d");
+
+    // First, we need to generate the wfc_density
+    //double *density = (double *)malloc(sizeof(double)*gSize);
+    
+    // now to perform the complexMagnitudeSquared operation
+    complexMagnitudeSquared<<<grid,threads>>>(wfc_gpu, density_d);
 
     // Pulling operators from find_sobel(par)
     double2 *sobel_x_gpu = par.cufftDoubleComplexval("sobel_x_gpu");
     double2 *sobel_y_gpu = par.cufftDoubleComplexval("sobel_y_gpu");
     double2 *sobel_z_gpu = par.cufftDoubleComplexval("sobel_z_gpu");
 
-    // Creating variables for the edge gradient along xyz
-    double2 *gradient_x_fft;
-    double2 *gradient_y_fft;
-    double2 *gradient_z_fft;
-
-    cudaMalloc((void**) &gradient_x_fft, sizeof(double2) * gSize);
-    cudaMalloc((void**) &gradient_y_fft, sizeof(double2) * gSize);
-    cudaMalloc((void**) &gradient_z_fft, sizeof(double2) * gSize);
-
     // This should work in principle, but the D2Z transform plays tricks
     // Generating plan for d2z in 3d
     //cufftHandle plan_3d2z;
     //cufftPlan3d(&plan_3d2z, xDim, yDim, zDim, CUFFT_D2Z);
 
-    // Creating complex density
-    double2 *density_d2;
-    cudaMalloc((void**) &density_d2, sizeof(double2) * gSize);
-
-    make_cufftDoubleComplex<<<grid, threads>>>(density_d, density_d2);
-
-    cufftHandle plan_3d;
-    cufftPlan3d(&plan_3d, xDim, yDim, zDim, CUFFT_Z2Z);
+    //make_cufftDoubleComplex<<<grid, threads>>>(density_d, density_d2);
 
     // Now fft forward, multiply, fft back
     cufftExecZ2Z(plan_3d, density_d2, gradient_x_fft, CUFFT_FORWARD);
@@ -544,10 +544,6 @@ void find_edges(Grid &par,
     cufftExecZ2Z(plan_3d, gradient_y_fft, gradient_y_fft, CUFFT_INVERSE);
     cufftExecZ2Z(plan_3d, gradient_z_fft, gradient_z_fft, CUFFT_INVERSE);
 
-    // Creating the edges variable on the gpu
-    double *edges_gpu;
-    cudaMalloc((void**) &edges_gpu, sizeof(double) * gSize);
-
     l2_norm<<<grid, threads>>>(gradient_x_fft, gradient_y_fft, 
                                gradient_z_fft, edges_gpu);
 
@@ -555,16 +551,15 @@ void find_edges(Grid &par,
     cudaMemcpy(edges, edges_gpu, sizeof(double) * gSize, 
                cudaMemcpyDeviceToHost);
 
-    // Now we have to free all the variables
-    cudaFree(gradient_x_fft);
-    cudaFree(gradient_y_fft);
-    cudaFree(gradient_z_fft);
-    cudaFree(density_d);
-    cudaFree(density_d2);
-    cudaFree(edges_gpu);
-
     // Method to find edges based on window approach -- more efficient, 
     // but difficult to implement
+
+    par.store("density_d", density_d);
+    par.store("density_d2", density_d2);
+    par.store("edges_gpu", edges_gpu);
+    par.store("gradient_x_fft", gradient_x_fft);
+    par.store("gradient_y_fft", gradient_y_fft);
+    par.store("gradient_z_fft", gradient_z_fft);
 /*
     // first, we need to set the threading
     unsigned int gid = getGid3d3d();
