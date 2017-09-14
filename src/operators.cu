@@ -567,7 +567,7 @@ void generate_fields(Grid &par){
     cudaMalloc((void**) &wfc_gpu, sizeof(double2)*gSize);
     cudaMalloc((void**) &phi_gpu, sizeof(double)*gSize);
 
-    if (par.Wfcfn == "file"){
+    if (par.bval("read_wfc")){
         wfc = par.cufftDoubleComplexval("wfc");
         cudaMemcpy(wfc_gpu, wfc, sizeof(double2)*gSize, cudaMemcpyHostToDevice);
     }
