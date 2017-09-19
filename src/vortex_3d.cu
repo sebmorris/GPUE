@@ -492,7 +492,6 @@ void find_edges(Grid &par,
     if (par.bval("found_sobel") == false){
         std::cout << "Finding sobel filters" << '\n';
         find_sobel(par);
-
         cudaMalloc((void**) &density_d, sizeof(double) * gSize);
         cudaMalloc((void**) &gradient_x_fft, sizeof(double2) * gSize);
         cudaMalloc((void**) &gradient_y_fft, sizeof(double2) * gSize);
@@ -511,9 +510,6 @@ void find_edges(Grid &par,
 
     cufftHandle plan_3d = par.ival("plan_3d");
 
-    // First, we need to generate the wfc_density
-    //double *density = (double *)malloc(sizeof(double)*gSize);
-    
     // now to perform the complexMagnitudeSquared operation
     complexMagnitudeSquared<<<grid,threads>>>(wfc_gpu, density_d);
 
@@ -527,7 +523,7 @@ void find_edges(Grid &par,
     //cufftHandle plan_3d2z;
     //cufftPlan3d(&plan_3d2z, xDim, yDim, zDim, CUFFT_D2Z);
 
-    //make_cufftDoubleComplex<<<grid, threads>>>(density_d, density_d2);
+    make_cufftDoubleComplex<<<grid, threads>>>(density_d, density_d2);
 
     // Now fft forward, multiply, fft back
     cufftExecZ2Z(plan_3d, density_d2, gradient_x_fft, CUFFT_FORWARD);
