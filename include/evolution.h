@@ -67,7 +67,7 @@ void evolve_2d(Grid &par,
  * @param       c Descriptor of CUDA operation
  * @return      0 for success. See CUDA failure codes in cuda.h for other values
  */
-void evolve_3d(Grid &par,
+void evolve(Grid &par,
             cufftDoubleComplex *gpuParSum, int numSteps,
             unsigned int gstate,
             std::string buffer);

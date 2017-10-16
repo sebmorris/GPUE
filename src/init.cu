@@ -461,13 +461,8 @@ int main(int argc, char **argv){
             }
             par.store("pAz_gpu", pAz_gpu);
 
-            evolve_3d(par, par_sum,
-                      gsteps, 0, buffer);
         }
-        if (dimnum == 2){
-            evolve_2d(par, par_sum,
-                      gsteps,  0, buffer);
-        }
+        evolve(par, par_sum, gsteps, 0, buffer);
         wfc = par.cufftDoubleComplexval("wfc");
         wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
         cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*gsize,
@@ -539,13 +534,8 @@ int main(int argc, char **argv){
                 exit(1);
             }
             par.store("pAz_gpu", pAz_gpu);
-            evolve_3d(par, par_sum,
-                      esteps, 1, buffer);
         }
-        if (dimnum == 2){
-            evolve_2d(par, par_sum,
-                      esteps, 1, buffer);
-        }
+        evolve(par, par_sum, esteps, 1, buffer);
         wfc = par.cufftDoubleComplexval("wfc");
         wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
     }
