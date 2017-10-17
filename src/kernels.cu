@@ -192,6 +192,18 @@ __global__ void l2_norm(double2 *in1, double2 *in2, double2 *in3, double *out){
                     + in3[gid].x*in3[gid].x + in3[gid].y*in3[gid].y);
 }
 
+__global__ void l2_norm(double *in1, double *in2, double *out){
+
+    int gid = getGid3d3d();
+    out[gid] = sqrt(in1[gid]*in1[gid] + in2[gid]*in2[gid]);
+}
+
+__global__ void l2_norm(double2 *in1, double2 *in2, double *out){
+
+    int gid = getGid3d3d();
+    out[gid] = sqrt(in1[gid].x*in1[gid].x + in1[gid].y*in1[gid].y
+                    + in2[gid].x*in2[gid].x + in2[gid].y*in2[gid].y);
+}
 
 /**
  * Performs the non-linear evolution term of Gross--Pitaevskii equation.

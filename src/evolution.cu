@@ -804,22 +804,20 @@ void evolve(Grid &par,
                     //       look into it when we need it in the future.
                     std::cout << "commencing 3d vortex tracking" << '\n';
 
-                    if (dimnum == 3){
-                        // Creating the necessary double* values
-                        double* edges = (double *)malloc(sizeof(double)
-                                                         *gridSize);
+                    // Creating the necessary double* values
+                    double* edges = (double *)malloc(sizeof(double)
+                                                     *gridSize);
 
-                        // calling the kernel to find the edges
-                        find_edges(par, wfc, edges);
+                    // calling the kernel to find the edges
+                    find_edges(par, wfc, edges);
 
-                        // Now we need to output everything
-                        if ( write_it){
-                            FileIO::writeOutDouble(buffer, data_dir + "Edges",
-                                                   edges, gridSize, i);
-                        }
-
-                        free(edges);
+                    // Now we need to output everything
+                    if ( write_it){
+                        FileIO::writeOutDouble(buffer, data_dir + "Edges",
+                                               edges, gridSize, i);
                     }
+
+                    free(edges);
 
                     fileName = "wfc_ev";
                     break;

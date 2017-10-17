@@ -199,13 +199,13 @@ void find_sobel(Grid &par){
     }
     else{
         double *sobel_x, *sobel_y, *sobel_z;
-        xDim = 9;
-        yDim = 9;
-        zDim = 9;
+        xDim = 3;
+        yDim = 3;
+        zDim = 3;
 
-        sobel_x = (double *) malloc(sizeof(double) *9);
-        sobel_y = (double *) malloc(sizeof(double) *9);
-        sobel_z = (double *) malloc(sizeof(double) *9);
+        sobel_x = (double *) malloc(sizeof(double) *27);
+        sobel_y = (double *) malloc(sizeof(double) *27);
+        sobel_z = (double *) malloc(sizeof(double) *27);
 
         // There is clearly a better way to do this with matrix multiplication
         // the sobel operator is separable, so we just need to mix 
@@ -360,10 +360,211 @@ void find_sobel(Grid &par){
     par.store("found_sobel", true);
 }
 
-// Fucntion to transfer 3d sobel operators for non-fft convolution
+void find_sobel_2d(Grid &par){
+
+    std::string conv_type = par.sval("conv_type");
+    int xDim, yDim, zDim;
+
+    // There will be two cases to take into account here, one for fft 
+    // convolution and another for window
+
+    int index = 0;
+
+    if (conv_type == "FFT"){
+        double2 *sobel_x, *sobel_y, *sobel_z;
+        xDim = par.ival("xDim");
+        yDim = par.ival("yDim");
+
+        sobel_x = (double2 *) malloc(sizeof(double2) *xDim*yDim);
+        sobel_y = (double2 *) malloc(sizeof(double2) *xDim*yDim);
+
+        // Now let's go ahead and pad these guys with 0's
+        for (int i = 0; i < xDim; ++i){
+            for (int j = 0; j < yDim; ++j){
+                index = j + i * yDim;
+                sobel_x[index].x = 0;
+                sobel_y[index].x = 0;
+            }
+        }
+
+        // There is clearly a better way to do this with matrix multiplication
+        // the sobel operator is separable, so we just need to mix
+        // Gradient and triangle filters, check:
+        //     https://en.wikipedia.org/wiki/Sobel_operator
+    
+        // S_y
+        int factor;
+        for (int i = 0; i < 3; ++i){
+            for (int j = 0; j < 3; ++j){
+                index = j + yDim*i;
+                if (j == 0){
+                    factor = -1;
+                }
+                if (j == 1){
+                    factor = 0;
+                }
+                if (j == 2){
+                    factor = 1;
+                }
+                if (j == 0 && i == 0){
+                    sobel_y[index].x = factor * 1;
+                }
+                if (j == 0 && i == 1){
+                    sobel_y[index].x = factor * 2;
+                }
+                if (j == 0 && i == 2){
+                    sobel_y[index].x = factor * 1;
+                }
+                if (j == 2 && i == 0){
+                    sobel_y[index].x = factor * 1;
+                }
+                if (j == 2 && i == 1){
+                    sobel_y[index].x = factor * 2;
+                }
+                if (j == 2 && i == 2){
+                    sobel_y[index].x = factor * 1;
+                }
+            }
+        }
+    
+        // Now for S_x
+        for (int i = 0; i < 3; ++i){
+            for (int j = 0; j < 3; ++j){
+                index = j + yDim*i;
+                if (i == 0){
+                    factor = -1;
+                }
+                if (i == 1){
+                    factor = 0;
+                }
+                if (i == 2){
+                    factor = 1;
+                }
+                if (i == 0 && j == 0){
+                    sobel_x[index].x = factor * 1;
+                }
+                if (i == 0 && j == 1){
+                    sobel_x[index].x = factor * 2;
+                }
+                if (i == 0 && j == 2){
+                    sobel_x[index].x = factor * 1;
+                }
+                if (i == 2 && j == 0){
+                    sobel_x[index].x = factor * 1;
+                }
+                if (i == 2 && j == 1){
+                    sobel_x[index].x = factor * 2;
+                }
+                if (i == 2 && j == 2){
+                    sobel_x[index].x = factor * 1;
+                }
+            }
+        }
+
+
+        par.store("sobel_x", sobel_x);
+        par.store("sobel_y", sobel_y);
+        par.store("sobel_z", sobel_z);
+
+    }
+    else{
+        double *sobel_x, *sobel_y, *sobel_z;
+        xDim = 3;
+        yDim = 3;
+
+        sobel_x = (double *) malloc(sizeof(double) *9);
+        sobel_y = (double *) malloc(sizeof(double) *9);
+
+        // There is clearly a better way to do this with matrix multiplication
+        // the sobel operator is separable, so we just need to mix 
+        // Gradient and triangle filters, check:
+        //     https://en.wikipedia.org/wiki/Sobel_operator
+    
+        int factor;
+        // S_y
+        for (int i = 0; i < 3; ++i){
+            for (int j = 0; j < 3; ++j){
+                index = j + 3*i;
+                if (j == 0){
+                    factor = -1;
+                }
+                if (j == 1){
+                    factor = 0;
+                }
+                if (j == 2){
+                    factor = 1;
+                }
+                if (j == 0 && i == 0){
+                    sobel_y[index] = factor * 1;
+                }
+                if (j == 0 && i == 1){
+                    sobel_y[index] = factor * 2;
+                }
+                if (j == 0 && i == 2){
+                    sobel_y[index] = factor * 1;
+                }
+                if (j == 2 && i == 0){
+                    sobel_y[index] = factor * 1;
+                }
+                if (j == 2 && i == 1){
+                    sobel_y[index] = factor * 2;
+                }
+                if (j == 2 && i == 2){
+                    sobel_y[index] = factor * 1;
+                }
+            }
+        }
+    
+        // Now for S_x
+        for (int i = 0; i < 3; ++i){
+            for (int j = 0; j < 3; ++j){
+                index = j + 3*i;
+                if (i == 0){
+                    factor = -1;
+                }
+                if (i == 1){
+                    factor = 0;
+                }
+                if (i == 2){
+                    factor = 1;
+                }
+                if (i == 0 && j == 0){
+                    sobel_x[index] = factor * 1;
+                }
+                if (i == 0 && j == 1){
+                    sobel_x[index] = factor * 2;
+                }
+                if (i == 0 && j == 2){
+                    sobel_x[index] = factor * 1;
+                }
+                if (i == 2 && j == 0){
+                    sobel_x[index] = factor * 1;
+                }
+                if (i == 2 && j == 1){
+                    sobel_x[index] = factor * 2;
+                }
+                if (i == 2 && j == 2){
+                    sobel_x[index] = factor * 1;
+                }
+            }
+        }
+
+
+
+        par.store("sobel_x", sobel_x);
+        par.store("sobel_y", sobel_y);
+        par.store("sobel_z", sobel_z);
+    }
+
+    transfer_sobel(par);
+
+}
+
+// Function to transfer 3d sobel operators for non-fft convolution
 void transfer_sobel(Grid &par){
 
     // Grabbing necessary parameters
+    int dimnum = par.ival("dimnum");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
@@ -371,6 +572,14 @@ void transfer_sobel(Grid &par){
     std::string conv_type = par.sval("conv_type");
 
     double2 *sobel_x_gpu, *sobel_y_gpu, *sobel_z_gpu;
+
+    cufftHandle plan_nd;
+    if (dimnum == 2){
+        plan_nd = par.ival("plan_2d");
+    }
+    else if (dimnum == 3){
+        plan_nd = par.ival("plan_3d");
+    }
 
     // creating space on device for 2 separate cases
     // Note that in the case of the FFT, the Sobel operators will be double2's
@@ -381,7 +590,9 @@ void transfer_sobel(Grid &par){
         double2 *sobel_z = par.cufftDoubleComplexval("sobel_z");
         cudaMalloc((void**) &sobel_x_gpu, sizeof(double2) *gSize);
         cudaMalloc((void**) &sobel_y_gpu, sizeof(double2) *gSize);
-        cudaMalloc((void**) &sobel_z_gpu, sizeof(double2) *gSize);
+        if (dimnum == 3){
+            cudaMalloc((void**) &sobel_z_gpu, sizeof(double2) *gSize);
+        }
 
         // Transferring to device
         cudaError_t err;
@@ -402,22 +613,22 @@ void transfer_sobel(Grid &par){
             exit(1);
         }
     
+        if (dimnum == 3){
         // Sobel_z
-        err = cudaMemcpy(sobel_z_gpu, sobel_z, sizeof(double2)*gSize,
-                         cudaMemcpyHostToDevice);
-        if (err != cudaSuccess){
-            std::cout << "ERROR: Could not copy sobel_z to device!" << '\n';
-            exit(1);
+            err = cudaMemcpy(sobel_z_gpu, sobel_z, sizeof(double2)*gSize,
+                             cudaMemcpyHostToDevice);
+            if (err != cudaSuccess){
+                std::cout << "ERROR: Could not copy sobel_z to device!" << '\n';
+                exit(1);
+            }
         }
     
-        // Generating the 3d plan
-        cufftHandle plan_3d;
-        cufftPlan3d(&plan_3d, xDim, yDim, zDim, CUFFT_Z2Z);
-    
         // We only need the FFT's of the sobel operators. Let's generate those
-        cufftExecZ2Z(plan_3d, sobel_x_gpu, sobel_x_gpu, CUFFT_FORWARD);
-        cufftExecZ2Z(plan_3d, sobel_y_gpu, sobel_y_gpu, CUFFT_FORWARD);
-        cufftExecZ2Z(plan_3d, sobel_z_gpu, sobel_z_gpu, CUFFT_FORWARD);
+        cufftExecZ2Z(plan_nd, sobel_x_gpu, sobel_x_gpu, CUFFT_FORWARD);
+        cufftExecZ2Z(plan_nd, sobel_y_gpu, sobel_y_gpu, CUFFT_FORWARD);
+        if (dimnum == 3){
+            cufftExecZ2Z(plan_nd, sobel_z_gpu, sobel_z_gpu, CUFFT_FORWARD);
+        }
     
         // Storing in set of parameters
         par.store("sobel_x_gpu", sobel_x_gpu);
@@ -428,9 +639,16 @@ void transfer_sobel(Grid &par){
         double2 *sobel_x = par.cufftDoubleComplexval("sobel_x");
         double2 *sobel_y = par.cufftDoubleComplexval("sobel_y");
         double2 *sobel_z = par.cufftDoubleComplexval("sobel_z");
-        cudaMalloc((void**) &sobel_x_gpu, sizeof(double) *9);
-        cudaMalloc((void**) &sobel_y_gpu, sizeof(double) *9);
-        cudaMalloc((void**) &sobel_z_gpu, sizeof(double) *9);
+        int size;
+        if (dimnum == 2){
+            size = 9;
+        }
+        else if (dimnum == 3){
+            size = 27;
+        }
+        cudaMalloc((void**) &sobel_x_gpu, sizeof(double) *size);
+        cudaMalloc((void**) &sobel_y_gpu, sizeof(double) *size);
+        cudaMalloc((void**) &sobel_z_gpu, sizeof(double) *size);
         // Transferring to device
         cudaError_t err;
    
@@ -450,12 +668,14 @@ void transfer_sobel(Grid &par){
             exit(1);
         }
    
-        // Sobel_z
-        err = cudaMemcpy(sobel_z_gpu, sobel_z, sizeof(double)*gSize,
-                         cudaMemcpyHostToDevice);
-        if (err != cudaSuccess){
-            std::cout << "ERROR: Could not copy sobel_z to device!" << '\n';
-            exit(1);
+        if (dimnum == 3){
+            // Sobel_z
+            err = cudaMemcpy(sobel_z_gpu, sobel_z, sizeof(double)*gSize,
+                             cudaMemcpyHostToDevice);
+            if (err != cudaSuccess){
+                std::cout << "ERROR: Could not copy sobel_z to device!" << '\n';
+                exit(1);
+            }
         }
    
         // Storing in set of parameters
@@ -476,6 +696,7 @@ void find_edges(Grid &par,
     // for this, we simply need to take our sobel 3d sobel filter,
     // FFT forward, multiply, FFT back.
 
+    int dimnum = par.ival("dimnum");
     dim3 grid = par.grid;
     dim3 threads = par.threads;
 
@@ -491,11 +712,18 @@ void find_edges(Grid &par,
     // Now we need to grab the Sobel operators
     if (par.bval("found_sobel") == false){
         std::cout << "Finding sobel filters" << '\n';
-        find_sobel(par);
+        if (dimnum == 2){
+            find_sobel_2d(par);
+        }
+        if (dimnum == 3){
+            find_sobel(par);
+        }
         cudaMalloc((void**) &density_d, sizeof(double) * gSize);
         cudaMalloc((void**) &gradient_x_fft, sizeof(double2) * gSize);
         cudaMalloc((void**) &gradient_y_fft, sizeof(double2) * gSize);
-        cudaMalloc((void**) &gradient_z_fft, sizeof(double2) * gSize);
+        if (dimnum == 3){
+            cudaMalloc((void**) &gradient_z_fft, sizeof(double2) * gSize);
+        }
         cudaMalloc((void**) &density_d2, sizeof(double2) * gSize);
         cudaMalloc((void**) &edges_gpu, sizeof(double) * gSize);
     }
@@ -504,7 +732,9 @@ void find_edges(Grid &par,
         edges_gpu = par.dsval("edges_gpu");
         gradient_x_fft = par.cufftDoubleComplexval("gradient_x_fft");
         gradient_y_fft = par.cufftDoubleComplexval("gradient_y_fft");
-        gradient_z_fft = par.cufftDoubleComplexval("gradient_z_fft");
+        if (dimnum == 3){
+            gradient_z_fft = par.cufftDoubleComplexval("gradient_z_fft");
+        }
         density_d2 = par.cufftDoubleComplexval("density_d2");
     }
 
@@ -516,7 +746,10 @@ void find_edges(Grid &par,
     // Pulling operators from find_sobel(par)
     double2 *sobel_x_gpu = par.cufftDoubleComplexval("sobel_x_gpu");
     double2 *sobel_y_gpu = par.cufftDoubleComplexval("sobel_y_gpu");
-    double2 *sobel_z_gpu = par.cufftDoubleComplexval("sobel_z_gpu");
+    double2 *sobel_z_gpu;
+    if (dimnum == 3){
+        sobel_z_gpu = par.cufftDoubleComplexval("sobel_z_gpu");
+    }
 
     // This should work in principle, but the D2Z transform plays tricks
     // Generating plan for d2z in 3d
@@ -528,20 +761,31 @@ void find_edges(Grid &par,
     // Now fft forward, multiply, fft back
     cufftExecZ2Z(plan_3d, density_d2, gradient_x_fft, CUFFT_FORWARD);
     cufftExecZ2Z(plan_3d, density_d2, gradient_y_fft, CUFFT_FORWARD);
-    cufftExecZ2Z(plan_3d, density_d2, gradient_z_fft, CUFFT_FORWARD);
+    if (dimnum == 3){
+        cufftExecZ2Z(plan_3d, density_d2, gradient_z_fft, CUFFT_FORWARD);
+    }
 
     // Now to perform the multiplication
     cMult<<<grid, threads>>>(gradient_x_fft, sobel_x_gpu, gradient_x_fft);
     cMult<<<grid, threads>>>(gradient_y_fft, sobel_y_gpu, gradient_y_fft);
-    cMult<<<grid, threads>>>(gradient_z_fft, sobel_z_gpu, gradient_z_fft);
+    if (dimnum == 3){
+        cMult<<<grid, threads>>>(gradient_z_fft, sobel_z_gpu, gradient_z_fft);
+    }
     
     // FFT back
     cufftExecZ2Z(plan_3d, gradient_x_fft, gradient_x_fft, CUFFT_INVERSE);
     cufftExecZ2Z(plan_3d, gradient_y_fft, gradient_y_fft, CUFFT_INVERSE);
-    cufftExecZ2Z(plan_3d, gradient_z_fft, gradient_z_fft, CUFFT_INVERSE);
+    if (dimnum == 3){
+        cufftExecZ2Z(plan_3d, gradient_z_fft, gradient_z_fft, CUFFT_INVERSE);
+    }
 
-    l2_norm<<<grid, threads>>>(gradient_x_fft, gradient_y_fft, 
-                               gradient_z_fft, edges_gpu);
+    if (dimnum == 2){
+        l2_norm<<<grid, threads>>>(gradient_x_fft, gradient_y_fft, edges_gpu);
+    }
+    else if (dimnum == 3){
+        l2_norm<<<grid, threads>>>(gradient_x_fft, gradient_y_fft, 
+                                   gradient_z_fft, edges_gpu);
+    }
 
     // Copying edges back
     cudaMemcpy(edges, edges_gpu, sizeof(double) * gSize, 

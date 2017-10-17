@@ -22,6 +22,7 @@ pos **find_skeletons(double *edges);
 
 // Function to find 3d sobel operators for fft convolution
 void find_sobel(Grid &par);
+void find_sobel_2d(Grid &par);
 
 // Function to transfer 3d sobel operators for non-fft convolution
 void transfer_sobel(Grid &par);

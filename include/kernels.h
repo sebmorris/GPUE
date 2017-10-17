@@ -139,6 +139,8 @@ __global__ void vecMult(double2 *in, double *factor, double2 *out);
 // performs the l2 normalization of the provided terms
 __global__ void l2_norm(double *in1, double *in2, double *in3, double *out);
 __global__ void l2_norm(double2 *in1, double2 *in2, double2 *in3, double *out);
+__global__ void l2_norm(double *in1, double *in2, double *out);
+__global__ void l2_norm(double2 *in1, double2 *in2, double *out);
 
 /**
 * @brief	Complex field scaling and renormalisation. Used mainly post-FFT.
