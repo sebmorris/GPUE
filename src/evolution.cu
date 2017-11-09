@@ -604,6 +604,7 @@ void evolve_2d(Grid &par,
         if(gstate==0){
             parSum(gpuWfc, gpuParSum, par);
         }
+
     }
 
     // std::cout << "finished evolution" << '\n';
