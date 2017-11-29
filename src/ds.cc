@@ -49,21 +49,6 @@ void generate_plan_other3d(cufftHandle *plan_fft1d, Grid &par, int axis){
     // Along first dimension (z)
     if (axis == 0){
         result = cufftPlan1d(plan_fft1d, xDim, CUFFT_Z2Z, yDim*zDim);
-/*
-        int batch = xDim*yDim;
-        int rank = 1;
-        int n[] = {xDim, yDim, zDim};
-        int idist = xDim;
-        int odist = xDim;
-        int inembed[] = {xDim, yDim, zDim};
-        int onembed[] = {xDim, yDim, zDim};
-        int istride = 1;
-        int ostride = 1;
-    
-        result = cufftPlanMany(plan_fft1d, rank, n, inembed, istride, 
-                               idist, onembed, ostride, odist, 
-                               CUFFT_Z2Z, batch);
-*/
     }
 
     // Along second dimension (y)

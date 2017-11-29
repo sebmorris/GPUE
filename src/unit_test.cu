@@ -4,6 +4,7 @@
 #include "../include/parser.h"
 #include "../include/evolution.h"
 #include "../include/init.h"
+#include "../include/dynamic.h"
 #include <string.h>
 #include <assert.h>
 #include <cufft.h>
@@ -28,6 +29,9 @@ void grid_test3d();
 // Test of 1D fft's along all 3d grids
 void fft_test();
 
+// Test to check the equation parser for dynamic fields
+void dynamic_test();
+
 // Kernel testing will be added later
 
 /*----------------------------------------------------------------------------//
@@ -36,15 +40,36 @@ void fft_test();
 
 void test_all(){
     std::cout << "Starting unit tests..." << '\n';
-    parameter_test();
+    //parameter_test();
+
+    // Do not uncomment these 2
     //parser_test();
     //evolve_2d_test();
-    grid_test2d();
-    grid_test3d();
-    parSum_test();
-    fft_test();
+
+    //grid_test2d();
+    //grid_test3d();
+    //parSum_test();
+    //fft_test();
+    dynamic_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
+}
+
+// Test to check the equation parser for dynamic fields
+// For this test, we will need a general set of parameters to read in and a
+// standard equation string to look at. 
+void dynamic_test(){
+
+    std::cout << "Beginning test of dynamic functions..." <<'\n';
+    std::string eqn_string = "((3*x)+7)+(5-7)";
+
+    Grid par;
+    par.store("x",5);
+
+    EqnNode eqn_tree = parse_eqn(par, eqn_string);
+
+    std::cout << "Dynamic tests passed" <<'\n';
+
 }
 
 // Test of 1D fft's along all 3d grids

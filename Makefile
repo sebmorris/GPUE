@@ -1,7 +1,7 @@
-#CUDA_HOME = /usr/local/cuda/
-CUDA_HOME = /apps/free/cuda/7.5.18/
+CUDA_HOME = /opt/cuda/
+#CUDA_HOME = /apps/free/cuda/7.5.18/
 #CUTT_DIR = cutt/lib
-GPU_ARCH	= sm_20
+GPU_ARCH	= sm_50
 OS:=	$(shell uname)
 ifeq ($(OS),Darwin)
 CUDA_LIB	= $(CUDA_HOME)/lib
@@ -24,9 +24,9 @@ INCFLAGS	= -I$(CUDA_HEADER)
 LDFLAGS		= -L$(CUDA_LIB) 
 EXECS		= gpue # BINARY NAME HERE
 
-DEPS = ./include/constants.h ./include/ds.h ./include/edge.h ./include/evolution.h ./include/fileIO.h ./include/init.h ./include/kernels.h ./include/lattice.h ./include/manip.h ./include/minions.h ./include/node.h ./include/operators.h ./include/parser.h ./include/split_op.h ./include/tracker.h ./include/unit_test.h ./include/vort.h ./include/vortex_3d.h
+DEPS = ./include/constants.h ./include/ds.h ./include/edge.h ./include/evolution.h ./include/fileIO.h ./include/init.h ./include/kernels.h ./include/lattice.h ./include/manip.h ./include/minions.h ./include/node.h ./include/operators.h ./include/parser.h ./include/split_op.h ./include/tracker.h ./include/unit_test.h ./include/vort.h ./include/vortex_3d.h ./include/dynamic.h
 
-OBJ = fileIO.o kernels.o split_op.o tracker.o minions.o ds.o edge.o node.o lattice.o manip.o vort.o parser.o evolution.o init.o unit_test.o operators.o vortex_3d.o
+OBJ = fileIO.o kernels.o split_op.o tracker.o minions.o ds.o edge.o node.o lattice.o manip.o vort.o parser.o evolution.o init.o unit_test.o operators.o vortex_3d.o dynamic.o
 
 %.o: ./src/%.cc $(DEPS)
 	$(CC) -c -o $@ $(INCFLAGS) $(CFLAGS) $(LDFLAGS) -Xcompiler "-fopenmp" -arch=$(GPU_ARCH) $<

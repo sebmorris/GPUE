@@ -1,20 +1,3 @@
-///@endcond
-//##############################################################################
-/**
- *  @file    operators.h
- *  @author  James Ryan Schloss (leios)
- *  @date    5/31/2016
- *  @version 0.1
- *
- *  @brief function for evolution.
- *
- *  @section DESCRIPTION
- *  These functions and variables are necessary for carrying out the GPUE
- *	simulations. This file will be re-written in an improved form in some
- *	future release.
- */
-//##############################################################################
-
 #ifndef OPERATORS_H
 #define OPERATORS_H
 
