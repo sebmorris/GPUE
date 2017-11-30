@@ -6,6 +6,8 @@
 
 struct EqnNode{
     double val;
+    bool is_dynamic = false;
+    char var = '0';
 
     EqnNode *left, *right;
 

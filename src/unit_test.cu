@@ -61,7 +61,7 @@ void test_all(){
 void dynamic_test(){
 
     std::cout << "Beginning test of dynamic functions..." <<'\n';
-    std::string eqn_string = "((3*x)+7)+(5-7)";
+    std::string eqn_string = "(((3*x)+7)+(5-7))";
 
     Grid par;
     par.store("x",5);
