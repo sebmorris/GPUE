@@ -13,13 +13,15 @@ struct EqnNode{
 
     //typedef void (*functionPtr)(EqnNode *, int, int, int, double);
     typedef double (*functionPtr)(double, double);
-    functionPtr op;
+    functionPtr op = NULL;
 };
 
 EqnNode parse_eqn(Grid &par, std::string eqn_string);
 
-void evaluate_eqn(EqnNode eqn, int xid, int yid, int zid, double time);
-void evaluate_eqn_gpu(EqnNode eqn, int xid, int yid, int zid, double time);
+double evaluate_eqn(EqnNode eqn, double x, double y, double z, 
+                    double time);
+void evaluate_eqn_gpu(EqnNode eqn, double x, double y, double z, 
+                      double time);
 
 void allocate_eqn(EqnNode *eqn, EqnNode *eqn_gpu);
 

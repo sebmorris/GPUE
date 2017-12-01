@@ -61,12 +61,15 @@ void test_all(){
 void dynamic_test(){
 
     std::cout << "Beginning test of dynamic functions..." <<'\n';
-    std::string eqn_string = "(((3*x)+7)+(5-7))";
+    std::string eqn_string = "(((3*x)+7)+(5-7)+cos(0))";
 
     Grid par;
     par.store("x",5);
 
     EqnNode eqn_tree = parse_eqn(par, eqn_string);
+    double val = evaluate_eqn(eqn_tree, 10, 0, 0, 1.0);
+
+    std::cout << "The value is: " << val << '\n';
 
     std::cout << "Dynamic tests passed" <<'\n';
 
