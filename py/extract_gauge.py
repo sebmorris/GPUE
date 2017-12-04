@@ -28,7 +28,7 @@ def write_3d(var, outfile, fudge_factor):
     for i in range(0,len(var)):
         for j in range(0,len(var)):
             for k in range(0,len(var)):
-                file.write(str(var[i][j] * fudge_factor) + '\n')
+                file.write(str(var[k][j] * fudge_factor) + '\n')
     file.close()
 
 def write_constant(outfile, res):
@@ -37,7 +37,8 @@ def write_constant(outfile, res):
         file.write(str(0) + '\n')
     file.close()
 
-var = extract_field("linpol_vecpot.mat","avec")
+var = extract_field("Avec_broad_256.mat","avec")
+#var = extract_field("Avec_128.mat","avec")
 
 # These are the necessary parameters for when the BEC is 10x too large
 #write_3d(var, "gauge_3d",  0.001)

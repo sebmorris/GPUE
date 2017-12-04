@@ -44,6 +44,7 @@ def plot_var(xDim, yDim, data_dir, pltval):
                    cmap = cm.jet)
     plt.colorbar()
     fig = plt.gcf()
+    #plt.clim(0,1)
     plt.show()
 
 # function to plot a variable with a range
@@ -68,10 +69,10 @@ def plot_var_range(xDim, yDim, data_dir, pltval, start, end, incr):
 def plot_wfc(xDim, yDim, data_dir, pltval, start, end, incr):
     for i in range(start,end,incr):
         print(i)
-        #data_real = "../" + data_dir + "/wfc_0_const_%s" % i
-        #data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
-        data_real = "../" + data_dir + "/wfc_ev_%s" % i
-        data_im = "../" + data_dir + "/wfc_evi_%s" % i
+        data_real = "../" + data_dir + "/wfc_0_const_%s" % i
+        data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+        #data_real = "../" + data_dir + "/wfc_ev_%s" % i
+        #data_im = "../" + data_dir + "/wfc_evi_%s" % i
         #data_x = "../" + data_dir + "x_0" % i
         #data_y = "../" + data_dir + "y_0" % i
         
