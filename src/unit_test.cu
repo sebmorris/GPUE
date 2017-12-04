@@ -67,9 +67,27 @@ void dynamic_test(){
     par.store("x",5);
 
     EqnNode eqn_tree = parse_eqn(par, eqn_string);
-    double val = evaluate_eqn(eqn_tree, 10, 0, 0, 1.0);
+    double val = evaluate_eqn(&eqn_tree, 10, 0, 0, 1.0);
 
     std::cout << "The value is: " << val << '\n';
+
+    std::cout << "finding the number of elements in abstract syntax tree...\n";
+
+    int num = 0;
+    find_element_num(eqn_tree, num);
+
+    std::cout << "Total number of elements is: " << num << '\n';
+
+    std::cout << "Now to copy the tree to the GPU..." << '\n';
+
+    EqnNode_gpu *eqn_gpu, *eqn_cpu;
+    eqn_cpu = (EqnNode_gpu *)malloc(sizeof(EqnNode_gpu)*num);
+    num = 0;
+    tree_to_array(eqn_tree, eqn_cpu, num);
+
+    cudaMalloc((void**) &eqn_gpu, sizeof(EqnNode_gpu)*num);
+    cudaMemcpy(eqn_gpu, eqn_cpu, sizeof(EqnNode_gpu)*num,
+               cudaMemcpyHostToDevice);
 
     std::cout << "Dynamic tests passed" <<'\n';
 

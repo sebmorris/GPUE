@@ -3,21 +3,38 @@
 #include <stack>
 
 #include "../include/dynamic.h"
+#include "../include/kernels.h"
 
 // Simple functions to subtract, add, multiply and divide
 double subtract(double a, double b){
     return a-b;
 }
 
+__device__ double subtract_gpu(double a, double b){
+    return b - a;
+}
+
 double add(double a, double b){
     return a+b;
+}
+
+__device__ double add_gpu(double a, double b){
+    return a + b;
 }
 
 double multiply(double a, double b){
     return a*b;
 }
 
+__device__ double multiply_gpu(double a, double b){
+    return a * b;
+}
+
 double divide(double a, double b){
+    return a/b;
+}
+
+__device__ double divide_gpu(double a, double b){
     return a/b;
 }
 
@@ -25,23 +42,22 @@ double cos(double a, double b){
     return cos(a);
 }
 
+__device__ double cos_gpu(double a, double b){
+    return cos(a);
+}
+
 // We assume that we have already removed unnecessary spaces and such from 
 // our eqn_string
 EqnNode parse_eqn(Grid &par, std::string eqn_string){
 
-    std::cout << eqn_string << '\n';
-
     // boolean value iff first minus
     bool minus = false;
-
-    //std::cout << equation << '\n';
 
     // Because this will be called recursively, we need to return if the string
     // length is 0
     if (eqn_string.length() == 0){
         std::cout << "There's nothing here!" << '\n';
         exit(1);
-        //return;
     }
 
     // vector of all possibe mathematical operators (not including functions)
@@ -122,7 +138,6 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     
             for (int i = 0; i < ignored_positions.size(); ++i){
                 --ignored_positions[i];
-                std::cout << ignored_positions[i] << '\n';
             }
         }
         temp_string = eqn_string;
@@ -139,11 +154,8 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
                         -= temp_positions[i+1] - temp_positions[i] + 1;
                 }
             }
-            std::cout << temp_string << '\n';
         }
     }
-
-    std::cout << "Done parsing equation" << '\n';
 
     // Creating the EqnNode
     EqnNode eqn_tree;
@@ -197,8 +209,6 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
                 mop_point = temp_string.size()-1;
                 eqn_tree.op = mfunctions_map[temp_string];
                 eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
-                std::cout << eqn_string.substr(mop_point+1, 
-                                    eqn_string.size() - mop_point-1) << '\n';
                 eqn_tree.left[0] = parse_eqn(par, 
                                     eqn_string.substr(mop_point+1, 
                                     eqn_string.size() - mop_point-1));
@@ -211,8 +221,6 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
                 
         }
     }
-
-    std::cout << mop_point << '\n';
 
     // Now we need to find the mop_point position in the eqn_string
     // We know the temp_string and how many positions we removed and where.
@@ -230,9 +238,6 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
         mop_point = count;
     }
 
-    std::cout << mop_point << '\n';
-    std::cout << eqn_string[mop_point] << '\n';
-
     // Now we need to store the operator into the eqn_tree
     eqn_tree.op = moperator_map[eqn_string[mop_point]];
 
@@ -247,34 +252,105 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     return eqn_tree;
 }
 
-double evaluate_eqn(EqnNode eqn, double x, double y, double z, 
+double evaluate_eqn(EqnNode *eqn, double x, double y, double z, 
                     double time){
 
-    if (eqn.op == NULL){
-        if (eqn.is_dynamic){
-            if(eqn.var == 'x'){
+    if (eqn->op == NULL){
+        if (eqn->is_dynamic){
+            if(eqn->var == 'x'){
                 return x;
             }
-            if(eqn.var == 'y'){
+            if(eqn->var == 'y'){
                 return y;
             }
-            if(eqn.var == 'z'){
+            if(eqn->var == 'z'){
                 return z;
             }
-            if(eqn.var == 't'){
+            if(eqn->var == 't'){
                 return time;
             }
         }
         else{
-            return eqn.val;
+            return eqn->val;
         }
     }
 
-    double val1 = evaluate_eqn(eqn.left[0], x, y, z, time);
-    double val2 = evaluate_eqn(eqn.right[0], x, y, z, time);
-    return eqn.op(val1, val2);
+    double val1 = evaluate_eqn(eqn->left, x, y, z, time);
+    double val2 = evaluate_eqn(eqn->right, x, y, z, time);
+    return eqn->op(val1, val2);
 
 }
 
-void allocate_eqn(EqnNode *eqn, EqnNode *eqn_gpu){
+void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
+
+    eqn_array[element_num].val = eqn.val;
+    eqn_array[element_num].var = eqn.var;
+    eqn_array[element_num].is_dynamic = eqn.is_dynamic;
+
+    // Now to create a map for all the functions
+    typedef double (*functionPtr1)(double, double);
+    typedef __device__ double (*functionPtr2)(double, double);
+
+    std::unordered_map<functionPtr1, functionPtr2> ptr_map;
+    ptr_map[add] = add_gpu;
+    ptr_map[subtract] = subtract_gpu;
+    ptr_map[multiply] = multiply_gpu;
+    ptr_map[divide] = divide_gpu;
+    ptr_map[cos] = cos_gpu;
+
+    eqn_array[element_num].op = ptr_map[eqn.op];
+
+    if (eqn.op == NULL){
+        return;
+    }
+    else{
+        element_num++;
+        tree_to_array(eqn.left[0], eqn_array, element_num);
+        element_num++;
+        tree_to_array(eqn.right[0], eqn_array, element_num);
+    }
+}
+
+void find_element_num(EqnNode eqn_tree, int &element_num){
+
+    element_num++;
+    if (eqn_tree.op == NULL){
+        return;
+    }
+    else{
+        find_element_num(eqn_tree.right[0], element_num);
+        find_element_num(eqn_tree.left[0], element_num);
+    }
+}
+
+/*----------------------------------------------------------------------------//
+* GPU KERNELS
+*-----------------------------------------------------------------------------*/
+__device__ double evaluate_eqn_gpu(EqnNode *eqn, double x, double y, double z, 
+                                   double time, int &element_num){
+
+    if (eqn[element_num].op == NULL){
+        if (eqn[element_num].is_dynamic){
+            if(eqn[element_num].var == 'x'){
+                return x;
+            }
+            if(eqn[element_num].var == 'y'){
+                return y;
+            }
+            if(eqn[element_num].var == 'z'){
+                return z;
+            }
+            if(eqn[element_num].var == 't'){
+                return time;
+            }
+        }
+        else{
+            return eqn[element_num].val;
+        }
+    }
+
+    double val1 = evaluate_eqn_gpu(eqn, x, y, z, time, element_num);
+    double val2 = evaluate_eqn_gpu(eqn, x, y, z, time, element_num);
+    return eqn[element_num].op(val1, val2);
+
 }
