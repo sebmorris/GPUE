@@ -6,8 +6,8 @@
 
 import numpy as np
 
-xDim = yDim = zDim = 128
-#xDim = yDim = zDim = 256
+#xDim = yDim = zDim = 128
+xDim = yDim = zDim = 256
 
 # Function to create plot with vtk
 def to_vtk(item, xDim, yDim, zDim, nframes, filename):
@@ -145,7 +145,7 @@ def proj_2d(xDim, yDim, zDim, data_dir, pltval, i):
     file = open(filename,'w')
     for k in range(0,xDim):
         for j in range(0,yDim):
-            file.write(str(wfc[j][k][zDim/2]) + '\n')
+            file.write(str(wfc[k][j][zDim/2]) + '\n')
     file.close()
 
 def proj_k2d(xDim, yDim, zDim, data_dir, pltval, i):
@@ -184,33 +184,35 @@ item_wfc = wfc_density(xDim, yDim, zDim,"data","wfc",50000)
 #item_wfc = wfc_density(xDim, yDim, zDim,"data","wfc",1000000)
 item_phase = wfc_phase(xDim, yDim, zDim,"data","wfc",50000)
 #item_phase = wfc_phase(xDim, yDim, zDim,"data","wfc",1000000)
-item_var = var(xDim, yDim, zDim,"data","By_0")
-item2_var = var(xDim, yDim, zDim,"data","Edges_0")
+#item_var = var(xDim, yDim, zDim,"data","By_0")
+#item2_var = var(xDim, yDim, zDim,"data","Edges_0")
 
-to_bvox(item_wfc, xDim, yDim, zDim, 1, "test_wfc.bvox")
-to_bvox(item_phase, xDim, yDim, zDim, 1, "test_phase.bvox")
-to_bvox(item_var, xDim, yDim, zDim, 1, "test_var.bvox")
-to_bvox(item2_var, xDim, yDim, zDim, 1, "test_edges.bvox")
+#to_bvox(item_wfc, xDim, yDim, zDim, 1, "test_wfc.bvox")
+#to_bvox(item_phase, xDim, yDim, zDim, 1, "test_phase.bvox")
+#to_bvox(item_var, xDim, yDim, zDim, 1, "test_var.bvox")
+#to_bvox(item2_var, xDim, yDim, zDim, 1, "test_edges.bvox")
 '''
 
-'''
+print("iterating through data...")
 # Writing out the potential
 #item_pot = var(xDim, yDim, zDim, "data", "V_0")
 #to_bvox(item_pot, xDim, yDim, zDim, 1, "test_pot.bvox")
-item_gauge = var(xDim, yDim, zDim, "data", "Az_0")
-to_bvox(item_gauge, xDim, yDim, zDim, 1, "test_gauge.bvox")
-for i in range(0,6):
+#item_gauge = var(xDim, yDim, zDim, "data", "Az_0")
+#to_bvox(item_gauge, xDim, yDim, zDim, 1, "test_gauge.bvox")
+#item_edges = var(xDim, yDim, zDim,"data","Edges_0")
+#to_bvox(item_edges, xDim, yDim, zDim, 1, "test_edges.bvox")
+#to_vtk(item_edges, xDim, yDim, zDim, 1, "test_edges.vtk")
+for i in range(0,11):
 #for i in [86, 143, 195, 95, 152, 204]:
-    num = i * 1000
-    proj_2d(xDim, yDim, zDim, "data", "wfc", num)
-    item = wfc_density(xDim, yDim, zDim, "data", "wfc", num)
-    item_ph = wfc_phase(xDim, yDim, zDim, "data", "wfc", num)
-    to_bvox(item, xDim, yDim, zDim, 1, "wfc_%s.bvox" %num)
-    to_bvox(item_ph, xDim, yDim, zDim, 1, "wfc_ph_%s.bvox" %num)
+#for i in [4, 40]:
+    num = i * 10
+    proj_2d(xDim, yDim, zDim, "data", "wfc_ev", num)
+    #item = wfc_density(xDim, yDim, zDim, "data", "wfc_ev", num)
+    #item_ph = wfc_phase(xDim, yDim, zDim, "data", "wfc", num)
+    #to_bvox(item, xDim, yDim, zDim, 1, "wfc_%s.bvox" %num)
+    #to_vtk(item, xDim, yDim, zDim, 1, "wfc_%s.vtk" %num)
+    #to_bvox(item_ph, xDim, yDim, zDim, 1, "wfc_ph_%s.bvox" %num)
 
-item_edges = var(xDim, yDim, zDim,"data","Edges_0")
-to_bvox(item_edges, xDim, yDim, zDim, 1, "test_edges.bvox")
-'''
 '''
 
 for i in range(0,21):
@@ -251,4 +253,45 @@ to_bvox(item, xDim, yDim, zDim, 1, "wfc_check.bvox")
 
 #proj_phase_2d(xDim, yDim, zDim, "data", "wfc", 660)
 #proj_phase_2d(xDim, yDim, zDim, "data", "wfc", 320)
-proj_phase_2d(xDim, yDim, zDim, "data", "wfc", 1000)
+#proj_phase_2d(xDim, yDim, zDim, "data", "wfc", 1000)
+#item_pot = var(xDim, yDim, zDim, "data", "V_0")
+#to_bvox(item_pot, xDim, yDim, zDim, 1, "test_pot.bvox")
+#item_edges = var(xDim, yDim, zDim,"data","Edges_0")
+#to_bvox(item_edges, xDim, yDim, zDim, 1, "test_edges.bvox")
+#item = wfc_density(xDim, yDim, zDim,"data","wfc", 0)
+#to_bvox(item, xDim, yDim, zDim, 1, "test_wfc.bvox")
+
+'''
+item_gx = var(xDim, yDim, zDim,"data","Ax_0")
+to_bvox(item_gx, xDim, yDim, zDim, 1, "Ax_0.bvox")
+item_gy = var(xDim, yDim, zDim,"data","Ay_0")
+to_bvox(item_gy, xDim, yDim, zDim, 1, "Ay_0.bvox")
+item_gz = var(xDim, yDim, zDim,"data","Az_0")
+to_bvox(item_gz, xDim, yDim, zDim, 1, "Az_0.bvox")
+item_V = var(xDim, yDim, zDim,"data","V_0")
+to_bvox(item_V, xDim, yDim, zDim, 1, "V_0.bvox")
+item_K = var(xDim, yDim, zDim,"data","K_0")
+to_bvox(item_K, xDim, yDim, zDim, 1, "K_0.bvox")
+'''
+'''
+for i in range(0,11):
+    num = i*100000
+    print(num)
+    item = var(xDim, yDim, zDim, "data", "Edges_%s" %num)
+    to_bvox(item, xDim, yDim, zDim, 1, "EDGES_%s.bvox" %num)
+
+'''
+'''
+num = 500000
+proj_2d(xDim, yDim, zDim, "data", "wfc", num)
+item = wfc_density(xDim, yDim, zDim, "data", "wfc", num)
+item_edges = var(xDim, yDim, zDim, "data", "Edges_0")
+to_bvox(item, xDim, yDim, zDim, 1, "wfc_%s.bvox" %num)
+to_bvox(item_edges, xDim, yDim, zDim, 1, "Edges_0.bvox")
+to_vtk(item, xDim, yDim, zDim, 1, "wfc_%s.vtk" %num)
+
+'''
+'''
+proj_var2d(xDim, yDim, zDim, "data", "V_0")
+#proj_2d(xDim, yDim, zDim, "data", "wfc_ev", 0)
+'''
