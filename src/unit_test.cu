@@ -85,12 +85,43 @@ void dynamic_test(){
     num = 0;
     tree_to_array(eqn_tree, eqn_cpu, num);
 
+    for (int i = 0; i < num; ++i){
+        std::cout << eqn_cpu[i].val << '\n';
+        std::cout << eqn_cpu[i].left << '\n';
+        std::cout << eqn_cpu[i].right << '\n' << '\n';
+    }
+
+    double check_val = evaluate_eqn_gpu_check(eqn_cpu, 5, 0, 0, 0, num);
+
+    std::cout << "Check Value is: " << check_val << '\n';
+/*
+
+    num = 0;
     cudaMalloc((void**) &eqn_gpu, sizeof(EqnNode_gpu)*num);
     cudaMemcpy(eqn_gpu, eqn_cpu, sizeof(EqnNode_gpu)*num,
                cudaMemcpyHostToDevice);
 
-    std::cout << "Dynamic tests passed" <<'\n';
+    // Now to check some simple evaluation
+    std::cout << "Now to check simple GPU evaluation..." << '\n';
+    int n = 64;
+    double *array, *array_gpu;
+    array = (double *)malloc(sizeof(double)*n);
+    cudaMalloc(&array_gpu, sizeof(double)*n);
 
+    int threads = 64;
+    int grid = (int)ceil((float)n/threads);
+
+    //zeros<<<grid, threads>>>(array_gpu, n);
+    find_field<<<grid, threads>>>(array_gpu, 0.1, 0.0, 0.0, 0.0, eqn_gpu);
+
+    cudaMemcpy(array, array_gpu, sizeof(double)*n, cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < n; ++i){
+        std::cout << array[i] << '\n';
+    }
+*/
+
+    std::cout << "Dynamic tests passed" <<'\n';
 }
 
 // Test of 1D fft's along all 3d grids

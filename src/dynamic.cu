@@ -301,12 +301,17 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
     eqn_array[element_num].op = ptr_map[eqn.op];
 
     if (eqn.op == NULL){
+        std::cout << "leaf node: " << eqn.val << '\n';
         return;
     }
     else{
+        int temp = element_num;
         element_num++;
+        eqn_array[temp].left = element_num;
         tree_to_array(eqn.left[0], eqn_array, element_num);
+
         element_num++;
+        eqn_array[temp].right = element_num;
         tree_to_array(eqn.right[0], eqn_array, element_num);
     }
 }
@@ -326,8 +331,10 @@ void find_element_num(EqnNode eqn_tree, int &element_num){
 /*----------------------------------------------------------------------------//
 * GPU KERNELS
 *-----------------------------------------------------------------------------*/
-__device__ double evaluate_eqn_gpu(EqnNode *eqn, double x, double y, double z, 
-                                   double time, int &element_num){
+double evaluate_eqn_gpu_check(EqnNode_gpu *eqn, double x, double y,
+                                   double z, double time, int &element_num){
+
+    std::cout << element_num << '\n';
 
     if (eqn[element_num].op == NULL){
         if (eqn[element_num].is_dynamic){
@@ -349,8 +356,60 @@ __device__ double evaluate_eqn_gpu(EqnNode *eqn, double x, double y, double z,
         }
     }
 
+    double val1 = evaluate_eqn_gpu_check(eqn, x, y, z, time, 
+                                         eqn[element_num].left);
+    double val2 = evaluate_eqn_gpu_check(eqn, x, y, z, time, 
+                                         eqn[element_num].right);
+    return eqn[element_num].op(val1, val2);
+
+}
+__device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
+                                   double z, double time, int &element_num){
+
+    if (eqn[element_num].op == NULL){
+        if (eqn[element_num].is_dynamic){
+            if(eqn[element_num].var == 'x'){
+                return x;
+            }
+            if(eqn[element_num].var == 'y'){
+                return y;
+            }
+            if(eqn[element_num].var == 'z'){
+                return z;
+            }
+            if(eqn[element_num].var == 't'){
+                return time;
+            }
+        }
+        else{
+            return eqn[element_num].val;
+        }
+    }
+
+    element_num++;
     double val1 = evaluate_eqn_gpu(eqn, x, y, z, time, element_num);
+    element_num++;
     double val2 = evaluate_eqn_gpu(eqn, x, y, z, time, element_num);
     return eqn[element_num].op(val1, val2);
+
+}
+
+__global__ void find_field(double *field, double dx, double dy, double dz, 
+                           double time, EqnNode_gpu *eqn){
+    int gid = getGid3d3d();
+    int xid = blockIdx.x*blockDim.x + threadIdx.x;
+    int yid = blockIdx.y*blockDim.y + threadIdx.y;
+    int zid = blockIdx.z*blockDim.z + threadIdx.z;
+
+    int num = 0;
+    field[xid] = evaluate_eqn_gpu(eqn, dx*xid, dy*yid, dz*zid, time, num);
+}
+
+__global__ void zeros(double *field, int n){
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+
+    if (xid < n){
+        field[xid] = 0;
+    }
 
 }
