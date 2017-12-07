@@ -44,9 +44,9 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num);
 *-----------------------------------------------------------------------------*/
 
 __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
-                                   double z, double time, int &element_num);
+                                   double z, double time, int element_num);
 double evaluate_eqn_gpu_check(EqnNode_gpu *eqn, double x, double y,
-                                   double z, double time, int &element_num);
+                                   double z, double time, int element_num);
 
 __global__ void find_field(double *field, double dx, double dy, double dz, 
                            double time, EqnNode_gpu *eqn);
