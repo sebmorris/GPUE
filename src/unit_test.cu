@@ -75,13 +75,14 @@ void dynamic_test(){
 
     int num = 0;
     find_element_num(eqn_tree, num);
+    int element_num = num;
 
     std::cout << "Total number of elements is: " << num << '\n';
 
     std::cout << "Now to copy the tree to the GPU..." << '\n';
 
     EqnNode_gpu *eqn_gpu, *eqn_cpu;
-    eqn_cpu = (EqnNode_gpu *)malloc(sizeof(EqnNode_gpu)*num);
+    eqn_cpu = (EqnNode_gpu *)malloc(sizeof(EqnNode_gpu)*element_num);
     num = 0;
     tree_to_array(eqn_tree, eqn_cpu, num);
 
@@ -89,6 +90,9 @@ void dynamic_test(){
         std::cout << eqn_cpu[i].val << '\n';
         std::cout << eqn_cpu[i].left << '\n';
         std::cout << eqn_cpu[i].right << '\n';
+        if (eqn_cpu[i].op == add_gpu){
+            std::cout << "add" << '\n';
+        }
         std::cout << (eqn_cpu[i].op == NULL) << '\n' << '\n';
     }
 
@@ -96,8 +100,8 @@ void dynamic_test(){
 
     //std::cout << "Check Value is: " << check_val << '\n';
 
-    cudaMalloc((void**) &eqn_gpu, sizeof(EqnNode_gpu)*num);
-    cudaMemcpy(eqn_gpu, eqn_cpu, sizeof(EqnNode_gpu)*num,
+    cudaMalloc((void**) &eqn_gpu, sizeof(EqnNode_gpu)*element_num);
+    cudaMemcpy(eqn_gpu, eqn_cpu, sizeof(EqnNode_gpu)*element_num,
                cudaMemcpyHostToDevice);
 
     // Now to check some simple evaluation

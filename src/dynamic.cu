@@ -301,16 +301,24 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
 
     bool only_left = false;
     auto it = ptr_map1.find(eqn.op);
+    auto it2 = ptr_map2.find(eqn.op);
     if (it != ptr_map1.end()){
+        std::cout << "found math function" << '\n';
         eqn_array[element_num].op = ptr_map1[eqn.op];
     }
-    else{
+    else if (it2 != ptr_map2.end()){
+        std::cout << "found cos function" << '\n';
         eqn_array[element_num].op = ptr_map2[eqn.op];
         only_left = true;
+    }
+    else{
+        eqn_array[element_num].op = NULL;
     }
 
     if (eqn.op == NULL){
         std::cout << "leaf node: " << eqn.val << '\t' << element_num << '\n';
+        eqn_array[element_num].left = -1;
+        eqn_array[element_num].right = -1;
         return;
     }
     else{
@@ -323,6 +331,9 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
             element_num++;
             eqn_array[temp].right = element_num;
             tree_to_array(eqn.right[0], eqn_array, element_num);
+        }
+        else{
+            eqn_array[temp].right = -1;
         }
     }
 }
@@ -342,43 +353,11 @@ void find_element_num(EqnNode eqn_tree, int &element_num){
 /*----------------------------------------------------------------------------//
 * GPU KERNELS
 *-----------------------------------------------------------------------------*/
-double evaluate_eqn_gpu_check(EqnNode_gpu *eqn, double x, double y,
-                                   double z, double time, int element_num){
-
-    std::cout << "element_num is: " << element_num << '\n';
-
-    if (eqn[element_num].op == NULL){
-        if (eqn[element_num].is_dynamic){
-            if(eqn[element_num].var == 'x'){
-                return x;
-            }
-            if(eqn[element_num].var == 'y'){
-                return y;
-            }
-            if(eqn[element_num].var == 'z'){
-                return z;
-            }
-            if(eqn[element_num].var == 't'){
-                return time;
-            }
-        }
-        else{
-            return eqn[element_num].val;
-        }
-    }
-
-    double val1 = evaluate_eqn_gpu_check(eqn, x, y, z, time, 
-                                         eqn[element_num].left);
-    double val2 = evaluate_eqn_gpu_check(eqn, x, y, z, time, 
-                                         eqn[element_num].right);
-    std::cout << "operating..." << '\n';
-    return eqn[element_num].op(val1, val2);
-
-}
 __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
                                    double z, double time, int element_num){
 
-    if (eqn[element_num].op == NULL){
+    if (eqn[element_num].right < 0 &&
+        eqn[element_num].left < 0){
         if (eqn[element_num].is_dynamic){
             if(eqn[element_num].var == 'x'){
                 return x;
@@ -398,9 +377,23 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
         }
     }
 
-    double val1 = evaluate_eqn_gpu(eqn, x, y, z, time, eqn[element_num].left);
-    double val2 = evaluate_eqn_gpu(eqn, x, y, z, time, eqn[element_num].right);
-    return val1 + val2;
+    double val1;
+    double val2;
+    if (eqn[element_num].left > 0){
+        val1 = evaluate_eqn_gpu(eqn, x, y, z, time, eqn[element_num].left);
+    }
+    else{
+        val1 = 0;
+    }
+
+    if (eqn[element_num].right > 0){
+        val2 = evaluate_eqn_gpu(eqn, x, y, z, time, eqn[element_num].right);
+    }
+    else{
+        val2 = 0;
+    }
+
+    //return multiply_gpu(val1, val2);
     return eqn[element_num].op(val1, val2);
 
 }

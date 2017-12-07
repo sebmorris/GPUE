@@ -29,6 +29,7 @@ struct EqnNode_gpu{
     //typedef void (*functionPtr)(EqnNode *, int, int, int, double);
     typedef __device__ double (*functionPtr)(double, double);
     functionPtr op = NULL;
+    //__device__ double add_gpu(double a, double b){return a + b;};
 };
 
 EqnNode parse_eqn(Grid &par, std::string eqn_string);
@@ -45,11 +46,30 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num);
 
 __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
                                    double z, double time, int element_num);
-double evaluate_eqn_gpu_check(EqnNode_gpu *eqn, double x, double y,
-                                   double z, double time, int element_num);
 
 __global__ void find_field(double *field, double dx, double dy, double dz, 
                            double time, EqnNode_gpu *eqn);
 
 __global__ void zeros(double *field, int n);
+
+
+/*----------------------------------------------------------------------------//
+* SIMPLE MATH FUNCTIONS
+*-----------------------------------------------------------------------------*/
+// Simple functions to subtract, add, multiply and divide
+double subtract(double a, double b);
+__device__ double subtract_gpu(double a, double b);
+
+double add(double a, double b);
+__device__ double add_gpu(double a, double b);
+
+double multiply(double a, double b);
+__device__ double multiply_gpu(double a, double b);
+
+double divide(double a, double b);
+__device__ double divide_gpu(double a, double b);
+
+double cos(double a, double b);
+__device__ double cos_gpu(double a, double b);
+
 #endif
