@@ -89,18 +89,10 @@ void dynamic_test(){
     for (int i = 0; i < num; ++i){
         std::cout << eqn_cpu[i].val << '\n';
         std::cout << eqn_cpu[i].left << '\n';
-        std::cout << eqn_cpu[i].right << '\n';
-        if (eqn_cpu[i].op == add_gpu){
-            std::cout << "add" << '\n';
-        }
-        std::cout << (eqn_cpu[i].op == NULL) << '\n' << '\n';
+        std::cout << eqn_cpu[i].right << '\n' << '\n';
     }
 
-    //double check_val = evaluate_eqn_gpu_check(eqn_cpu, 5, 0, 0, 0, 0);
-
-    //std::cout << "Check Value is: " << check_val << '\n';
-
-    cudaMalloc((void**) &eqn_gpu, sizeof(EqnNode_gpu)*element_num);
+    cudaMalloc((void**)&eqn_gpu, sizeof(EqnNode_gpu)*element_num);
     cudaMemcpy(eqn_gpu, eqn_cpu, sizeof(EqnNode_gpu)*element_num,
                cudaMemcpyHostToDevice);
 

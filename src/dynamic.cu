@@ -11,7 +11,7 @@ double subtract(double a, double b){
 }
 
 __device__ double subtract_gpu(double a, double b){
-    return b - a;
+    return a - b;
 }
 
 double add(double a, double b){
@@ -49,9 +49,6 @@ __device__ double cos_gpu(double a, double b){
 // We assume that we have already removed unnecessary spaces and such from 
 // our eqn_string
 EqnNode parse_eqn(Grid &par, std::string eqn_string){
-
-    // boolean value iff first minus
-    bool minus = false;
 
     // Because this will be called recursively, we need to return if the string
     // length is 0
@@ -288,31 +285,28 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
     eqn_array[element_num].is_dynamic = eqn.is_dynamic;
 
     // Now to create a map for all the functions
-    typedef double (*functionPtr1)(double, double);
-    typedef __device__ double (*functionPtr2)(double, double);
+    std::unordered_map<fnPtr, int> ptr_map1, ptr_map2;
+    ptr_map1[add] = 1;
+    ptr_map1[subtract] = 2;
+    ptr_map1[multiply] = 3;
+    ptr_map1[divide] = 4;
 
-    std::unordered_map<functionPtr1, functionPtr2> ptr_map1, ptr_map2;
-    ptr_map1[add] = add_gpu;
-    ptr_map1[subtract] = subtract_gpu;
-    ptr_map1[multiply] = multiply_gpu;
-    ptr_map1[divide] = divide_gpu;
-
-    ptr_map2[cos] = cos_gpu;
+    ptr_map2[cos] = 5;
 
     bool only_left = false;
     auto it = ptr_map1.find(eqn.op);
     auto it2 = ptr_map2.find(eqn.op);
     if (it != ptr_map1.end()){
         std::cout << "found math function" << '\n';
-        eqn_array[element_num].op = ptr_map1[eqn.op];
+        eqn_array[element_num].op_num = ptr_map1[eqn.op];
     }
     else if (it2 != ptr_map2.end()){
         std::cout << "found cos function" << '\n';
-        eqn_array[element_num].op = ptr_map2[eqn.op];
+        eqn_array[element_num].op_num = ptr_map2[eqn.op];
         only_left = true;
     }
     else{
-        eqn_array[element_num].op = NULL;
+        eqn_array[element_num].op_num = 0;
     }
 
     if (eqn.op == NULL){
@@ -360,6 +354,7 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
         eqn[element_num].left < 0){
         if (eqn[element_num].is_dynamic){
             if(eqn[element_num].var == 'x'){
+                printf("x is: %4.2f\n",x);
                 return x;
             }
             if(eqn[element_num].var == 'y'){
@@ -393,8 +388,28 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
         val2 = 0;
     }
 
-    //return multiply_gpu(val1, val2);
-    return eqn[element_num].op(val1, val2);
+    //return add_gpu(val1, val2);
+    switch(eqn[element_num].op_num){
+        case 0:
+            printf("GPU kernel failure! Improper equation tree!");
+            break;
+        case 1:
+            return add_gpu(val1, val2);
+            break;
+        case 2:
+            return subtract_gpu(val1, val2);
+            break;
+        case 3:
+            return multiply_gpu(val1, val2);
+            break;
+        case 4:
+            return divide_gpu(val1, val2);
+            break;
+        case 5:
+            return cos_gpu(val1, val2);
+            break;
+    }
+    return 0;
 
 }
 

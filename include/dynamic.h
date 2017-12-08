@@ -4,6 +4,9 @@
 #include <string>
 #include "../include/ds.h"
 
+typedef double (*fnPtr) (double, double);
+
+
 struct EqnNode{
     double val = 0;
     bool is_dynamic = false;
@@ -11,9 +14,7 @@ struct EqnNode{
 
     EqnNode *left, *right;
 
-    //typedef void (*functionPtr)(EqnNode *, int, int, int, double);
-    typedef double (*functionPtr)(double, double);
-    functionPtr op = NULL;
+    fnPtr op = NULL;
 };
 
 // For ease of allocating, we will store the entire GPU tree into an array that
@@ -26,10 +27,7 @@ struct EqnNode_gpu{
     int left = -1;
     int right = -1;
 
-    //typedef void (*functionPtr)(EqnNode *, int, int, int, double);
-    typedef __device__ double (*functionPtr)(double, double);
-    functionPtr op = NULL;
-    //__device__ double add_gpu(double a, double b){return a + b;};
+    int op_num;
 };
 
 EqnNode parse_eqn(Grid &par, std::string eqn_string);
@@ -39,6 +37,8 @@ double evaluate_eqn(EqnNode *eqn, double x, double y, double z,
                     double time);
 
 void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num);
+
+void allocate_equation(EqnNode_gpu *eqn_cpu, EqnNode_gpu *eqn_gpu, int n);
 
 /*----------------------------------------------------------------------------//
 * GPU KERNELS
