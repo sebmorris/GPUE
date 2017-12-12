@@ -61,15 +61,12 @@ void test_all(){
 void dynamic_test(){
 
     std::cout << "Beginning test of dynamic functions..." <<'\n';
-    std::string eqn_string = "(((3*x)+7)+(5-7)+cos(0))";
+    std::string eqn_string = "(((3*x)+7)+(5-7)+cos(0))+pow(120,2)";
 
     Grid par;
     par.store("x",5);
 
     EqnNode eqn_tree = parse_eqn(par, eqn_string);
-    double val = evaluate_eqn(&eqn_tree, 10, 0, 0, 1.0);
-
-    std::cout << "The value is: " << val << '\n';
 
     std::cout << "finding the number of elements in abstract syntax tree...\n";
 

@@ -52,24 +52,4 @@ __global__ void find_field(double *field, double dx, double dy, double dz,
 
 __global__ void zeros(double *field, int n);
 
-
-/*----------------------------------------------------------------------------//
-* SIMPLE MATH FUNCTIONS
-*-----------------------------------------------------------------------------*/
-// Simple functions to subtract, add, multiply and divide
-double subtract(double a, double b);
-__device__ double subtract_gpu(double a, double b);
-
-double add(double a, double b);
-__device__ double add_gpu(double a, double b);
-
-double multiply(double a, double b);
-__device__ double multiply_gpu(double a, double b);
-
-double divide(double a, double b);
-__device__ double divide_gpu(double a, double b);
-
-double cos(double a, double b);
-__device__ double cos_gpu(double a, double b);
-
 #endif

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <limits>
 #include <stack>
+#include <cufft.h>
 
 #include "../include/dynamic.h"
 #include "../include/kernels.h"
@@ -46,9 +47,77 @@ __device__ double cos_gpu(double a, double b){
     return cos(a);
 }
 
+double sin(double a, double b){
+    return sin(a);
+}
+
+__device__ double sin_gpu(double a, double b){
+    return sin(a);
+}
+
+double tan(double a, double b){
+    return tan(a);
+}
+
+__device__ double tan_gpu(double a, double b){
+    return tan(a);
+}
+
+double sqrt(double a, double b){
+    return sqrt(a);
+}
+
+__device__ double sqrt_gpu(double a, double b){
+    return sqrt(a);
+}
+
+
+double pow(double a, double b){
+    return pow(a, b);
+}
+
+__device__ double pow_gpu(double a, double b){
+    return pow(a, b);
+}
+
+
+double exp(double a, double b){
+    return exp(a);
+}
+
+__device__ double exp_gpu(double a, double b){
+    return exp(a);
+}
+
+__device__ double jn_gpu(double a, double b){
+    if ((int)a == 0){
+        return j0(b);
+    }
+    if ((int)a == 1){
+        return j1(b);
+    }
+    else{
+        return jn(a,b);
+    }
+}
+
+__device__ double yn_gpu(double a, double b){
+    if ((int)a == 0){
+        return y0(b);
+    }
+    if ((int)a == 1){
+        return y1(b);
+    }
+    else{
+        return yn(a,b);
+    }
+}
+
+
 // We assume that we have already removed unnecessary spaces and such from 
 // our eqn_string
 EqnNode parse_eqn(Grid &par, std::string eqn_string){
+    std::cout << eqn_string << '\n';
 
     // Because this will be called recursively, we need to return if the string
     // length is 0
@@ -58,9 +127,9 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     }
 
     // vector of all possibe mathematical operators (not including functions)
-    std::vector<std::string> moperators(4);
+    std::vector<std::string> moperators(5);
     moperators = {
-        "-", "+", "/", "*"
+        "-", "+", "/", "*", "^"
     };
 
     // we need a map for these operators
@@ -70,6 +139,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     moperator_map['+'] = add;
     moperator_map['*'] = multiply;
     moperator_map['/'] = divide;
+    moperator_map['^'] = pow;
 
     // And another vector for brackets of various types which indicate recursive
     // parsing of the equation
@@ -79,23 +149,24 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     };
 
     // vector of all possible mathematical functions... more to come
-    std::vector<std::string> mfunctions(5);
+    std::vector<std::string> mfunctions(6);
     mfunctions = {
-        "sin", "cos", "exp", "tan", "erf", "sqrt"
+        "sin", "cos", "exp", "tan", "sqrt", "pow"
     };
 
     // We also need a specific map for the functions above
     typedef double (*functionPtr)(double, double);
     std::unordered_map<std::string, functionPtr> mfunctions_map;
     mfunctions_map["cos"] = cos;
-/*
     mfunctions_map["sin"] = sin;
     mfunctions_map["cos"] = cos;
     mfunctions_map["tan"] = tan;
     mfunctions_map["exp"] = exp;
-    mfunctions_map["erf"] = erf;
+    //mfunctions_map["erf"] = erf;
     mfunctions_map["sqrt"] = sqrt;
-*/
+    mfunctions_map["pow"] = pow;
+    mfunctions_map["jn"] = jn_gpu;
+    mfunctions_map["yn"] = yn_gpu;
 
     // first, we need to parse the equation string and remove parentheses
     // Then we'll sort according to the math operators (mops)
@@ -204,11 +275,27 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
                     != mfunctions_map.end()){
 
                 mop_point = temp_string.size()-1;
-                eqn_tree.op = mfunctions_map[temp_string];
-                eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
-                eqn_tree.left[0] = parse_eqn(par, 
-                                    eqn_string.substr(mop_point+1, 
-                                    eqn_string.size() - mop_point-1));
+
+                // Check for commas
+                std::string check_string = eqn_string.substr(mop_point+1, 
+                                           eqn_string.size() - mop_point-1);
+                if(check_string.find(",") < check_string.size()){
+                    eqn_tree.op = mfunctions_map[temp_string];
+                    eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
+                    eqn_tree.right = (EqnNode *)malloc(sizeof(EqnNode));
+
+                    int comma_loc = check_string.find(",");
+                    eqn_tree.left[0] = parse_eqn(par, 
+                        check_string.substr(1, comma_loc - 1));
+                    eqn_tree.right[0] = parse_eqn(par, 
+                        check_string.substr(comma_loc+1, 
+                                            check_string.size()-comma_loc-2));
+                }
+                else{
+                    eqn_tree.op = mfunctions_map[temp_string];
+                    eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
+                    eqn_tree.left[0] = parse_eqn(par, check_string);
+                }
 
             }
             else{
@@ -290,18 +377,23 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
     ptr_map1[subtract] = 2;
     ptr_map1[multiply] = 3;
     ptr_map1[divide] = 4;
+    ptr_map1[pow] = 5;
 
-    ptr_map2[cos] = 5;
+    ptr_map2[cos] = 6;
+    ptr_map2[sin] = 7;
+    ptr_map2[tan] = 8;
+    ptr_map2[sqrt] = 9;
+    ptr_map2[exp] = 10;
+    ptr_map2[jn_gpu] = 11;
+    ptr_map2[yn_gpu] = 12;
 
     bool only_left = false;
     auto it = ptr_map1.find(eqn.op);
     auto it2 = ptr_map2.find(eqn.op);
     if (it != ptr_map1.end()){
-        std::cout << "found math function" << '\n';
         eqn_array[element_num].op_num = ptr_map1[eqn.op];
     }
     else if (it2 != ptr_map2.end()){
-        std::cout << "found cos function" << '\n';
         eqn_array[element_num].op_num = ptr_map2[eqn.op];
         only_left = true;
     }
@@ -310,7 +402,6 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
     }
 
     if (eqn.op == NULL){
-        std::cout << "leaf node: " << eqn.val << '\t' << element_num << '\n';
         eqn_array[element_num].left = -1;
         eqn_array[element_num].right = -1;
         return;
@@ -354,7 +445,6 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
         eqn[element_num].left < 0){
         if (eqn[element_num].is_dynamic){
             if(eqn[element_num].var == 'x'){
-                printf("x is: %4.2f\n",x);
                 return x;
             }
             if(eqn[element_num].var == 'y'){
@@ -406,7 +496,28 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
             return divide_gpu(val1, val2);
             break;
         case 5:
+            return pow_gpu(val1, val2);
+            break;
+        case 6:
             return cos_gpu(val1, val2);
+            break;
+        case 7:
+            return sin_gpu(val1, val2);
+            break;
+        case 8:
+            return tan_gpu(val1, val2);
+            break;
+        case 9:
+            return sqrt_gpu(val1, val2);
+            break;
+        case 10:
+            return exp_gpu(val1, val2);
+            break;
+        case 11:
+            return jn_gpu(val1, val2);
+            break;
+        case 12:
+            return yn_gpu(val1, val2);
             break;
     }
     return 0;
