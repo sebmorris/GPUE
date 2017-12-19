@@ -32,6 +32,9 @@ void fft_test();
 // Test to check the equation parser for dynamic fields
 void dynamic_test();
 
+// Test to make sure the kernel for the polynomial approx. of Bessel fxns works
+void bessel_test();
+
 // Kernel testing will be added later
 
 /*----------------------------------------------------------------------------//
@@ -51,6 +54,7 @@ void test_all(){
     //parSum_test();
     //fft_test();
     dynamic_test();
+    bessel_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
 }
@@ -113,6 +117,11 @@ void dynamic_test(){
     }
 
     std::cout << "Dynamic tests passed" <<'\n';
+}
+
+// Test for bessel functions
+void bessel_test(){
+
 }
 
 // Test of 1D fft's along all 3d grids

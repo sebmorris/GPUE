@@ -72,12 +72,13 @@ __device__ double sqrt_gpu(double a, double b){
 }
 
 
-double pow(double a, double b){
+/*double pow(double a, double b){
     return pow(a, b);
 }
+*/
 
 __device__ double pow_gpu(double a, double b){
-    return pow(a, b);
+    return pow(a, (int)b);
 }
 
 
@@ -87,6 +88,13 @@ double exp(double a, double b){
 
 __device__ double exp_gpu(double a, double b){
     return exp(a);
+}
+
+__device__ double poly_j(int i, double x, int n){
+    double jval;
+    for (int i = 0; i < n; ++i){
+    }
+    return jval;
 }
 
 __device__ double jn_gpu(double a, double b){
