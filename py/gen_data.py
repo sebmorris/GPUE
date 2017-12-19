@@ -202,10 +202,10 @@ print("iterating through data...")
 #item_edges = var(xDim, yDim, zDim,"data","Edges_0")
 #to_bvox(item_edges, xDim, yDim, zDim, 1, "test_edges.bvox")
 #to_vtk(item_edges, xDim, yDim, zDim, 1, "test_edges.vtk")
-for i in range(0,11):
+for i in range(0,101):
 #for i in [86, 143, 195, 95, 152, 204]:
 #for i in [4, 40]:
-    num = i * 10
+    num = i * 100
     proj_2d(xDim, yDim, zDim, "data", "wfc_ev", num)
     #item = wfc_density(xDim, yDim, zDim, "data", "wfc_ev", num)
     #item_ph = wfc_phase(xDim, yDim, zDim, "data", "wfc", num)
@@ -294,4 +294,8 @@ to_vtk(item, xDim, yDim, zDim, 1, "wfc_%s.vtk" %num)
 '''
 proj_var2d(xDim, yDim, zDim, "data", "V_0")
 #proj_2d(xDim, yDim, zDim, "data", "wfc_ev", 0)
+'''
+'''
+item_edges = var(xDim, yDim, zDim,"data","Edges_10000")
+to_vtk(item_edges, xDim, yDim, zDim, 1, "test_edges.vtk")
 '''

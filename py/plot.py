@@ -61,7 +61,9 @@ def plot_var_range(xDim, yDim, data_dir, pltval, start, end, incr):
         fig = plt.gcf()
         #plt.show()
         plt.draw()
-        fig.savefig(output + '.png')
+        num_str = "%s" % i
+        output_str = pltval + num_str.rjust(5,'0') + ".png"
+        fig.savefig(output_str)
         plt.clf()
 
     
