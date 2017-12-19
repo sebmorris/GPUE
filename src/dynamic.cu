@@ -6,6 +6,14 @@
 #include "../include/dynamic.h"
 #include "../include/kernels.h"
 
+__device__ double factorial(double val){
+    double ret_val = val;
+    for (int i = floor(val) - 1; i > 0; --i){
+        ret_val *= i;
+    }
+    return ret_val;
+}
+
 // Simple functions to subtract, add, multiply and divide
 double subtract(double a, double b){
     return a-b;
@@ -72,11 +80,6 @@ __device__ double sqrt_gpu(double a, double b){
 }
 
 
-/*double pow(double a, double b){
-    return pow(a, b);
-}
-*/
-
 __device__ double pow_gpu(double a, double b){
     return pow(a, (int)b);
 }
@@ -90,9 +93,14 @@ __device__ double exp_gpu(double a, double b){
     return exp(a);
 }
 
-__device__ double poly_j(int i, double x, int n){
+__device__ double poly_j(int v, double x, int n){
     double jval;
+    double sigma, b;
     for (int i = 0; i < n; ++i){
+        b = pow(-1,i)*(factorial(n+i-1) * pow(n,1-2*i))/
+                       (factorial(i)*factorial(n-i)*factorial(v+i));
+        sigma = b*pow(x*0.5,2*i+v);
+        jval += sigma;
     }
     return jval;
 }

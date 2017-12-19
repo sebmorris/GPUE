@@ -52,4 +52,6 @@ __global__ void find_field(double *field, double dx, double dy, double dz,
 
 __global__ void zeros(double *field, int n);
 
+__device__ double poly_j(int v, double x, int n);
+
 #endif

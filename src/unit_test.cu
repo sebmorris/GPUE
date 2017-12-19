@@ -36,6 +36,10 @@ void dynamic_test();
 void bessel_test();
 
 // Kernel testing will be added later
+__device__ bool close(double a, double b, double threshold){
+    return (abs(a-b) < threshold);
+}
+
 
 /*----------------------------------------------------------------------------//
 * MAIN
@@ -53,7 +57,7 @@ void test_all(){
     //grid_test3d();
     //parSum_test();
     //fft_test();
-    dynamic_test();
+    //dynamic_test();
     bessel_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
@@ -119,8 +123,41 @@ void dynamic_test(){
     std::cout << "Dynamic tests passed" <<'\n';
 }
 
+__global__ void bessel_test_kernel(double *j, double *j_poly, bool *val){
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    j[xid] = j0(xid * 2.0 / 128);
+    j_poly[xid] = poly_j(0,xid * 2.0 / 128, 20);
+
+    if (!close(j[xid],j_poly[xid], 0.001)){
+        val[0] = false;
+    }
+    else val[0] = true;
+}
+
 // Test for bessel functions
 void bessel_test(){
+
+    std::cout << "Testing Bessel Functions..." << '\n';
+
+    double *j_gpu, *j_poly_gpu;
+    bool *val, *val_gpu;
+    int n = 128;
+    cudaMalloc((void **)&j_gpu, sizeof(double)*n);
+    cudaMalloc((void **)&j_poly_gpu, sizeof(double)*n);
+
+    cudaMalloc((void **)&val_gpu, sizeof(bool));
+    val = (bool *)malloc(sizeof(bool));
+
+    bessel_test_kernel<<<64,2>>>(j_gpu, j_poly_gpu, val_gpu);
+    cudaMemcpy(val, val_gpu, sizeof(bool), cudaMemcpyDeviceToHost);
+
+    if(val[0]){
+        std::cout << "Bessel Test Passed!" << '\n';
+    }
+    else{
+        std::cout << "Bessel Test Failed!" << '\n';
+        exit(1);
+    }
 
 }
 
