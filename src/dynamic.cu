@@ -8,6 +8,9 @@
 
 __device__ double factorial(double val){
     double ret_val = val;
+    if (val < 1){
+        return 1;
+    }
     for (int i = floor(val) - 1; i > 0; --i){
         ret_val *= i;
     }
@@ -105,6 +108,31 @@ __device__ double poly_j(int v, double x, int n){
     return jval;
 }
 
+__device__ double2 poly_i(int v, double2 x, int n){
+    double2 ival, sigma;
+    double b;
+    x = mult({0,1},x);
+    for (int i = 0; i < n; ++i){
+        b = pow(-1,i)*(factorial(n+i-1) * pow(n,1-2*i))/
+                       (factorial(i)*factorial(n-i)*factorial(v+i));
+        sigma = mult(pow(mult(x,0.5),2*i+v),b);
+        ival = add(ival, sigma);
+    }
+    return ival;
+}
+
+__device__ double2 poly_k(int v, double2 x, int n){
+    return mult(subtract(poly_i(-v, x, n), poly_i(v, x, n)),
+                M_PI/(2*sin(n*M_PI)));
+}
+
+__device__ double k2n_gpu(double a, double b){
+    double2 x = {b,0};
+    double2 val = poly_k((int)a, x, 30);
+    return mult(val, val).x;
+}
+
+
 __device__ double jn_gpu(double a, double b){
     if ((int)a == 0){
         return j0(b);
@@ -183,6 +211,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     mfunctions_map["pow"] = pow;
     mfunctions_map["jn"] = jn_gpu;
     mfunctions_map["yn"] = yn_gpu;
+    mfunctions_map["k2n"] = k2n_gpu;
 
     // first, we need to parse the equation string and remove parentheses
     // Then we'll sort according to the math operators (mops)
@@ -402,6 +431,7 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
     ptr_map2[exp] = 10;
     ptr_map2[jn_gpu] = 11;
     ptr_map2[yn_gpu] = 12;
+    ptr_map2[k2n_gpu] = 13;
 
     bool only_left = false;
     auto it = ptr_map1.find(eqn.op);
@@ -534,6 +564,9 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
             break;
         case 12:
             return yn_gpu(val1, val2);
+            break;
+        case 13:
+            return k2n_gpu(val1, val2);
             break;
     }
     return 0;

@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <cufft.h>
 #include <vector>
+#include <fstream>
 
 // Test for the Grid structure with paramters in it 
 void parameter_test();
@@ -128,7 +129,7 @@ __global__ void bessel_test_kernel(double *j, double *j_poly, bool *val){
     j[xid] = j0(xid * 2.0 / 128);
     j_poly[xid] = poly_j(0,xid * 2.0 / 128, 20);
 
-    if (!close(j[xid],j_poly[xid], 0.001)){
+    if (!close(j[xid],j_poly[xid], 0.00001)){
         val[0] = false;
     }
     else val[0] = true;

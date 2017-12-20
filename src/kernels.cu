@@ -2,6 +2,25 @@
 #include "../include/constants.h"
 #include <stdio.h>
 
+__device__ double2 subtract(double2 a, double2 b){
+    return {a.x-b.x, a.y-b.y};
+}
+__device__ double2 add(double2 a, double2 b){
+    return {a.x+b.x, a.y+b.y};
+}
+__device__ double2 pow(double2 a, int b){
+    double r = sqrt(a.x*a.x + a.y*a.y);
+    double theta = atan(a.y / a.x);
+    return{pow(r,b)*cos(b*theta),pow(r,b)*sin(b*theta)};
+}
+
+__device__ double2 mult(double2 a, double b){
+    return {a.x*b, a.y*b};
+}
+__device__ double2 mult(double2 a, double2 b){
+    return {a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x};
+}
+
 //Evaluted in MATLAB: N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR))
 //__constant__ double gDenConst = 6.6741e-40;
 

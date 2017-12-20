@@ -17,6 +17,12 @@
 #define KERNELS_H
 #include<stdio.h>
 
+__device__ double2 subtract(double2 a, double2 b);
+__device__ double2 add(double2 a, double2 b);
+__device__ double2 pow(double2 a, int b);
+__device__ double2 mult(double2 a, double b);
+__device__ double2 mult(double2 a, double2 b);
+
 // Function to convert a double* to double2*
 __global__ void make_cufftDoubleComplex(double *in, double2 *out);
 
