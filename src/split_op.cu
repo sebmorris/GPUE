@@ -61,12 +61,17 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
-    dim3 grid_tmp(xDim*yDim, 1, 1);
-    int gsize = xDim*yDim;
-    double dg = dx * dy;
+    dim3 grid_tmp(xDim, 1, 1);
+    int gsize = xDim;
+    double dg = dx;
 
     // Setting option for 3d
-    if (dimnum == 3){
+    if (dimnum > 1){
+        grid_tmp.x *= yDim;
+        gsize *= yDim;
+        dg *= dy;
+    }
+    if (dimnum > 2){
         grid_tmp.x *= zDim;
         gsize *= zDim;
         dg *= dz;
@@ -94,7 +99,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
         grid_tmp.x /= threads.x;
         block = (int) ceil((double)grid_tmp.x/threads.x);
         pass++;
-        //std::cout << grid_tmp << '\n';
+        //std::cout << grid_tmp.x << '\n';
     }
     thread_tmp = grid_tmp.x;
     multipass<<<1,thread_tmp,thread_tmp.x*sizeof(double2)>>>(&gpuParSum[0],

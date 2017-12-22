@@ -15,8 +15,11 @@ int init(Grid &par){
     int zDim = par.ival("zDim");
     bool write_file = par.bval("write_file");
     dim3 threads;
-    unsigned int gSize = xDim*yDim;
-    if (dimnum == 3){
+    unsigned int gSize = xDim;
+    if (dimnum > 1){
+        gSize *= yDim;
+    }
+    if (dimnum > 2){
         gSize *= zDim;
     }
     double omega = par.dval("omega");
@@ -114,8 +117,11 @@ int init(Grid &par){
     double dx = xMax/(xDim>>1);
     double dy = yMax/(yDim>>1);
     double dz = zMax/(zDim>>1);
-    if (dimnum == 2){
+    if (dimnum < 3){
         dz = 1;
+    }
+    if (dimnum < 2){
+        dy = 1;
     }
     par.store("dx",dx);
     par.store("dy",dy);
@@ -219,8 +225,10 @@ int init(Grid &par){
         FileIO::writeOutDouble(buffer, data_dir + "x",x,xDim,0);
         FileIO::writeOutDouble(buffer, data_dir + "y",y,yDim,0);
         FileIO::writeOutDouble(buffer, data_dir + "z",z,zDim,0);
-        FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
-        if (dimnum == 3){
+        if (dimnum > 1){
+            FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+        }
+        if (dimnum == 2){
             FileIO::writeOutDouble(buffer, data_dir + "Bx",Bx,gSize,0);
             FileIO::writeOutDouble(buffer, data_dir + "By",By,gSize,0);
         }
@@ -364,26 +372,24 @@ int main(int argc, char **argv){
     cufftDoubleComplex *GK = par.cufftDoubleComplexval("GK");
     cufftDoubleComplex *GV = par.cufftDoubleComplexval("GV");
     cufftDoubleComplex *GpAx = par.cufftDoubleComplexval("GpAx");
-    cufftDoubleComplex *GpAy = par.cufftDoubleComplexval("GpAy");
+    cufftDoubleComplex *GpAy = nullptr;
     cufftDoubleComplex *GpAz = nullptr;
     cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
     cufftDoubleComplex *EK = par.cufftDoubleComplexval("EK");
-    cufftDoubleComplex *EpAy = par.cufftDoubleComplexval("EpAy");
     cufftDoubleComplex *EpAx = par.cufftDoubleComplexval("EpAx");
+    cufftDoubleComplex *EpAy = nullptr;
     cufftDoubleComplex *EpAz = nullptr;
     cufftDoubleComplex *wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
     cufftDoubleComplex *par_sum = par.cufftDoubleComplexval("par_sum");
     cudaError_t err;
-    int gsize = xDim * yDim;
+    int gsize = xDim;
 
     // Special variables for the 3d case
-    if (dimnum == 3){
-        double dz = par.dval("dz");
-        double *z = par.dsval("z");
-        double *pAz = par.dsval("pAz");
-        cufftDoubleComplex *GpAz = par.cufftDoubleComplexval("GpAz");
-        cufftDoubleComplex *EpAz = par.cufftDoubleComplexval("EpAz");
-        gsize = xDim*yDim*zDim;
+    if (dimnum > 1){
+        gsize *= yDim;
+    }
+    if (dimnum > 2){
+        gsize *= zDim;
     }
     cudaMalloc((void**) &V_gpu, sizeof(double2)*gsize);
     cudaMalloc((void**) &K_gpu, sizeof(double2)*gsize);
@@ -420,12 +426,6 @@ int main(int argc, char **argv){
             FileIO::writeOut(buffer, data_dir + "GK1",GK,gsize,0);
             FileIO::writeOut(buffer, data_dir + "GV1",GV,gsize,0);
         }
-        err=cudaMemcpy(pAy_gpu, GpAy, sizeof(cufftDoubleComplex)*gsize,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy pAy_gpu to device" << '\n';
-            exit(1);
-        }
         err=cudaMemcpy(pAx_gpu, GpAx, sizeof(cufftDoubleComplex)*gsize,
                        cudaMemcpyHostToDevice);
         if(err!=cudaSuccess){
@@ -438,11 +438,6 @@ int main(int argc, char **argv){
             std::cout << "ERROR: Could not copy wfc_gpu to device" << '\n';
             exit(1);
         }
-        par.store("pAx", pAx);
-        par.store("pAy", pAy);
-        par.store("GK", GK);
-        par.store("GV", GV);
-        par.store("wfc", wfc);
         par.store("K_gpu", K_gpu);
         par.store("V_gpu", V_gpu);
         par.store("wfc_gpu", wfc_gpu);
@@ -450,7 +445,19 @@ int main(int argc, char **argv){
         par.store("pAx_gpu", pAx_gpu);
 
         // Special cases for 3d
-        if (dimnum == 3){
+        if (dimnum > 1){
+            GpAy = par.cufftDoubleComplexval("GpAy");
+            err=cudaMemcpy(pAy_gpu, GpAy, sizeof(cufftDoubleComplex)*gsize,
+                           cudaMemcpyHostToDevice);
+
+            if(err!=cudaSuccess){
+                std::cout << "ERROR: Could not copy pAy_gpu to device" << '\n';
+                exit(1);
+            }
+            par.store("pAy_gpu", pAy_gpu);
+
+        }
+        if (dimnum > 2){
             GpAz = par.cufftDoubleComplexval("GpAz");
             err=cudaMemcpy(pAz_gpu, GpAz, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
@@ -481,12 +488,6 @@ int main(int argc, char **argv){
     */
     //************************************************************//
     if(esteps > 0){
-        err=cudaMemcpy(pAy_gpu, EpAy, sizeof(cufftDoubleComplex)*gsize,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy pAy_gpu to device" << '\n';
-            exit(1);
-        }
         err=cudaMemcpy(pAx_gpu, EpAx, sizeof(cufftDoubleComplex)*gsize,
                        cudaMemcpyHostToDevice);
         if(err!=cudaSuccess){
@@ -512,19 +513,25 @@ int main(int argc, char **argv){
             exit(1);
         }
 
-        par.store("pAx", pAx);
-        par.store("pAy", pAy);
-        par.store("EK", EK);
-        par.store("EV", EV);
-        par.store("wfc", wfc);
         par.store("K_gpu", K_gpu);
         par.store("V_gpu", V_gpu);
         par.store("wfc_gpu", wfc_gpu);
-        par.store("pAy_gpu", pAy_gpu);
         par.store("pAx_gpu", pAx_gpu);
-        FileIO::writeOutDouble(buffer, data_dir + "V_opt",V_opt,gsize,0);
-        // Special variables / instructions for 3d case
-        if (dimnum == 3){
+
+        // Special variables / instructions for 2/3d case
+        if (dimnum > 1){
+            pAy_gpu = par.cufftDoubleComplexval("pAy_gpu");
+            EpAy = par.cufftDoubleComplexval("EpAy");
+            err=cudaMemcpy(pAy_gpu, EpAy, sizeof(cufftDoubleComplex)*gsize,
+                           cudaMemcpyHostToDevice);
+            if(err!=cudaSuccess){
+                std::cout << "ERROR: Could not copy pAy_gpu to device" << '\n';
+                exit(1);
+            }
+            par.store("pAy_gpu", pAy_gpu);
+        }
+
+        if (dimnum > 2){
             pAz_gpu = par.cufftDoubleComplexval("pAz_gpu");
             EpAz = par.cufftDoubleComplexval("EpAz");
             err=cudaMemcpy(pAz_gpu, EpAz, sizeof(cufftDoubleComplex)*gsize,
@@ -539,6 +546,7 @@ int main(int argc, char **argv){
         wfc = par.cufftDoubleComplexval("wfc");
         wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
     }
+
     std::cout << "done evolving" << '\n';
     free(EV); free(EK); free(EpAy); free(EpAx);
     free(x);free(y);

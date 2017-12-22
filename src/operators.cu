@@ -904,6 +904,9 @@ void generate_grid(Grid& par){
         }
     
     }
+    else if (dimnum == 1){
+        par.threads.x = xDim;
+    }
     par.grid.x=xD;
     par.grid.y=yD;
     par.grid.z=zD;

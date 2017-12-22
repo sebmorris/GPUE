@@ -671,18 +671,18 @@ void evolve(Grid &par,
     double omegaZ;
     double mass = par.dval("mass");
     double dx = par.dval("dx");
-    double dy = par.dval("dy");
+    double dy;
     double dz = 1;
     double interaction = par.dval("interaction");
     double laser_power = par.dval("laser_power");
     double gDenConst = par.dval("gDenConst");
     double *x = par.dsval("x");
-    double *y = par.dsval("y");
+    double *y;
     double *z;
     double *V = par.dsval("V");
     double *Phi = par.dsval("Phi");
     double2 *gpu1dpAx = par.cufftDoubleComplexval("pAx_gpu");
-    double2 *gpu1dpAy = par.cufftDoubleComplexval("pAy_gpu");
+    double2 *gpu1dpAy;
     double2 *gpu1dpAz;
     double *Phi_gpu = par.dsval("Phi_gpu");
     bool write_it = par.bval("write_it");
@@ -694,7 +694,7 @@ void evolve(Grid &par,
     bool ramp = par.bval("ramp");
     int ramp_type = par.ival("ramp_type");
     int xDim = par.ival("xDim");
-    int yDim = par.ival("yDim");
+    int yDim = 1;
     int zDim = 1;
     cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
     cufftDoubleComplex *gpuWfc = par.cufftDoubleComplexval("wfc_gpu");
@@ -703,7 +703,13 @@ void evolve(Grid &par,
     cufftDoubleComplex *V_gpu =
         par.cufftDoubleComplexval("V_gpu");
 
-    if (dimnum == 3){
+    if (dimnum > 1){
+        dy = par.dval("dy");
+        y = par.dsval("y");
+        gpu1dpAy = par.cufftDoubleComplexval("pAy_gpu");
+        yDim = par.ival("yDim");
+    }
+    if (dimnum > 2){
         dz = par.dval("dz");
         z = par.dsval("z");
         gpu1dpAz = par.cufftDoubleComplexval("pAz_gpu");
@@ -810,7 +816,9 @@ void evolve(Grid &par,
                                                      *gridSize);
 
                     // calling the kernel to find the edges
-                    find_edges(par, wfc, edges);
+                    if (dimnum > 1){
+                        find_edges(par, wfc, edges);
+                    }
 
                     // Now we need to output everything
                     if ( write_it){
@@ -907,10 +915,12 @@ void evolve(Grid &par,
                 scalarPow<<<grid,threads>>>((cufftDoubleComplex*) gpu1dpAy, 
                                             omega_0,
                                             (cufftDoubleComplex*) gpu1dpAy);
-                scalarPow<<<grid,threads>>>((cufftDoubleComplex*) gpu1dpAx, 
-                                            omega_0,
-                                            (cufftDoubleComplex*) gpu1dpAx);
-                if (dimnum == 3){
+                if (dimnum > 1){
+                    scalarPow<<<grid,threads>>>((cufftDoubleComplex*) gpu1dpAx, 
+                                                omega_0,
+                                                (cufftDoubleComplex*) gpu1dpAx);
+                }
+                if (dimnum > 2){
                     scalarPow<<<grid,threads>>>((cufftDoubleComplex*) gpu1dpAz, 
                                                 omega_0,
                                                 (cufftDoubleComplex*) gpu1dpAz);
@@ -1081,6 +1091,14 @@ void evolve(Grid &par,
                         break;
     
                 }
+            }
+            else if (dimnum == 1){
+                result = cufftExecZ2Z(plan_1d,gpuWfc,gpuWfc,CUFFT_FORWARD);
+                scalarMult<<<grid,threads>>>(gpuWfc,renorm_factor_1d,gpuWfc);
+                cMult<<<grid,threads>>>(gpuWfc,
+                    (cufftDoubleComplex*) gpu1dpAx, gpuWfc);
+                result = cufftExecZ2Z(plan_1d,gpuWfc,gpuWfc, CUFFT_INVERSE);
+                scalarMult<<<grid,threads>>>(gpuWfc, renorm_factor_1d, gpuWfc);
             }
         }
 
