@@ -150,6 +150,16 @@ void Grid::store(std::string id, std::string sparam){
     param_string[id] = sparam;
 }
 
+// Function to store asts into data_dir
+void Grid::store(std::string id, EqnNode_gpu *ensparam){
+    param_ast[id] = ensparam;
+}
+
+// Function to store asts into data_dir
+void Grid::store(std::string id, EqnNode astparam){
+    param_ast_cpu[id] = astparam;
+}
+
 // Two boolean functions to check whether a string exists in 
 // param_double or param_dstar
 bool Grid::is_double(std::string id){
@@ -165,6 +175,16 @@ bool Grid::is_double(std::string id){
 bool Grid::is_dstar(std::string id){
     auto it = param_dstar.find(id);
     if (it != param_dstar.end()){
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool Grid::is_ast_cpu(std::string id){
+    auto it = param_ast_cpu.find(id);
+    if (it != param_ast_cpu.end()){
         return true;
     }
     else {
@@ -211,8 +231,6 @@ bool Grid::bval(std::string id){
 }
 
 // Function to retrieve string from data_dir
-// Note: There is only one string value in the Grid struct... 
-//       We must add an unordered map for strings if further strings are desired
 std::string Grid::sval(std::string id){
     auto it = param_string.find(id);
     if (it == param_string.end()){
@@ -233,6 +251,29 @@ cufftDoubleComplex *Grid::cufftDoubleComplexval(std::string id){
     }
     return it->second;
 }
+
+// Function to call back the ast's
+EqnNode_gpu *Grid::astval(std::string id){
+    auto it = param_ast.find(id);
+    if (it == param_ast.end()){
+        std::cout << "ERROR: could not find string " << id
+                  << " in Grid::param_ast." << '\n';
+        assert(it != param_ast.end());
+    }
+    return it->second;
+}
+
+// Function to call back the ast's
+EqnNode Grid::ast_cpuval(std::string id){
+    auto it = param_ast_cpu.find(id);
+    if (it == param_ast_cpu.end()){
+        std::cout << "ERROR: could not find string " << id
+                  << " in Grid::param_ast_cpu." << '\n';
+        assert(it != param_ast_cpu.end());
+    }
+    return it->second;
+}
+
 
 // Function for file writing (to replace fileIO::writeOutParam)
 void Grid::write(std::string filename){
@@ -314,3 +355,4 @@ void Grid::set_V_fn(std::string id){
         V_fn = kharmonic_V;
     }
 }
+

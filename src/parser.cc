@@ -53,6 +53,8 @@ Grid parseArgs(int argc, char** argv){
     par.store("box_size", -0.01);
     par.store("found_sobel", false);
     par.store("energy_calc", false);
+    par.store("use_param_file", false);
+    par.store("param_file","param.cfg");
     par.Afn = "rotation";
     par.Kfn = "rotation_K";
     par.Vfn = "2d";
@@ -165,6 +167,14 @@ Grid parseArgs(int argc, char** argv){
                 double atoms = atof(optarg);
                 printf("Argument for atoms is given as %E\n",atoms);
                 par.store("atoms",(int)atoms);
+                break;
+            }
+            case 'I':
+            {
+                std::string param_file = optarg;
+                printf("Input parameter file is %s!\n", param_file);
+                par.store("param_file", (std::string)param_file);
+                par.store("use_param_file", true);
                 break;
             }
             case 'R':

@@ -39,6 +39,31 @@ struct pos{
     double x, y, z;
 };
 
+typedef double (*fnPtr) (double, double);
+
+struct EqnNode{
+    double val = 0;
+    bool is_dynamic = false;
+    char var = '0';
+
+    EqnNode *left, *right;
+
+    fnPtr op = NULL;
+};
+
+// For ease of allocating, we will store the entire GPU tree into an array that
+// simply connects elements inside
+struct EqnNode_gpu{
+    double val = 0;
+    bool is_dynamic = false;
+    char var = '0';
+
+    int left = -1;
+    int right = -1;
+
+    int op_num;
+};
+
 /**
  * @brief       Class to hold the variable map and grid information
  * @ingroup     data
@@ -65,7 +90,8 @@ class Grid{
         std::unordered_map<std::string, bool> param_bool;
         std::unordered_map<std::string, cufftDoubleComplex*> sobel;
         std::unordered_map<std::string, std::string> param_string;
-        std::string data_dir;
+        std::unordered_map<std::string, EqnNode_gpu*> param_ast;
+        std::unordered_map<std::string, EqnNode> param_ast_cpu;
 
         // List of all strings for parsing into the appropriate param map
         // 1 -> int, 2 -> double, 3 -> double*
@@ -101,6 +127,12 @@ class Grid{
         // Function to store string into data_dir
         void store(std::string id, std::string sparam);
 
+        // Function to store asts into data_dir
+        void store(std::string id, EqnNode_gpu *ensparam);
+
+        // Function to store asts into data_dir
+        void store(std::string id, EqnNode astparam);
+
         // Function to retrieve integer value from param_int
         int ival(std::string id);
 
@@ -119,6 +151,12 @@ class Grid{
         // Function to call back the sobel operators
         cufftDoubleComplex *cufftDoubleComplexval(std::string id);
 
+        // Function to call back ast
+        EqnNode_gpu *astval(std::string id);
+
+        // Function to call back ast
+        EqnNode ast_cpuval(std::string id);
+
         // Function for file writing
         void write(std::string filename);
 
@@ -126,6 +164,7 @@ class Grid{
         // param_double or param_dstar
         bool is_double(std::string id);
         bool is_dstar(std::string id);
+        bool is_ast_cpu(std::string id);
 
         // Function to print all available variables
         void print_map();

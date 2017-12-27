@@ -58,7 +58,7 @@ void test_all(){
     //grid_test3d();
     //parSum_test();
     //fft_test();
-    //dynamic_test();
+    dynamic_test();
     bessel_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
@@ -92,11 +92,13 @@ void dynamic_test(){
     num = 0;
     tree_to_array(eqn_tree, eqn_cpu, num);
 
+/*
     for (int i = 0; i < num; ++i){
         std::cout << eqn_cpu[i].val << '\n';
         std::cout << eqn_cpu[i].left << '\n';
         std::cout << eqn_cpu[i].right << '\n' << '\n';
     }
+*/
 
     cudaMalloc((void**)&eqn_gpu, sizeof(EqnNode_gpu)*element_num);
     cudaMemcpy(eqn_gpu, eqn_cpu, sizeof(EqnNode_gpu)*element_num,
@@ -120,6 +122,11 @@ void dynamic_test(){
     for (int i = 0; i < n; ++i){
         std::cout << array[i] << '\n';
     }
+
+    // Now testing simple parsing of example "example.cfg"
+    std::cout << "Testing simple parameter parsing." << '\n';
+    par.store("param_file", (std::string)"src/example.cfg");
+    parse_param_file(par);
 
     std::cout << "Dynamic tests passed" <<'\n';
 }

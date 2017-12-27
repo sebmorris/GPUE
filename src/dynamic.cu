@@ -2,8 +2,10 @@
 #include <limits>
 #include <stack>
 #include <cufft.h>
+#include <fstream>
 
 #include "../include/dynamic.h"
+#include "../include/ds.h"
 #include "../include/kernels.h"
 
 __device__ double factorial(double val){
@@ -157,11 +159,68 @@ __device__ double yn_gpu(double a, double b){
     }
 }
 
+void allocate_eqn(Grid &par, std::string val_string, std::string eqn_string){
+    EqnNode eqn_tree = parse_eqn(par, eqn_string);
+    EqnNode_gpu *eqn_gpu, *eqn_cpu;
+
+    int num = 0;
+    find_element_num(eqn_tree, num);
+    int element_num = num;
+
+    eqn_cpu = (EqnNode_gpu *)malloc(sizeof(EqnNode_gpu)*element_num);
+
+    num = 0;
+    tree_to_array(eqn_tree, eqn_cpu, num);
+
+    cudaMalloc((void**)&eqn_gpu,sizeof(EqnNode_gpu)*element_num);
+    cudaMemcpy(eqn_gpu, eqn_cpu,sizeof(EqnNode_gpu)*element_num,
+               cudaMemcpyHostToDevice);
+
+    par.store(val_string, eqn_gpu);
+    par.store(val_string, eqn_tree);
+    free(eqn_cpu);
+
+}
+
+void parse_param_file(Grid &par){
+
+    // First, we need to open the file and read it in
+    std::string line, eqn_string, val_string;
+    std::ifstream file (par.sval("param_file"));
+
+    if(file.is_open()){
+        while(getline(file, line)){
+            line.erase(remove_if(line.begin(), line.end(), isspace), 
+                       line.end());
+            int it = line.find("=");
+            if (it < 0){
+                //std::cout << "No equals sign!" << '\n';
+                eqn_string += line.substr(0,line.size());
+                //std::cout << val_string << '\t' << eqn_string << '\n';
+            }
+            else{
+                if (val_string != ""){
+                    allocate_eqn(par, val_string, eqn_string);
+                    val_string = "";
+                    eqn_string = "";
+                }
+                val_string = line.substr(0, it);
+                eqn_string = line.substr(it+1, line.size() - it-1);
+                //std::cout << val_string << '\t' << eqn_string << '\n';
+            }
+            
+            //std::cout << line << '\n';
+        }
+        allocate_eqn(par, val_string, eqn_string);
+        file.close();
+    }
+}
+
 
 // We assume that we have already removed unnecessary spaces and such from 
 // our eqn_string
 EqnNode parse_eqn(Grid &par, std::string eqn_string){
-    std::cout << eqn_string << '\n';
+    //std::cout << eqn_string << '\n';
 
     // Because this will be called recursively, we need to return if the string
     // length is 0
@@ -344,7 +403,18 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
 
             }
             else{
-                eqn_tree.val = par.dval(temp_string);
+                if (par.is_ast_cpu(temp_string)){
+                    //std::cout << "found ast" << '\n';
+                    eqn_tree = par.ast_cpuval(temp_string);
+                }
+                else if(par.is_double(temp_string)){
+                    //std::cout << "found double " << temp_string << "!"<< '\n';
+                    eqn_tree.val = par.dval(temp_string);
+                }
+                else{
+                    std::cout << "No value " << temp_string << " found!\n";
+                    exit(1);
+                }
             }
             return eqn_tree;
                 
