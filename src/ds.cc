@@ -182,6 +182,16 @@ bool Grid::is_dstar(std::string id){
     }
 }
 
+bool Grid::is_ast_gpu(std::string id){
+    auto it = param_ast.find(id);
+    if (it != param_ast.end()){
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 bool Grid::is_ast_cpu(std::string id){
     auto it = param_ast_cpu.find(id);
     if (it != param_ast_cpu.end()){

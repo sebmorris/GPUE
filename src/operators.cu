@@ -1,5 +1,6 @@
 #include "../include/operators.h"
 #include "../include/kernels.h"
+#include "../include/dynamic.h"
 
 double sign(double x){
     if (x < 0){
@@ -369,19 +370,50 @@ void generate_gauge(Grid &par){
         std::cout << "finished reading Ax / Ay from file" << '\n';
     }
     else{
-        par.Ax_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
-                                             xMax, yMax, zMax, 
-                                             omegaX, omegaY, omegaZ, 
-                                             omega, fudge, Ax_gpu);
-        par.Ay_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
-                                             xMax, yMax, zMax, 
-                                             omegaX, omegaY, omegaZ, 
-                                             omega, fudge, Ay_gpu);
-        if (dimnum == 3){
-            par.Az_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
+        if (par.is_ast_gpu("Ax")){
+            double dx = par.dval("dx");
+            double dy = par.dval("dy");
+            double dz = par.dval("dz");
+            EqnNode_gpu *eqn = par.astval("Ax");
+
+            find_field<<<par.grid, par.threads>>>(Ax_gpu, dx, dy, dz, 0, eqn);
+        }
+        else{
+            par.Ax_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
                                                  xMax, yMax, zMax, 
                                                  omegaX, omegaY, omegaZ, 
-                                                 omega, fudge, Az_gpu);
+                                                 omega, fudge, Ax_gpu);
+        }
+        if (par.is_ast_gpu("Ay")){
+            double dx = par.dval("dx");
+            double dy = par.dval("dy");
+            double dz = par.dval("dz");
+            EqnNode_gpu *eqn = par.astval("Ay");
+
+            find_field<<<par.grid, par.threads>>>(Ay_gpu, dx, dy, dz, 0, eqn);
+        }
+        else{
+            par.Ay_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
+                                                 xMax, yMax, zMax, 
+                                                 omegaX, omegaY, omegaZ, 
+                                                 omega, fudge, Ay_gpu);
+        }
+        if (dimnum == 3){
+            if (par.is_ast_gpu("Az")){
+                double dx = par.dval("dx");
+                double dy = par.dval("dy");
+                double dz = par.dval("dz");
+                EqnNode_gpu *eqn = par.astval("Az");
+
+                find_field<<<par.grid, par.threads>>>(Az_gpu, dx, dy, dz, 
+                                                      0, eqn);
+            }
+            else{
+                par.Az_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
+                                                     xMax, yMax, zMax, 
+                                                     omegaX, omegaY, omegaZ, 
+                                                     omega, fudge, Az_gpu);
+            }
         }
         else{
             kconstant_A<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
@@ -551,8 +583,18 @@ void generate_fields(Grid &par){
 
     cudaMalloc((void **) &V_gpu, sizeof(double)*gSize);
 
-    par.V_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, items_gpu,
-                                        Ax_gpu, Ay_gpu, Az_gpu, V_gpu);
+    if (par.is_ast_gpu("V")){
+        double dx = par.dval("dx");
+        double dy = par.dval("dy");
+        double dz = par.dval("dz");
+
+        EqnNode_gpu *eqn = par.astval("V");
+        find_field<<<par.grid, par.threads>>>(V_gpu, dx, dy, dz, 0, eqn);
+    }
+    else{
+        par.V_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, items_gpu,
+                                            Ax_gpu, Ay_gpu, Az_gpu, V_gpu);
+    }
 
     cudaMemcpy(V, V_gpu, sizeof(double)*gSize, cudaMemcpyDeviceToHost);
 

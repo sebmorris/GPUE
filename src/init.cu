@@ -336,7 +336,6 @@ int main(int argc, char **argv){
         // Initializing the wfc
         int gSize = xDim * yDim * zDim;
         cufftDoubleComplex *wfc;
-        //wfc = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
 
         std::string infile = par.sval("infile");
         std::string infilei = par.sval("infilei");

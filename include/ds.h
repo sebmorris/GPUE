@@ -164,6 +164,7 @@ class Grid{
         // param_double or param_dstar
         bool is_double(std::string id);
         bool is_dstar(std::string id);
+        bool is_ast_gpu(std::string id);
         bool is_ast_cpu(std::string id);
 
         // Function to print all available variables
