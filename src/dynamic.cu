@@ -220,7 +220,7 @@ void parse_param_file(Grid &par){
 // We assume that we have already removed unnecessary spaces and such from 
 // our eqn_string
 EqnNode parse_eqn(Grid &par, std::string eqn_string){
-    //std::cout << eqn_string << '\n';
+    std::cout << eqn_string << '\n';
 
     // Because this will be called recursively, we need to return if the string
     // length is 0
@@ -369,7 +369,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     int mop_point = 0;
     while (!mop_found){
         for (auto &mop : moperators){
-            if (temp_string.find(mop) < temp_string.size()){
+            if (temp_string.find(mop) < temp_string.size() && !mop_found){
                 mop_point = temp_string.find(mop);
                 mop_found = true;
             } 
@@ -425,16 +425,17 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
     // We know the temp_string and how many positions we removed and where.
     if (ignored_positions.size() > 0){
         int count = 0;
-        for (int i = 0; i <= mop_point; ++i){
+        int i;
+        for (i = 0; i <= mop_point; ++i){
             for (int j = 0; j < ignored_positions.size(); j += 2){
-                if (ignored_positions[j] == i){
+                if (ignored_positions[j] == i + count){
                     count += ignored_positions[j+1] - ignored_positions[j];
                 }
             }
             count++;
         }
 
-        mop_point = count;
+        mop_point = count + i - 1;
     }
 
     // Now we need to store the operator into the eqn_tree

@@ -1,5 +1,5 @@
-
 #include "../include/init.h"
+#include "../include/dynamic.h"
 
 int init(Grid &par){
 
@@ -138,6 +138,7 @@ int init(Grid &par){
     par.store("dpy",dpy);
     par.store("dpz",dpz);
 
+
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
     /* Initialise wavefunction, momentum, position, angular momentum,
@@ -166,6 +167,9 @@ int init(Grid &par){
     #endif
 
     par.store("gSize", xDim*yDim*zDim);
+    if (par.bval("use_param_file")){
+        parse_param_file(par);
+    }
     generate_fields(par);
     double *K = par.dsval("K");
     double *Ax = par.dsval("Ax");

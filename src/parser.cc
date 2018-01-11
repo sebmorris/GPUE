@@ -66,7 +66,7 @@ Grid parseArgs(int argc, char** argv){
     optind = 1;
 
     while ((opt = getopt (argc, argv, 
-           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:;")) !=-1)
+           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:I:;")) !=-1)
     {
         switch (opt)
         {
@@ -171,8 +171,10 @@ Grid parseArgs(int argc, char** argv){
             }
             case 'I':
             {
-                std::string param_file = optarg;
-                printf("Input parameter file is %s!\n", param_file);
+                std::string data_dir = par.sval("data_dir");
+                std::string param_file = filecheck(data_dir 
+                                                   + (std::string)optarg);
+                std::cout << "Input parameter file is " <<  param_file << '\n';
                 par.store("param_file", (std::string)param_file);
                 par.store("use_param_file", true);
                 break;
