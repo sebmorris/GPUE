@@ -4,7 +4,7 @@
 #include <string>
 #include "../include/ds.h"
 
-EqnNode parse_eqn(Grid &par, std::string eqn_string);
+EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str);
 void find_element_num(EqnNode eqn_tree, int &element_num);
 
 double evaluate_eqn(EqnNode *eqn, double x, double y, double z, 

@@ -74,8 +74,9 @@ void dynamic_test(){
 
     Grid par;
     par.store("x",5);
+    std::string val_string = "check_var";
 
-    EqnNode eqn_tree = parse_eqn(par, eqn_string);
+    EqnNode eqn_tree = parse_eqn(par, eqn_string, val_string);
 
     std::cout << "finding the number of elements in abstract syntax tree...\n";
 

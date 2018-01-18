@@ -57,6 +57,9 @@ __device__ unsigned int getTid3d3d();
 * @return	Magnitude of complex number
 */
 __device__ double complexMagnitude(double2 in);
+
+__device__ double2 make_complex(double in, int evolution_type);
+
 __global__ void complexMagnitude(double2 *in, double *out);
 /**
 * @brief	Return the squared magnitude of a complex number. $|(a+\textrm{i}b)*(a-\textrm{i}b)|$
@@ -119,6 +122,10 @@ __global__ void cMultPhi(double2* in1, double* in2, double2* out);
 * @param	N Number of atoms in condensate
 */
 __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt, double mass, int gstate, double gDenConst);
+__global__ void cMultDensity_ast(EqnNode_gpu *eqn, double2* in, double2* out,
+                                 double dx, double dy, double dz, double time,
+                                 int e_num, double dt, double mass, int gstate,
+                                 double gDenConst);
 
 //##############################################################################
 
@@ -252,6 +259,20 @@ __global__ void transpose2d2(const double2 *indata, double2 *outdata);
 
 __global__ void naivetranspose2d2(int xDim, int yDim, 
                             const double2 *indata, double2 *outdata);
+
+__global__ void ast_mult(double *array, double *array_out, EqnNode_gpu *eqn,
+                         double dx, double dy, double dz, double time,
+                         int element_num);
+__global__ void ast_cmult(double2 *array, double2 *array_out, EqnNode_gpu *eqn,
+                          double dx, double dy, double dz, double time,
+                          int element_num);
+__global__ void ast_op_mult(double2 *array, double2 *array_out,
+                            EqnNode_gpu *eqn,
+                            double dx, double dy, double dz, double time,
+                            int element_num, int evolution_type, double dt);
+
+__device__ double2 real_ast(double val, double dt);
+__device__ double2 im_ast(double val, double dt);
 
 //##############################################################################
 /**

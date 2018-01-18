@@ -1,5 +1,6 @@
-
 #include "../include/constants.h"
+#include "../include/dynamic.h"
+#include "../include/ds.h"
 #include <stdio.h>
 
 __device__ double2 subtract(double2 a, double2 b){
@@ -121,6 +122,30 @@ __device__ unsigned int getTid3d3d(){
     return blockDim.x * ( blockDim.y * ( blockDim.z + ( threadIdx.z * blockDim.y ) )  + threadIdx.y )  + threadIdx.x;
 }
 
+__device__ double2 make_complex(double in, int evolution_type){
+    double2 result;
+
+    switch(evolution_type){
+        // No change
+        case 0:
+            result.x = in;
+            result.y = 0;
+            break;
+        // Im. Time evolution
+        case 1:
+            result.x = exp(-in);
+            result.y = 0;
+            break;
+        // Real Time evolution
+        case 2:
+            result.x = cos(-in);
+            result.y = sin(-in);
+            break;
+    }
+
+    return result;
+}
+
 __device__ double2 conjugate(double2 in){
     double2 result = in;
     result.y = -result.y;
@@ -230,11 +255,11 @@ __global__ void l2_norm(double2 *in1, double2 *in2, double *out){
 __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt, double mass, int gstate, double gDenConst){
     double2 result;
     double gDensity;
-    //int gid = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
     int gid = getGid3d3d();
     double2 tin1 = in1[gid];
     double2 tin2 = in2[gid];
-    gDensity = gDenConst*complexMagnitudeSquared(in2[gid])*(dt/HBAR); // scaling of interaction strength doesn't work now
+    gDensity = gDenConst*complexMagnitudeSquared(in2[gid])*(dt/HBAR);
 
     if(gstate == 0){
         double tmp = in1[gid].x*exp(-gDensity);
@@ -248,6 +273,40 @@ __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt
         
         result.x = (tmp.x)*tin2.x - (tmp.y)*tin2.y;
         result.y = (tmp.x)*tin2.y + (tmp.y)*tin2.x;
+    }
+    out[gid] = result;
+}
+
+//cMultDensity for ast V
+__global__ void cMultDensity_ast(EqnNode_gpu *eqn, double2* in, double2* out, 
+                                 double dx, double dy, double dz, double time,
+                                 int e_num, double dt, double mass, int gstate, 
+                                 double gDenConst){
+    double2 result;
+    double gDensity;
+
+    int gid = getGid3d3d();
+    int xid = blockIdx.x*blockDim.x + threadIdx.x;
+    int yid = blockIdx.y*blockDim.y + threadIdx.y;
+    int zid = blockIdx.z*blockDim.z + threadIdx.z;
+
+    double2 tin = in[gid];
+    gDensity = gDenConst*complexMagnitudeSquared(in[gid])*(dt/HBAR);
+    double2 val = make_complex(evaluate_eqn_gpu(eqn, xid*dx, yid*dy, zid*dz,
+                                                time, e_num), gstate+1);
+
+    if(gstate == 0){
+        double tmp = val.x*exp(-gDensity);
+        result.x = (tmp)*tin.x - (val.y)*tin.y;
+        result.y = (tmp)*tin.y + (val.y)*tin.x;
+    }
+    else{
+        double2 tmp;
+        tmp.x = val.x*cos(-gDensity) - val.y*sin(-gDensity);
+        tmp.y = val.y*cos(-gDensity) + val.x*sin(-gDensity);
+
+        result.x = (tmp.x)*tin.x - (tmp.y)*tin.y;
+        result.y = (tmp.x)*tin.y + (tmp.y)*tin.x;
     }
     out[gid] = result;
 }
@@ -473,6 +532,71 @@ __global__ void trapz(double *array, const int dimension, double dx,
     out = element[dimension];
 }
 */
+
+// Function to multiply a double* with an astval
+__global__ void ast_mult(double *array, double *array_out, EqnNode_gpu *eqn,
+                         double dx, double dy, double dz, double time,
+                         int element_num){
+    int gid = getGid3d3d();
+    int xid = blockIdx.x*blockDim.x + threadIdx.x;
+    int yid = blockIdx.y*blockDim.y + threadIdx.y;
+    int zid = blockIdx.z*blockDim.z + threadIdx.z;
+
+    double val = evaluate_eqn_gpu(eqn, xid*dx, yid*dy, zid*dz, 
+                                  time, element_num);
+
+    array_out[gid] = array[gid] * val;
+}
+
+// Function to multiply a double* with an astval
+__global__ void ast_cmult(double2 *array, double2 *array_out, EqnNode_gpu *eqn,
+                          double dx, double dy, double dz, double time,
+                          int element_num){
+    int gid = getGid3d3d();
+    int xid = blockIdx.x*blockDim.x + threadIdx.x;
+    int yid = blockIdx.y*blockDim.y + threadIdx.y;
+    int zid = blockIdx.z*blockDim.z + threadIdx.z;
+
+    double val = evaluate_eqn_gpu(eqn, xid*dx, yid*dy, zid*dz, 
+                                  time, element_num);
+
+    array_out[gid].x = array[gid].x * val;
+    array_out[gid].y = array[gid].y * val;
+}
+
+// Function to multiply an AST V in real or imaginary time evolution
+__global__ void ast_op_mult(double2 *array, double2 *array_out, 
+                            EqnNode_gpu *eqn,
+                            double dx, double dy, double dz, double time,
+                            int element_num, int evolution_type, double dt){
+    int gid = getGid3d3d();
+    int xid = blockIdx.x*blockDim.x + threadIdx.x;
+    int yid = blockIdx.y*blockDim.y + threadIdx.y;
+    int zid = blockIdx.z*blockDim.z + threadIdx.z;
+
+    double val = evaluate_eqn_gpu(eqn, xid*dx, yid*dy, zid*dz, 
+                                  time, element_num);
+    double2 complex_val = make_complex(val*dt, evolution_type);
+
+    array_out[gid].x = array[gid].x * complex_val.x 
+                       - array[gid].y * complex_val.y;
+    array_out[gid].y = array[gid].x * complex_val.y 
+                       + array[gid].y * complex_val.x;
+}
+
+
+// Function to find the ast in real-time dynamics
+__device__ double2 real_ast(double val, double dt){
+
+    return {cos(-val*dt), sin(-val*dt)};
+}
+
+// Function to find the ast in real-time dynamics
+__device__ double2 im_ast(double val, double dt){
+
+    return {exp(-val*dt), 0};
+}
+
 
 //##############################################################################
 //##############################################################################

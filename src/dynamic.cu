@@ -160,7 +160,8 @@ __device__ double yn_gpu(double a, double b){
 }
 
 void allocate_eqn(Grid &par, std::string val_string, std::string eqn_string){
-    EqnNode eqn_tree = parse_eqn(par, eqn_string);
+    par.store(val_string + "_time", false);
+    EqnNode eqn_tree = parse_eqn(par, eqn_string, val_string);
     EqnNode_gpu *eqn_gpu, *eqn_cpu;
 
     int num = 0;
@@ -219,7 +220,7 @@ void parse_param_file(Grid &par){
 
 // We assume that we have already removed unnecessary spaces and such from 
 // our eqn_string
-EqnNode parse_eqn(Grid &par, std::string eqn_string){
+EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     std::cout << eqn_string << '\n';
 
     // Because this will be called recursively, we need to return if the string
@@ -357,6 +358,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
         }
         else if(temp_string[0] == 't'){
             eqn_tree.is_dynamic = true;
+            par.store(val_str + "_time", true);
             eqn_tree.var = 't';
             return eqn_tree;
         }
@@ -390,15 +392,16 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
 
                     int comma_loc = check_string.find(",");
                     eqn_tree.left[0] = parse_eqn(par, 
-                        check_string.substr(1, comma_loc - 1));
+                        check_string.substr(1, comma_loc - 1), val_str);
                     eqn_tree.right[0] = parse_eqn(par, 
                         check_string.substr(comma_loc+1, 
-                                            check_string.size()-comma_loc-2));
+                                            check_string.size()-comma_loc-2),
+                                            val_str);
                 }
                 else{
                     eqn_tree.op = mfunctions_map[temp_string];
                     eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
-                    eqn_tree.left[0] = parse_eqn(par, check_string);
+                    eqn_tree.left[0] = parse_eqn(par, check_string, val_str);
                 }
 
             }
@@ -406,6 +409,9 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
                 if (par.is_ast_cpu(temp_string)){
                     //std::cout << "found ast" << '\n';
                     eqn_tree = par.ast_cpuval(temp_string);
+                    if (par.bval("temp_string")){
+                        par.store(val_str + "_time", true);
+                    }
                 }
                 else if(par.is_double(temp_string)){
                     //std::cout << "found double " << temp_string << "!"<< '\n';
@@ -443,11 +449,11 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string){
 
     // Now we need to parse the left and right banches...
     eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
-    eqn_tree.left[0] = parse_eqn(par, eqn_string.substr(0, mop_point));
+    eqn_tree.left[0] = parse_eqn(par, eqn_string.substr(0, mop_point), val_str);
 
     eqn_tree.right = (EqnNode *)malloc(sizeof(EqnNode));
     eqn_tree.right[0] = parse_eqn(par, eqn_string.substr(mop_point+1, 
-                                       eqn_string.size() - mop_point-1));
+                                       eqn_string.size() - mop_point-1), val_str);
 
     return eqn_tree;
 }
