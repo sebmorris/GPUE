@@ -304,6 +304,14 @@ int init(Grid &par){
     par.store("plan_dim2", plan_dim2);
     par.store("plan_dim3", plan_dim3);
 
+    // Parameters for time-depd variables.
+    par.store("K_time", false);
+    par.store("V_time", false);
+    par.store("Ax_time", false);
+    par.store("Ay_time", false);
+    par.store("Az_time", false);
+
+
     std::cout << "variables stored" << '\n';
 
     return 0;
@@ -423,7 +431,7 @@ int main(int argc, char **argv){
     }
 
     if(gsteps > 0){
-        if(!par.bval("V_time")){
+        if(!par.bval("K_time")){
             err=cudaMemcpy(K_gpu, GK, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
             if(err!=cudaSuccess){
@@ -431,7 +439,7 @@ int main(int argc, char **argv){
                 exit(1);
             }
         }
-        if(!par.bval("K_time")){
+        if(!par.bval("V_time")){
             err=cudaMemcpy(V_gpu, GV, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
             if(err!=cudaSuccess){

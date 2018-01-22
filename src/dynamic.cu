@@ -334,7 +334,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     EqnNode eqn_tree;
 
     bool only_nums = 
-        (temp_string.find_first_not_of("0123456789") 
+        (temp_string.find_first_not_of("0123456789.") 
             == std::string::npos);
     if (only_nums){
         eqn_tree.val = atof(temp_string.c_str());
@@ -364,6 +364,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
         }
     }
 
+    //std::cout << temp_string << '\n';
 
     // We'll need to parse the equation string in reverse PEMDAS
     // So we go through the moperators, then mbrackets / mfunctions
@@ -371,7 +372,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     int mop_point = 0;
     while (!mop_found){
         for (auto &mop : moperators){
-            if (temp_string.find(mop) < temp_string.size() && !mop_found){
+            if (temp_string.find(mop)<temp_string.size() && !mop_found){
                 mop_point = temp_string.find(mop);
                 mop_found = true;
             } 
@@ -427,22 +428,31 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
         }
     }
 
+/*
+    std::cout << "ignored positions are: " << '\n';
+    for (int &pos : ignored_positions){
+        std::cout << pos << '\n';
+    }
+*/
+
     // Now we need to find the mop_point position in the eqn_string
     // We know the temp_string and how many positions we removed and where.
     if (ignored_positions.size() > 0){
         int count = 0;
-        int i;
-        for (i = 0; i <= mop_point; ++i){
+        for (int i = 0; i <= mop_point; ++i){
             for (int j = 0; j < ignored_positions.size(); j += 2){
-                if (ignored_positions[j] == i + count){
-                    count += ignored_positions[j+1] - ignored_positions[j];
+                if (ignored_positions[j] == count){
+                    count += ignored_positions[j+1] - ignored_positions[j] + 1;
                 }
             }
             count++;
         }
 
-        mop_point = count + i - 1;
+        mop_point = count-1;
     }
+
+    //std::cout << "eqn_string is: " << eqn_string << '\n';
+    //std::cout << "mop point is: " << mop_point << '\n';
 
     // Now we need to store the operator into the eqn_tree
     eqn_tree.op = moperator_map[eqn_string[mop_point]];
@@ -453,7 +463,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
 
     eqn_tree.right = (EqnNode *)malloc(sizeof(EqnNode));
     eqn_tree.right[0] = parse_eqn(par, eqn_string.substr(mop_point+1, 
-                                       eqn_string.size() - mop_point-1), val_str);
+                                  eqn_string.size() - mop_point-1), val_str);
 
     return eqn_tree;
 }
