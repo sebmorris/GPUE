@@ -1002,3 +1002,103 @@ __device__ void convolve_depth(double* density, double* edges, double* kernel,
         edges[depth_start + write_pos] = sum;
     }
 }
+
+/*----------------------------------------------------------------------------//
+* KERNELS
+*-----------------------------------------------------------------------------*/
+
+__global__ void scan_2d(double2* wfc, bool* out, double threshold,
+                        int type, int n){
+
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    int zid = blockDim.z*blockIdx.z + threadIdx.z;
+
+    switch(type){
+        // sweep through x
+        case 0:
+            for (int i = 0; i < n; ++i){
+                int index = i + yid*blockDim.x + zid*blockDim.x*blockDim.y;
+                bool val = 0;
+                if (complexMagnitude(wfc[index]) > threshold){
+                    val = ~val;
+                }
+                out[index] = val;
+            }
+            break;
+        // sweep through y
+        case 1:
+            for (int i = 0; i < n; ++i){
+                int index = xid + i*blockDim.x + zid*blockDim.x*blockDim.y;
+                bool val = 0;
+                if (complexMagnitude(wfc[index]) > threshold){
+                    val = ~val;
+                }
+                out[index] = val;
+            }
+            break;
+        // sweep through z
+        case 2:
+            for (int i = 0; i < n; ++i){
+                int index = xid + yid*blockDim.x + i*blockDim.x*blockDim.y;
+                bool val = 0;
+                if (complexMagnitude(wfc[index]) > threshold){
+                    val = ~val;
+                }
+                out[index] = val;
+            }
+            break;
+    }
+}
+
+__global__ void threshold_sum(bool *in, bool *in2, bool *out){
+    int gid = getGid3d3d();
+    if (in2[gid] == 1 || in[gid] == 1){
+        out[gid] = 1;
+    }
+    else{
+        out[gid] = 0;
+    }
+}
+
+__global__ void zeros(bool *in, bool *out){
+    int gid = getGid3d3d();
+    out[gid] = 0;
+}
+
+bool *threshold_wfc(Grid &par, double2* wfc, double threshold, 
+                    int xDim, int yDim, int zDim, int n){
+
+    bool *output, *temp;
+    output = (bool *)malloc(sizeof(bool)*n);
+    temp = (bool *)malloc(sizeof(bool)*n);
+
+    dim3 grid = par.grid;
+    dim3 threads = par.threads;
+
+    zeros<<<grid, threads>>>(temp, temp);
+    zeros<<<grid, threads>>>(output, output);
+
+    for (int i = 0; i < 3; ++i){
+        dim3 temp_grid, temp_threads;
+        switch(i){
+            case 0:
+                temp_grid = {1, yDim, 1};
+                temp_threads = {1, 1, zDim};
+                break;
+            case 1:
+                temp_grid = {1, 1, zDim};
+                temp_threads = {xDim, 1, 1};
+                break;
+            case 2:
+                temp_grid = {xDim, 1, 1};
+                temp_threads = {1, yDim, 1};
+                break;
+        }
+        scan_2d<<<temp_grid, temp_threads>>>(wfc, temp, threshold, i, n);
+        threshold_sum<<<grid, threads>>>(output, temp, output);
+    }
+
+    return output;
+
+}
