@@ -260,7 +260,7 @@ int init(Grid &par){
         printf("Result:=%d\n",result);
         printf("Error: Could not execute cufftPlan2d(%s, %d, %d).\n", "plan_2d",
                 (unsigned int)xDim, (unsigned int)yDim);
-        return -1;
+        exit(1);
     }
     generate_plan_other2d(&plan_other2d, par);
 
@@ -273,7 +273,7 @@ int init(Grid &par){
         printf("Error: Could not execute cufftPlan3d(%s, %d, %d, %d).\n", 
                 "plan_3d",
                 (unsigned int)xDim, (unsigned int)yDim, (unsigned int) zDim);
-        return -1;
+        exit(1);
     }
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//

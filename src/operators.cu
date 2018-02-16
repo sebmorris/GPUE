@@ -485,8 +485,8 @@ __global__ void ktest_Ax(double *x, double *y, double *z,
                          double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A){
     int gid = getGid3d3d_init();
-    int yid = blockDim.y*blockIdx.x + threadIdx.x;
-    A[gid] = (sin(y[yid] * 50000)+1) * yMax * omega;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    A[gid] = (sin(y[yid] * 100000)+1) * yMax * omega;
 }
 
 // testing kernel Ay

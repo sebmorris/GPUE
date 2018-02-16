@@ -188,15 +188,18 @@ void evolve_2d(Grid &par,
                          vortCoordsP = std::make_shared<Vtx::VtxList>
                                            (num_vortices[0]);
 
-                        //Locate the vortex positions to the nearest grid, then                         //perform a least-squares fit to determine the location                         //to sub-grid reolution.
+                         //Locate the vortex positions to the nearest grid, then
+                         //perform a least-squares fit to determine the location
+                         //to sub-grid reolution.
                          Tracker::vortPos(vortexLocation,
                                  vortCoords->getVortices(), xDim, wfc);
                          Tracker::lsFit(vortCoords->getVortices(),wfc,xDim);
 
-                        //Find the centre-most vortex in the lattice
+                         //Find the centre-most vortex in the lattice
                          central_vortex = Tracker::vortCentre(vortCoords->
                                  getVortices(), xDim);
-                        //Determine the Angle formed by the lattice relative to                         //the x-axis
+                         //Determine the Angle formed by the lattice relative to
+                         //the x-axis
                          vort_angle = Tracker::vortAngle(vortCoords->
                                  getVortices(), central_vortex);
 
@@ -277,9 +280,11 @@ void evolve_2d(Grid &par,
 
                     // The following will eventually be modified and moved into
                     // a new library that works closely wy0_shiftUE. Used to 
-                    // also defined for vortex elimination using graph positions                    // and UID numbers.
+                    // also defined for vortex elimination using graph positions
+                    // and UID numbers.
                     if (graph && num_vortices[0] > 0) {
-                        for (int ii = 0; ii < vortCoords->getVortices().size();                              ++ii) {
+                        for (int ii = 0; ii < vortCoords->getVortices().size();
+                             ++ii) {
                             std::shared_ptr<LatticeGraph::Node>
                                 n(new LatticeGraph::Node(
                                     *vortCoords->getVortices().at(ii).get()));
@@ -752,6 +757,59 @@ void evolve(Grid &par,
     // **         HERE BE DRAGONS OF THE MOST DANGEROUS KIND!            ** //
     // ** ############################################################## ** //
 
+    // 2D VORTEX TRACKING
+
+    double mask_2d = par.dval("mask_2d");
+    int x0_shift = par.dval("x0_shift");
+    int y0_shift = par.dval("y0_shift");
+    int charge = par.ival("charge");
+    int kill_idx = par.ival("kill_idx");
+    cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
+    int kick_it = par.ival("kick_it");
+    double *V_opt = par.dsval("V_opt");
+    // Double buffering and will attempt to thread free and calloc operations to
+    // hide time penalty. Or may not bother.
+    int num_vortices[2] = {0,0};
+
+    // binary matrix of size xDim*yDim,
+    // 1 for vortex at specified index, 0 otherwise
+    int* vortexLocation;
+    //int* olMaxLocation = (int*) calloc(xDim*yDim,sizeof(int));
+
+    std::shared_ptr<Vtx::Vortex> central_vortex; //vortex closest to the central position
+    /*
+    central_vortex.coords.x = -1;
+    central_vortex.coords.y = -1;
+    central_vortex.coordsD.x = -1.;
+    central_vortex.coordsD.y = -1.;
+    central_vortex.wind = 0;
+    */
+
+    // Angle of vortex lattice. Add to optical lattice for alignment.
+    double vort_angle;
+
+    // array of vortex coordinates from vortexLocation 1's
+    //struct Vtx::Vortex *vortCoords = NULL;
+
+
+    std::shared_ptr<Vtx::VtxList> vortCoords = std::make_shared<Vtx::VtxList>(7);
+    //std::vector<std::shared_ptr<Vtx::Vortex> vortCoords;
+
+    //Previous array of vortex coordinates from vortexLocation 1's
+    //struct Vtx::Vortex *vortCoordsP = NULL;
+    //std::vector<struct Vtx::Vortex> vortCoordsP;
+    std::shared_ptr<Vtx::VtxList> vortCoordsP = std::make_shared<Vtx::VtxList>(7);
+
+
+    LatticeGraph::Lattice lattice; //Vortex lattice graph.
+    double* adjMat;
+
+    double sepAvg = 0.0;
+
+    int num_kick = 0;
+    // Assuming triangular lattice at rotatio
+
+
     //std::cout << "numSteps is: " << numSteps << '\n';
     // Iterating through all of the steps in either g or esteps.
     for(int i=0; i < numSteps; ++i){
@@ -805,30 +863,244 @@ void evolve(Grid &par,
                 }
                 case 2: //Real-time evolution, constant Omega value.
                 {
-                    // Note: In the case of 3d, we need to think about
-                    //       vortex tracking in a new way.
-                    //       It may be as simple as splitting the problem into
-                    //       2D elements and working from there, but let's
-                    //       look into it when we need it in the future.
-                    std::cout << "commencing 3d vortex tracking" << '\n';
+                    if (dimnum == 3){
+                        // Note: In the case of 3d, we need to think about
+                        //       vortex tracking in a new way.
+                        //       It may be as simple as splitting the problem
+                        //       into 2D elements and working from there, but
+                        //       let's look into it when we need it in the
+                        //       future.
+                        std::cout << "commencing 3d vortex tracking" << '\n';
 
-                    // Creating the necessary double* values
-                    double* edges = (double *)malloc(sizeof(double)
-                                                     *gridSize);
+                        // Creating the necessary double* values
+                        double* edges = (double *)malloc(sizeof(double)
+                                                         *gridSize);
 
-                    // calling the kernel to find the edges
-                    if (dimnum > 1){
-                        find_edges(par, wfc, edges);
+                        // calling the kernel to find the edges
+                        if (dimnum > 1){
+                            find_edges(par, wfc, edges);
+                        }
+
+                        // Now we need to output everything
+                        if ( write_it){
+                            FileIO::writeOutDouble(buffer, data_dir + "Edges",
+                                                   edges, gridSize, i);
+                        }
+
+                        free(edges);
+
                     }
+                    else if (dimnum == 2){
+                        vortexLocation = (int *) calloc(xDim * yDim, sizeof(int));
+                        num_vortices[0] = Tracker::findVortex(vortexLocation, wfc,
+                                                              mask_2d, xDim, x, i);
+                        // If initial step, locate vortices, least-squares to find
+                        // exact centre, calculate lattice angle, generate optical
+                        // lattice.
+                        if (i == 0) {
+                             if(num_vortices[0] > 0){
+                             //Reserve enough space for the vortices
+                             //reserve(num_vortices[0]);
+                             vortCoords = std::make_shared<Vtx::VtxList>
+                                              (num_vortices[0]);
+                             vortCoordsP = std::make_shared<Vtx::VtxList>
+                                               (num_vortices[0]);
+    
+                             //Locate the vortex positions to the nearest grid, then
+                             //perform a least-squares fit to determine the location
+                             //to sub-grid reolution.
+                             Tracker::vortPos(vortexLocation,
+                                     vortCoords->getVortices(), xDim, wfc);
+                             Tracker::lsFit(vortCoords->getVortices(),wfc,xDim);
+    
+                             //Find the centre-most vortex in the lattice
+                             central_vortex = Tracker::vortCentre(vortCoords->
+                                     getVortices(), xDim);
+                             //Determine the Angle formed by the lattice relative to
+                             //the x-axis
+                             vort_angle = Tracker::vortAngle(vortCoords->
+                                     getVortices(), central_vortex);
+    
+                            //Store the vortex angle in the parameter file
+                             par.store("Vort_angle", vort_angle);
+                                 
+                            //Determine average lattice spacing.
+                             sepAvg = Tracker::vortSepAvg(vortCoords->
+                                     getVortices(), central_vortex);
+    
+                             par.store("Central_vort_x",
+                                      (double) central_vortex->getCoords().x);
+                             par.store("Central_vort_y",
+                                      (double) central_vortex->getCoords().y);
+                             par.store("Central_vort_winding",
+                                      (double) central_vortex->getWinding());
+                             par.store("Num_vort", (double) vortCoords->
+                                     getVortices().size());
+    
+                            //Setup the optical lattice to match the spacing and
+                            // angle+angle_sweep of the vortex lattice.
+                            // Amplitude matched by setting laser_power
+                            // parameter switch.
+                             optLatSetup(central_vortex, V, 
+                                        vortCoords->getVortices(),
+                                        vort_angle + PI * angle_sweep / 180.0,
+                                        laser_power * HBAR * sqrt(omegaX * omegaY),
+                                        V_opt, x, y, par);
+    
+    
+			    }
+                            // If kick_it param is 2, perform a single kick of the 
+                            // optical lattice for the first timestep only.
+                            // This is performed by loading the
+                            // EV_opt exp(V + V_opt) array into GPU memory
+                            // for the potential.
+                            if (kick_it == 2) {
+                                printf("Kicked it 1\n");
+                                cudaMemcpy(V_gpu, EV_opt,
+                                           sizeof(cufftDoubleComplex) * xDim * yDim,
+                                           cudaMemcpyHostToDevice);
+                            }
+                            // Write out the newly specified potential
+                            // and exp potential to files
+                            FileIO::writeOutDouble(buffer, data_dir + "V_opt_1",
+                                                   V_opt, xDim * yDim, 0);
+                            FileIO::writeOut(buffer, data_dir + "EV_opt_1", EV_opt,
+                                             xDim * yDim, 0);
+    
+                            //Store necessary parameters to Params.dat file.
+                            FileIO::writeOutParam(buffer, par,
+                                                  data_dir + "Params.dat");
+                        }
+                        //If i!=0 and the number of vortices changes
+                        // if num_vortices[1] < num_vortices[0] ... Fewer vortices
+                        else {
+                             if (num_vortices[0] > 0){
+                        	    Tracker::vortPos(vortexLocation, 
+                                        vortCoords->getVortices(), xDim, wfc);
+                        	    Tracker::lsFit(vortCoords->getVortices(), 
+                                                   wfc, xDim);
+                        	    Tracker::vortArrange(vortCoords->getVortices(),
+                                                        vortCoordsP->getVortices());
+                    		    FileIO::writeOutInt(buffer, data_dir + "vLoc_",
+                                                   vortexLocation, xDim * yDim, i);
+                             }
+                        }
+    
+                        // The following will eventually be modified and moved into
+                        // a new library that works closely wy0_shiftUE. Used to 
+                        // also defined for vortex elimination using graph positions
+                        // and UID numbers.
+                        if (graph && num_vortices[0] > 0) {
+                            for (int ii = 0; ii < vortCoords->getVortices().size();
+                                 ++ii) {
+                                std::shared_ptr<LatticeGraph::Node>
+                                    n(new LatticeGraph::Node(
+                                        *vortCoords->getVortices().at(ii).get()));
+                                lattice.addVortex(std::move(n));
+                            }
+                            unsigned int *uids = (unsigned int *) malloc(
+                                    sizeof(unsigned int) *
+                                    lattice.getVortices().size());
+                            for (size_t a=0; a < lattice.getVortices().size(); ++a){
+                                uids[a] = lattice.getVortexIdx(a)->getUid();
+                            }
+                            if(i==0) {
+                                //Lambda for vortex annihilation/creation.
+                                auto killIt=[&](int idx, int winding, 
+                                                double delta_x, double delta_y) {
+                                    if (abs(delta_x) > 0 || abs(delta_y) > 0){
+                                        // Killing initial vortex and then 
+                                        // imprinting new one
+                                        WFC::phaseWinding(Phi, 1, x,y, dx,dy,
+                                            lattice.getVortexUid(idx)->
+                                                getData().getCoordsD().x,
+                                            lattice.getVortexUid(idx)->
+                                                getData().getCoordsD().y,
+                                            xDim);
+    
+                                        cudaMemcpy(Phi_gpu, Phi, 
+                                                   sizeof(double) * xDim * yDim, 
+                                                   cudaMemcpyHostToDevice);
+                                        cMultPhi <<<grid, threads>>>(gpuWfc,Phi_gpu,
+                                                                      gpuWfc);
+    
+                                        // Imprinting new one
+                                        int cval = -winding;
+                                        WFC::phaseWinding(Phi, cval, x,y, dx,dy,
+                                            lattice.getVortexUid(idx)->
+                                                getData().getCoordsD().x + delta_x,
+                                            lattice.getVortexUid(idx)->
+                                                getData().getCoordsD().y + delta_y,
+                                            xDim);
+    
+                                        // Sending to device for imprinting
+                                        cudaMemcpy(Phi_gpu, Phi, 
+                                                   sizeof(double) * xDim * yDim, 
+                                                   cudaMemcpyHostToDevice);
+                                        cMultPhi <<<grid, threads>>>(gpuWfc,Phi_gpu,
+                                                                      gpuWfc);
+                                    }
+                                    else{
+                                        int cval = -(winding-1);
+                                        WFC::phaseWinding(Phi, cval, x,y,dx,dy,
+                                            lattice.getVortexUid(idx)->
+                                                getData().getCoordsD().x,
+                                            lattice.getVortexUid(idx)->
+                                                getData().getCoordsD().y,
+                                            xDim);
+                                        cudaMemcpy(Phi_gpu, Phi, 
+                                                   sizeof(double) * xDim * yDim, 
+                                                   cudaMemcpyHostToDevice);
+                                        cMultPhi <<<grid, threads>>>(gpuWfc,Phi_gpu,
+                                                                      gpuWfc);
+                                    }
+                                };
+                                if (kill_idx > 0){
+                                    killIt(kill_idx, charge, x0_shift, y0_shift);
+                                }
+                            }
+                            lattice.createEdges(1.5 * 2e-5 / dx);
+    
+                            //Assumes that vortices
+                            //only form edges when the distance is upto 1.5*2e-5.
+                            //Replace with delaunay triangulation determined edges 
+                            //for better computational scaling (and sanity)
+    
+                            //O(n^2) -> terrible implementation. It works for now.
+                            //Generates the adjacency matrix from the graph, and
+                            //outputs to a Mathematica compatible format.
+                            adjMat = (double *)calloc(lattice.getVortices().size() *
+                                                      lattice.getVortices().size(),
+                                                       sizeof(double));
+                            lattice.genAdjMat(adjMat);
+                            FileIO::writeOutAdjMat(buffer, data_dir + "graph",
+                                                   adjMat, uids,
+                                                   lattice.getVortices().size(), i);
+    
+                            //Free and clear all memory blocks
+                            free(adjMat);
+                            free(uids);
+                            lattice.getVortices().clear();
+                            lattice.getEdges().clear();
+                            //exit(0);
+                        }
 
-                    // Now we need to output everything
-                    if ( write_it){
-                        FileIO::writeOutDouble(buffer, data_dir + "Edges",
-                                               edges, gridSize, i);
+                        //Write out the vortex locations
+                        FileIO::writeOutVortex(buffer, data_dir + "vort_arr",
+                                               vortCoords->getVortices(), i);
+                        printf("Located %d vortices\n", 
+                               vortCoords->getVortices().size());
+    
+                        //Free memory block for now.
+                        free(vortexLocation);
+
+                        //Current values become previous values.
+                        num_vortices[1] = num_vortices[0];
+                        vortCoords->getVortices().swap(vortCoordsP->getVortices());
+		                vortCoords->getVortices().clear();
+			            std::cout << "I am here" << std::endl;
+    
                     }
-
-                    free(edges);
-
                     fileName = "wfc_ev";
                     break;
                 }
