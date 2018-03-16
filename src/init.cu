@@ -155,6 +155,7 @@ int init(Grid &par){
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
 
+/*
     #ifdef __linux
     int cores = omp_get_num_procs();
     par.store("Cores_Total",cores);
@@ -165,6 +166,7 @@ int init(Grid &par){
 
     //#pragma omp parallel for private(j)
     #endif
+*/
 
     par.store("gSize", xDim*yDim*zDim);
     if (par.bval("use_param_file")){
