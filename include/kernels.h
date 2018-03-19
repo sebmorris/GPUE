@@ -31,7 +31,6 @@ __global__ void make_cufftDoubleComplex(double *in, double2 *out);
 * @ingroup	gpu
 */
 __device__ unsigned int getGid3d3d();
-__device__ unsigned int getGid3d3d_init();
 
 /**
 * @brief	Indexing of blocks on device

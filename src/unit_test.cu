@@ -54,10 +54,10 @@ void test_all(){
     //parser_test();
     //evolve_2d_test();
 
-    //grid_test2d();
-    //grid_test3d();
-    //parSum_test();
-    //fft_test();
+    grid_test2d();
+    grid_test3d();
+    parSum_test();
+    fft_test();
     dynamic_test();
     bessel_test();
 
@@ -135,12 +135,12 @@ void dynamic_test(){
 __global__ void bessel_test_kernel(double *j, double *j_poly, bool *val){
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     j[xid] = j0(xid * 2.0 / 128);
-    j_poly[xid] = poly_j(0,xid * 2.0 / 128, 20);
+    j_poly[xid] = poly_j(0,xid * 2.0 / 128, 40);
 
-    if (!close(j[xid],j_poly[xid], 0.00001)){
+    if (!close(j[xid],j_poly[xid], 0.0001)){
         val[0] = false;
+        printf("Error at element %u in Bessel test!\n", xid);
     }
-    else val[0] = true;
 }
 
 // Test for bessel functions
@@ -156,6 +156,8 @@ void bessel_test(){
 
     cudaMalloc((void **)&val_gpu, sizeof(bool));
     val = (bool *)malloc(sizeof(bool));
+    val[0] = true;
+    cudaMemcpy(val_gpu, val, sizeof(bool), cudaMemcpyHostToDevice);
 
     bessel_test_kernel<<<64,2>>>(j_gpu, j_poly_gpu, val_gpu);
     cudaMemcpy(val, val_gpu, sizeof(bool), cudaMemcpyDeviceToHost);

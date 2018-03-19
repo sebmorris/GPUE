@@ -379,7 +379,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
         }
         if (!mop_found){
             if(auto it = mfunctions_map.find(temp_string)
-                    != mfunctions_map.end()){
+                      != mfunctions_map.end()){
 
                 mop_point = temp_string.size()-1;
 
@@ -410,9 +410,7 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
                 if (par.is_ast_cpu(temp_string)){
                     //std::cout << "found ast" << '\n';
                     eqn_tree = par.ast_cpuval(temp_string);
-                    if (par.bval("temp_string")){
-                        par.store(val_str + "_time", true);
-                    }
+                    par.store(val_str + "_time", true);
                 }
                 else if(par.is_double(temp_string)){
                     //std::cout << "found double " << temp_string << "!"<< '\n';
