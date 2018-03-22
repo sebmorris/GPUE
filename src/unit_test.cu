@@ -11,7 +11,43 @@
 #include <vector>
 #include <fstream>
 
-// Test for the Grid structure with paramters in it 
+// Adding tests for mathematical operator kernels
+void math_operator_test();
+__global__ void add_test(double2 *a, double2 *b, double2 *c);
+__global__ void subtract_test(double2 *a, double2 *b, double2 *c);
+__global__ void mult_test(double2 *a, double2 *b, double2 *c);
+__global__ void mult_test(double2 *a, double b, double2 *c);
+__global__ void pow_test(double2 *a, int b, double2 *c);
+
+// Tests for cufftDoubleComplex functions
+void cufftDoubleComplex_functions_test();
+__global__ void complexMag_test(double2 *in, double *out);
+__global__ void complexMag2_test(double2 *in, double *out);
+void realCompMult_test();
+void cMult_test();
+
+// Tests for quantum operations
+void make_complex_test();
+void cMultPhi_test();
+void cMultDens_test();
+
+// Tests for complex mathematical operations
+void vecMult_test();
+void scalarDiv_test();
+void vecConj_test();
+
+// AST tests
+void ast_mult_test();
+void ast_cmult_test();
+void ast_op_mult_test();
+void real_ast_test();
+void im_ast_test();
+
+// Other
+void energyCalc_test();
+void braKetMult_test();
+
+// Test for the Grid structure with parameters in it 
 void parameter_test();
 
 // Test for the parsing function
@@ -48,7 +84,14 @@ __device__ bool close(double a, double b, double threshold){
 
 void test_all(){
     std::cout << "Starting unit tests..." << '\n';
-    //parameter_test();
+    parameter_test();
+
+    std::cout 
+        << "Beginning testing of standard mathematical operation kernels...\n";
+    math_operator_test();
+
+    std::cout << "Beginning testing of cufftDoubleComplex kernels...\n";
+    cufftDoubleComplex_functions_test();
 
     // Do not uncomment these 2
     //parser_test();
@@ -62,6 +105,196 @@ void test_all(){
     bessel_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
+}
+
+void math_operator_test(){
+
+    // First, we need to create a set of grids and threads to read into the 
+    // kernels for testing
+    dim3 grid = {1,1,1};
+    dim3 threads = {1,1,1};
+
+    double2 *ha, *hb, *hc;
+    double2 *da, *db, *dc;
+    
+    // Allocating single-element arrays to test kernels with. 
+    ha = (double2*)malloc(sizeof(double2));
+    hb = (double2*)malloc(sizeof(double2));
+    hc = (double2*)malloc(sizeof(double2));
+
+    ha[0].x = 0.01;
+    ha[0].y = 0.1;
+    hb[0].x = 0.02;
+    hb[0].y = 0.2;
+
+    cudaMalloc((void**) &da, sizeof(double2));
+    cudaMalloc((void**) &db, sizeof(double2));
+    cudaMalloc((void**) &dc, sizeof(double2));
+
+    cudaMemcpy(da, ha, sizeof(double2), cudaMemcpyHostToDevice);
+    cudaMemcpy(db, hb, sizeof(double2), cudaMemcpyHostToDevice);
+
+    add_test<<<grid, threads>>>(da, db, dc);
+    cudaMemcpy(hc, dc, sizeof(double2), cudaMemcpyDeviceToHost);
+
+    if (abs(hc[0].x - 0.03) > 1e-16 || abs(hc[0].y - 0.3) > 1e-16){
+        std::cout << "Complex addition test failed!\n";
+        exit(1);
+    }
+
+    subtract_test<<<grid, threads>>>(da, db, dc);
+    cudaMemcpy(hc, dc, sizeof(double2), cudaMemcpyDeviceToHost);
+
+    if (hc[0].x != -0.01 || hc[0].y != -0.1){
+        std::cout << "Complex subtraction test failed!\n";
+        exit(1);
+    }
+
+    pow_test<<<grid, threads>>>(da, 3, dc);
+    cudaMemcpy(hc, dc, sizeof(double2), cudaMemcpyDeviceToHost);
+
+    if (abs(hc[0].x + 0.000299) > 1e-16 || abs(hc[0].y + 0.00097) > 1e-16){
+        std::cout << "Complex power test failed!\n";
+        exit(1);
+    }
+
+    mult_test<<<grid, threads>>>(da, db, dc);
+    cudaMemcpy(hc, dc, sizeof(double2), cudaMemcpyDeviceToHost);
+
+    if (abs(hc[0].x + 0.0198) > 1e-16 || abs(hc[0].y - 0.004) > 1e-16){
+        std::cout << "Complex multiplication test failed!\n";
+        exit(1);
+    }
+
+    mult_test<<<grid, threads>>>(da, 3.0, dc);
+    cudaMemcpy(hc, dc, sizeof(double2), cudaMemcpyDeviceToHost);
+
+    if (abs(hc[0].x - 0.03) > 1e-16 || abs(hc[0].y - 0.3) > 1e-16){
+        std::cout << "Complex multiplication test with real number failed!\n";
+        exit(1);
+    }
+
+    std::cout << "Complex addition, subtraction, multiplication, and powers have been tested\n";
+}
+
+__global__ void add_test(double2 *a, double2 *b, double2 *c){
+    c[0] = add(a[0],b[0]);
+}
+
+__global__ void subtract_test(double2 *a, double2 *b, double2 *c){
+    c[0] = subtract(a[0],b[0]);
+}
+
+__global__ void pow_test(double2 *a, int b, double2 *c){
+    c[0] = pow(a[0],b);
+}
+
+__global__ void mult_test(double2 *a, double2 *b, double2 *c){
+    c[0] = mult(a[0],b[0]);
+}
+
+__global__ void mult_test(double2 *a, double b, double2 *c){
+    c[0] = mult(a[0],b);
+}
+
+void cufftDoubleComplex_functions_test(){
+
+    // first creating the grid and threads
+    dim3 grid = {1,1,1};
+    dim3 threads = {1,1,1};
+
+    double *hval_double, *dval_double, *dout, *hout;
+    double2 *hval_double2, *dval_double2;
+
+    double2 *hin, *din;
+
+    hval_double = (double*)malloc(sizeof(double));
+    hval_double2 = (double2*)malloc(sizeof(double2));
+    hout = (double*)malloc(sizeof(double));
+    hin = (double2*)malloc(sizeof(double2));
+
+    hval_double[0] = 3.0;
+    hval_double2[0].x = 0.3;
+    hval_double2[0].y = 0.4;
+
+    hin[0].x = 3.0;
+    hin[0].y = 4.0;
+
+    cudaMalloc((void**)&dval_double, sizeof(double));
+    cudaMalloc((void**)&dval_double2, sizeof(double2));
+    cudaMalloc((void**)&dout, sizeof(double));
+    cudaMalloc((void**)&din, sizeof(double2));
+
+
+    // Testing make_cufftDoubleComplex function
+    cudaMemcpy(dval_double, hval_double, sizeof(double), 
+               cudaMemcpyHostToDevice);
+
+    make_cufftDoubleComplex<<<grid, threads>>>(dval_double, dval_double2);
+
+    cudaMemcpy(hval_double2, dval_double2, sizeof(double2),
+               cudaMemcpyDeviceToHost);
+
+    if (hval_double2[0].x != 3.0 || hval_double2[0].y != 0){
+        std::cout << "Test of make_cufftDoubleComplex failed!\n";
+        exit(1);
+    }
+
+    // testing device complexMagnitude function
+    cudaMemcpy(din, hin, sizeof(double2), cudaMemcpyHostToDevice);
+    complexMag_test<<<grid, threads>>>(din, dout);
+
+    cudaMemcpy(hout, dout, sizeof(double), cudaMemcpyDeviceToHost);
+
+    if (hout[0] != 5.0){
+        std::cout << hout[0] << '\n';
+        std::cout << "Test of device complexMagnitude failed!\n";
+        exit(1);
+    }
+
+    // Testing global complexMagnitude function
+    complexMagnitude<<<grid, threads>>>(din, dout);
+    cudaMemcpy(hout, dout, sizeof(double), cudaMemcpyDeviceToHost);
+
+    if (hout[0] != 5.0){
+        std::cout << hout[0] << '\n';
+        std::cout << "Test of global complexMagnitude failed!\n";
+        exit(1);
+    }
+
+    complexMag2_test<<<grid, threads>>>(din, dout);
+
+    cudaMemcpy(hout, dout, sizeof(double), cudaMemcpyDeviceToHost);
+
+    if (hout[0] != 25.0){
+        std::cout << hout[0] << '\n';
+        std::cout << "Test of device complexMagnitudeSquared failed!\n";
+        exit(1);
+    }
+
+    // Testing global complexMagnitude function
+    complexMagnitudeSquared<<<grid, threads>>>(din, dout);
+    cudaMemcpy(hout, dout, sizeof(double), cudaMemcpyDeviceToHost);
+
+    if (hout[0] != 25.0){
+        std::cout << hout[0] << '\n';
+        std::cout << "Test of global complexMagnitudeSquared failed!\n";
+        exit(1);
+    }
+
+
+    std::cout << "make_cufftDoubleComplex, and complexMagnitude[Squared] have been tested\n";
+
+    exit(0);
+    
+}
+
+__global__ void complexMag_test(double2 *in, double *out){
+    out[0] = complexMagnitude(in[0]);
+}
+
+__global__ void complexMag2_test(double2 *in, double *out){
+    out[0] = complexMagnitudeSquared(in[0]);
 }
 
 // Test to check the equation parser for dynamic fields
