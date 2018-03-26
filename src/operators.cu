@@ -310,7 +310,7 @@ void generate_K(Grid &par){
 __global__ void simple_K(double *xp, double *yp, double *zp, double mass,
                          double *K){
 
-    unsigned int gid = getGid3d3d_init();
+    unsigned int gid = getGid3d3d();
     unsigned int xid = blockDim.x*blockIdx.x + threadIdx.x;
     unsigned int yid = blockDim.y*blockIdx.y + threadIdx.y;
     unsigned int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -441,7 +441,7 @@ __global__ void kconstant_A(double *x, double *y, double *z,
                             double xMax, double yMax, double zMax,
                             double omegaX, double omegaY, double omegaZ,
                             double omega, double fudge, double *A){
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     A[gid] = 0;        
 }
 
@@ -450,7 +450,7 @@ __global__ void krotation_Ax(double *x, double *y, double *z,
                              double xMax, double yMax, double zMax,
                              double omegaX, double omegaY, double omegaZ,
                              double omega, double fudge, double *A){
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     A[gid] = -y[yid] * omega * omegaX;
 }
@@ -460,7 +460,7 @@ __global__ void krotation_Ay(double *x, double *y, double *z,
                              double xMax, double yMax, double zMax,
                              double omegaX, double omegaY, double omegaZ,
                              double omega, double fudge, double *A){
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     A[gid] = x[xid] * omega * omegaY;
 }
@@ -470,7 +470,7 @@ __global__ void kring_Az(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
                          double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A){
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
 
@@ -484,7 +484,7 @@ __global__ void ktest_Ax(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
                          double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A){
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     A[gid] = (sin(y[yid] * 100000)+1) * yMax * omega;
 }
@@ -494,7 +494,7 @@ __global__ void ktest_Ay(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
                          double omegaX, double omegaY, double omegaZ,
                          double omega, double fudge, double *A){
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     A[gid] = 0;
 }
 
@@ -757,7 +757,7 @@ void generate_fields(Grid &par){
 __global__ void kharmonic_V(double *x, double *y, double *z, double* items,
                             double *Ax, double *Ay, double *Az, double *V){
 
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -775,7 +775,7 @@ __global__ void kharmonic_V(double *x, double *y, double *z, double* items,
 __global__ void ktorus_V(double *x, double *y, double *z, double* items,
                          double *Ax, double *Ay, double *Az, double *V){
 
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -795,7 +795,7 @@ __global__ void ktorus_V(double *x, double *y, double *z, double* items,
 __global__ void kstd_wfc(double *x, double *y, double *z, double *items,
                          double winding, double *phi, double2 *wfc){
 
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -816,7 +816,7 @@ __global__ void kstd_wfc(double *x, double *y, double *z, double *items,
 __global__ void ktorus_wfc(double *x, double *y, double *z, double *items,
                            double winding, double *phi, double2 *wfc){
 
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
@@ -837,7 +837,7 @@ __global__ void aux_fields(double *V, double *K, double gdt, double dt,
                            double2* GV, double2* EV, double2* GK, double2* EK,
                            double2* GpAx, double2* GpAy, double2* GpAz,
                            double2* EpAx, double2* EpAy, double2* EpAz){
-    int gid = getGid3d3d_init();
+    int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;

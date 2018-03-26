@@ -1007,47 +1007,35 @@ __device__ void convolve_depth(double* density, double* edges, double* kernel,
 * KERNELS
 *-----------------------------------------------------------------------------*/
 
-__global__ void scan_2d(double2* wfc, bool* out, double threshold,
+__global__ void scan_2d(double* edges, bool* out, double threshold,
                         int type, int n){
 
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
 
-    switch(type){
-        // sweep through x
-        case 0:
-            for (int i = 0; i < n; ++i){
-                int index = i + yid*blockDim.x + zid*blockDim.x*blockDim.y;
-                bool val = 0;
-                if (complexMagnitude(wfc[index]) > threshold){
-                    val = ~val;
-                }
-                out[index] = val;
+    for (int i = 0; i < n; ++i){
+        int index;
+        switch(type){
+            // sweep through x
+            case 0:
+                index = i + yid*blockDim.x + zid*blockDim.x*blockDim.y;
+                break;
+            // sweep through y
+            case 1:
+                index = xid + i*blockDim.x + zid*blockDim.x*blockDim.y;
+                break;
+            // sweep through z
+            case 2:
+                index = xid + yid*blockDim.x + i*blockDim.x*blockDim.y;
+                break;
             }
-            break;
-        // sweep through y
-        case 1:
-            for (int i = 0; i < n; ++i){
-                int index = xid + i*blockDim.x + zid*blockDim.x*blockDim.y;
-                bool val = 0;
-                if (complexMagnitude(wfc[index]) > threshold){
-                    val = ~val;
-                }
-                out[index] = val;
-            }
-            break;
-        // sweep through z
-        case 2:
-            for (int i = 0; i < n; ++i){
-                int index = xid + yid*blockDim.x + i*blockDim.x*blockDim.y;
-                bool val = 0;
-                if (complexMagnitude(wfc[index]) > threshold){
-                    val = ~val;
-                }
-                out[index] = val;
-            }
-            break;
+
+        bool val = 0;
+        if (edges[index] > threshold){
+            val = !val;
+        }
+        out[index] = val;
     }
 }
 
@@ -1066,12 +1054,13 @@ __global__ void zeros(bool *in, bool *out){
     out[gid] = 0;
 }
 
-bool *threshold_wfc(Grid &par, double2* wfc, double threshold, 
-                    int xDim, int yDim, int zDim, int n){
+bool *threshold_wfc(Grid &par, double* edges, double threshold, 
+                    int xDim, int yDim, int zDim){
 
     bool *output, *temp;
-    output = (bool *)malloc(sizeof(bool)*n);
-    temp = (bool *)malloc(sizeof(bool)*n);
+    int gridSize = xDim*yDim*zDim;
+    cudaMalloc((void **) &output, sizeof(bool)*gridSize);
+    cudaMalloc((void **) &temp, sizeof(bool)*gridSize);
 
     dim3 grid = par.grid;
     dim3 threads = par.threads;
@@ -1085,17 +1074,22 @@ bool *threshold_wfc(Grid &par, double2* wfc, double threshold,
             case 0:
                 temp_grid = {1, yDim, 1};
                 temp_threads = {1, 1, zDim};
+                scan_2d<<<temp_grid, temp_threads>>>(edges, temp, threshold, i,
+                                                     xDim);
                 break;
             case 1:
                 temp_grid = {1, 1, zDim};
                 temp_threads = {xDim, 1, 1};
+                scan_2d<<<temp_grid, temp_threads>>>(edges, temp, threshold, i,
+                                                     yDim);
                 break;
             case 2:
                 temp_grid = {xDim, 1, 1};
                 temp_threads = {1, yDim, 1};
+                scan_2d<<<temp_grid, temp_threads>>>(edges, temp, threshold, i,
+                                                     zDim);
                 break;
         }
-        scan_2d<<<temp_grid, temp_threads>>>(wfc, temp, threshold, i, n);
         threshold_sum<<<grid, threads>>>(output, temp, output);
     }
 

@@ -86,6 +86,20 @@ namespace FileIO{
     }
 
     /*
+     * Writes out bool type data files.
+     */
+    void writeOutBool(std::string buffer, std::string file, bool *data,
+                            int length, int step){
+        FILE *f;
+        sprintf ((char *)buffer.c_str(), "%s_%d", file.c_str(), step);
+        f = fopen (buffer.c_str(),"w");
+        int i;
+        for (i = 0; i < length; i++)
+            fprintf (f, "%u\n",data[i]);
+        fclose (f);
+    }
+
+    /*
      * Writes out int type data files.
      */
     void writeOutInt(std::string buffer, std::string file, int *data,

@@ -1,4 +1,5 @@
 #include "../include/evolution.h"
+#include "../include/vortex_3d.h"
 
 void evolve_2d(Grid &par,
                cufftDoubleComplex *gpuParSum, int numSteps,
@@ -882,9 +883,25 @@ void evolve(Grid &par,
                         }
 
                         // Now we need to output everything
-                        if ( write_it){
+                        if (write_it){
                             FileIO::writeOutDouble(buffer, data_dir + "Edges",
                                                    edges, gridSize, i);
+                        }
+
+                        // Creating boolean array to work with
+                        bool *threshold = threshold_wfc(par, edges, 0.5,
+                                                        xDim, yDim, zDim);
+
+                        bool *threshold_cpu = 
+                            (bool *)malloc(sizeof(bool)*gridSize);
+
+                        cudaMemcpy(threshold_cpu, threshold, 
+                                   sizeof(bool)*gridSize,
+                                   cudaMemcpyDeviceToHost);
+
+                        if (write_it){
+                            FileIO::writeOutBool(buffer, data_dir + "Thresh",
+                                                 threshold_cpu, gridSize, i);
                         }
 
                         free(edges);
