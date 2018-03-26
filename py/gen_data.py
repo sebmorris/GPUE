@@ -192,6 +192,7 @@ item_phase = wfc_phase(xDim, yDim, zDim,"data","wfc",50000)
 #to_bvox(item_var, xDim, yDim, zDim, 1, "test_var.bvox")
 #to_bvox(item2_var, xDim, yDim, zDim, 1, "test_edges.bvox")
 '''
+'''
 
 print("iterating through data...")
 # Writing out the potential
@@ -213,6 +214,7 @@ for i in range(0,101):
     #to_vtk(item, xDim, yDim, zDim, 1, "wfc_%s.vtk" %num)
     #to_bvox(item_ph, xDim, yDim, zDim, 1, "wfc_ph_%s.bvox" %num)
 
+'''
 '''
 
 for i in range(0,21):
@@ -295,7 +297,5 @@ to_vtk(item, xDim, yDim, zDim, 1, "wfc_%s.vtk" %num)
 proj_var2d(xDim, yDim, zDim, "data", "V_0")
 #proj_2d(xDim, yDim, zDim, "data", "wfc_ev", 0)
 '''
-'''
-item_edges = var(xDim, yDim, zDim,"data","Edges_10000")
-to_vtk(item_edges, xDim, yDim, zDim, 1, "test_edges.vtk")
-'''
+#item = var(xDim, yDim, zDim,"data","V_0")
+#to_vtk(item, xDim, yDim, zDim, 1, "test.vtk")
