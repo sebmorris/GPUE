@@ -877,34 +877,38 @@ void evolve(Grid &par,
                         double* edges = (double *)malloc(sizeof(double)
                                                          *gridSize);
 
+
                         // calling the kernel to find the edges
                         if (dimnum > 1){
                             find_edges(par, wfc, edges);
+                            double* edges_gpu = par.dsval("edges_gpu");
+
+                            // Now we need to output everything
+                            if (write_it){
+                                FileIO::writeOutDouble(buffer, data_dir+"Edges",
+                                                       edges, gridSize, i);
+                            }
+
+                            // Creating boolean array to work with
+                            bool *threshold = threshold_wfc(par, edges_gpu, 
+                                                            0.5E6,
+                                                            xDim, yDim, zDim);
+
+                            bool *threshold_gpu = 
+                                (bool *)malloc(sizeof(bool)*gridSize);
+
+                            cudaMemcpy(threshold_gpu, threshold, 
+                                       sizeof(bool)*gridSize,
+                                       cudaMemcpyDeviceToHost);
+
+                            if (write_it){
+                                FileIO::writeOutBool(buffer, data_dir+"Thresh",
+                                                     threshold_gpu,gridSize,i);
+                            }
+
+                            cudaFree(threshold_gpu);
+                            free(edges);
                         }
-
-                        // Now we need to output everything
-                        if (write_it){
-                            FileIO::writeOutDouble(buffer, data_dir + "Edges",
-                                                   edges, gridSize, i);
-                        }
-
-                        // Creating boolean array to work with
-                        bool *threshold = threshold_wfc(par, edges, 0.5,
-                                                        xDim, yDim, zDim);
-
-                        bool *threshold_cpu = 
-                            (bool *)malloc(sizeof(bool)*gridSize);
-
-                        cudaMemcpy(threshold_cpu, threshold, 
-                                   sizeof(bool)*gridSize,
-                                   cudaMemcpyDeviceToHost);
-
-                        if (write_it){
-                            FileIO::writeOutBool(buffer, data_dir + "Thresh",
-                                                 threshold_cpu, gridSize, i);
-                        }
-
-                        free(edges);
 
                     }
                     else if (dimnum == 2){

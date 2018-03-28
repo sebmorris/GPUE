@@ -1014,6 +1014,9 @@ __global__ void scan_2d(double* edges, bool* out, double threshold,
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
 
+    bool val = false;
+    bool thresh_prev = false;
+
     for (int i = 0; i < n; ++i){
         int index;
         switch(type){
@@ -1031,9 +1034,14 @@ __global__ void scan_2d(double* edges, bool* out, double threshold,
                 break;
             }
 
-        bool val = 0;
         if (edges[index] > threshold){
-            val = !val;
+            thresh_prev = true;
+        }
+        else{
+            if (thresh_prev){
+                val = !val;
+            }
+            thresh_prev = false;
         }
         out[index] = val;
     }
