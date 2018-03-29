@@ -1062,6 +1062,47 @@ __global__ void zeros(bool *in, bool *out){
     out[gid] = 0;
 }
 
+__global__ void set_eq(double *in1, double *in2){
+    int gid = getGid3d3d();
+    in2[gid] = in1[gid];
+}
+
+// For this, we need to iterate through all points and find a single value
+// to act as a threshold. This can be done with parsum and by finding the max.
+double find_thresh(Grid &par, double* edges, int gSize){
+
+    // Now we need to find the maximum element with some sort of reduction
+    // For this purpose, we can assume our data is a large, 1D array
+    int max_threads = 256;
+    dim3 grid = par.grid;
+    dim3 threads = par.threads;
+
+    double *edges_temp;
+    cudaMalloc((void**) &edges_temp, sizeof(double)*gSize);
+    set_eq<<<grid,threads>>>(edges, edges_temp);
+
+    if (gSize < max_threads){
+        grid = {1,1,1};
+        threads = {gSize, 1, 1};
+    }
+    else{
+        grid = {ceil((float)gSize/max_threads),1,1};
+        threads = {max_threads, 1, 1};
+    }
+
+    // Reduction method
+    // TODO -- test!!!
+    int blockSize = 512;
+    while (blockSize > 1){
+        reduce<256><<<grid, threads>>>(edges_temp, edges_temp, gSize);
+        blockSize /= 2;
+    }
+
+    double threshold = edges_temp[0];
+    cudaFree(edges_temp);
+    return threshold;
+}
+
 bool *threshold_wfc(Grid &par, double* edges, double threshold, 
                     int xDim, int yDim, int zDim){
 

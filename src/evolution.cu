@@ -891,7 +891,7 @@ void evolve(Grid &par,
 
                             // Creating boolean array to work with
                             bool *threshold = threshold_wfc(par, edges_gpu, 
-                                                            0.5E6,
+                                                            5E7,
                                                             xDim, yDim, zDim);
 
                             bool *threshold_gpu = 
