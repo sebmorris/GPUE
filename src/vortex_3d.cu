@@ -1067,6 +1067,28 @@ __global__ void set_eq(double *in1, double *in2){
     in2[gid] = in1[gid];
 }
 
+// modified from: http://developer.download.nvidia.com/compute/cuda/1.1-Beta/x86_website/projects/reduction/doc/reduction.pdf
+__global__ void reduce(double *input, double *output){
+
+    extern __shared__ double sdata[];
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+    sdata[tid] = 0; //  = input[i];
+    __syncthreads();
+
+    for (unsigned int s = blockDim.x/2; s > 0; s >>=1){
+        if (tid < s){
+            sdata[tid] += sdata[tid+s];
+        }
+
+        __syncthreads();
+    }
+    if(tid == 0){
+        output[blockIdx.x] = sdata[0];
+    }
+}
+
+
 // For this, we need to iterate through all points and find a single value
 // to act as a threshold. This can be done with parsum and by finding the max.
 double find_thresh(Grid &par, double* edges, int gSize){
@@ -1094,13 +1116,18 @@ double find_thresh(Grid &par, double* edges, int gSize){
     // TODO -- test!!!
     int blockSize = 512;
     while (blockSize > 1){
-        reduce<256><<<grid, threads>>>(edges_temp, edges_temp, gSize);
+        int shared_size = threads.x*sizeof(double);
+        reduce<<<grid, threads, shared_size>>>(edges_temp, edges_temp);
         blockSize /= 2;
     }
 
-    double threshold = edges_temp[0];
+    double threshold[1];
+
+    cudaMemcpy(threshold, edges_temp, sizeof(double), 
+               cudaMemcpyDeviceToHost);
+    std::cout << "threshold is: " << threshold[0] << '\n';
     cudaFree(edges_temp);
-    return threshold;
+    return threshold[0];
 }
 
 bool *threshold_wfc(Grid &par, double* edges, double threshold, 

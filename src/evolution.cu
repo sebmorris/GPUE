@@ -890,8 +890,9 @@ void evolve(Grid &par,
                             }
 
                             // Creating boolean array to work with
+                            double thresh = find_thresh(par,edges_gpu,gridSize);
                             bool *threshold = threshold_wfc(par, edges_gpu, 
-                                                            5E7,
+                                                            thresh / gridSize,
                                                             xDim, yDim, zDim);
 
                             bool *threshold_gpu = 
