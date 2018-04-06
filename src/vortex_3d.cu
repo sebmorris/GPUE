@@ -1068,12 +1068,26 @@ __global__ void set_eq(double *in1, double *in2){
 }
 
 // modified from: http://developer.download.nvidia.com/compute/cuda/1.1-Beta/x86_website/projects/reduction/doc/reduction.pdf
-__global__ void reduce(double *input, double *output){
+__global__ void reduce(double *input, double *output, int axis){
 
     extern __shared__ double sdata[];
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-    sdata[tid] = 0; //  = input[i];
+    unsigned int tid;
+    unsigned int i;
+    switch(axis){
+        case 0:
+            tid = threadIdx.x;
+            i = blockIdx.x*blockDim.x + threadIdx.x;
+            break;
+        case 1:
+            tid = threadIdx.y;
+            i = blockIdx.y*blockDim.y + threadIdx.y;
+            break;
+        case 2:
+            tid = threadIdx.z;
+            i = blockIdx.z*blockDim.z + threadIdx.z;
+            break;
+    }
+    sdata[tid] = input[i];
     __syncthreads();
 
     for (unsigned int s = blockDim.x/2; s > 0; s >>=1){
@@ -1091,40 +1105,53 @@ __global__ void reduce(double *input, double *output){
 
 // For this, we need to iterate through all points and find a single value
 // to act as a threshold. This can be done with parsum and by finding the max.
-double find_thresh(Grid &par, double* edges, int gSize){
+double find_thresh(Grid &par, double* edges){
 
     // Now we need to find the maximum element with some sort of reduction
     // For this purpose, we can assume our data is a large, 1D array
-    int max_threads = 256;
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
     dim3 grid = par.grid;
     dim3 threads = par.threads;
+    int gSize = xDim*yDim*zDim;
 
     double *edges_temp;
     cudaMalloc((void**) &edges_temp, sizeof(double)*gSize);
     set_eq<<<grid,threads>>>(edges, edges_temp);
 
-    if (gSize < max_threads){
+    if (gSize < xDim){
         grid = {1,1,1};
         threads = {gSize, 1, 1};
     }
     else{
-        grid = {ceil((float)gSize/max_threads),1,1};
-        threads = {max_threads, 1, 1};
+        grid = {ceil((float)gSize/xDim),1,1};
+        threads = {xDim, 1, 1};
     }
 
     // Reduction method
     // TODO -- test!!!
-    int blockSize = 512;
-    while (blockSize > 1){
-        int shared_size = threads.x*sizeof(double);
-        reduce<<<grid, threads, shared_size>>>(edges_temp, edges_temp);
-        blockSize /= 2;
+    int shared_size = xDim*sizeof(double);
+    reduce<<<grid, threads, shared_size>>>(edges_temp, edges_temp, 0);
+
+    // TODO -- Work for other dimensions (2, 1)
+    if (gSize > xDim){
+        shared_size = yDim*sizeof(double);
+        grid = {1,ceil((float)gSize/yDim),1};
+        threads = {1, yDim, 1};
+        reduce<<<grid, threads, shared_size>>>(edges_temp, edges_temp, 1);
+
+        shared_size = zDim*sizeof(double);
+        grid = {1,1,ceil((float)gSize/zDim)};
+        threads = {1, 1, zDim};
+        reduce<<<grid, threads, shared_size>>>(edges_temp, edges_temp, 2);
     }
 
     double threshold[1];
 
     cudaMemcpy(threshold, edges_temp, sizeof(double), 
                cudaMemcpyDeviceToHost);
+    //threshold[0] /= gSize;
     std::cout << "threshold is: " << threshold[0] << '\n';
     cudaFree(edges_temp);
     return threshold[0];
