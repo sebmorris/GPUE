@@ -5,6 +5,7 @@
 #include "../include/evolution.h"
 #include "../include/init.h"
 #include "../include/dynamic.h"
+#include "../include/vortex_3d.h"
 #include <string.h>
 #include <assert.h>
 #include <cufft.h>
@@ -72,6 +73,9 @@ void dynamic_test();
 // Test to make sure the kernel for the polynomial approx. of Bessel fxns works
 void bessel_test();
 
+// Test for the vortex tracking functions in vortex_3d
+void vortex3d_test();
+
 // Kernel testing will be added later
 __device__ bool close(double a, double b, double threshold){
     return (abs(a-b) < threshold);
@@ -97,12 +101,13 @@ void test_all(){
     //parser_test();
     //evolve_2d_test();
 
-    grid_test2d();
-    grid_test3d();
-    parSum_test();
-    fft_test();
-    dynamic_test();
-    bessel_test();
+    //grid_test2d();
+    //grid_test3d();
+    //parSum_test();
+    //fft_test();
+    //dynamic_test();
+    //bessel_test();
+    vortex3d_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
 }
@@ -285,8 +290,6 @@ void cufftDoubleComplex_functions_test(){
 
     std::cout << "make_cufftDoubleComplex, and complexMagnitude[Squared] have been tested\n";
 
-    exit(0);
-    
 }
 
 __global__ void complexMag_test(double2 *in, double *out){
@@ -1305,5 +1308,95 @@ void evolve_2d_test(){
 
     std::cout << "Evolution test complete." << '\n';
     std::cout << "EVOLUTION TEST UNFINISHED!" << '\n';
+    
+}
+
+void vortex3d_test(){
+
+    std::cout << "Testing functions in vortex_3d..." << '\n';
+
+    // setting up array for scan_2d() thresholding test
+    // We are creating 
+    double *array, *darray;
+    bool *barray, *dbarray;
+    bool *check, *sum, *dsum;
+    int dim = 64;
+    double threshold = dim*dim*dim/2;
+
+    array = (double *)malloc(sizeof(double)*dim*dim*dim);
+    barray = (bool *)malloc(sizeof(bool)*dim*dim*dim);
+    sum = (bool *)malloc(sizeof(bool)*dim*dim*dim);
+
+    cudaMalloc((void **) &darray, sizeof(double)*dim*dim*dim);
+    cudaMalloc((void **) &dbarray, sizeof(bool)*dim*dim*dim);
+    cudaMalloc((void **) &check, sizeof(bool)*dim*dim*dim);
+    cudaMalloc((void **) &dsum, sizeof(bool)*dim*dim*dim);
+
+    for (int i = 0; i < dim; ++i){
+        for (int j = 0; j < dim; ++j){
+            for (int k = 0; k < dim; ++k){
+                int index = k + j * dim + i * dim * dim;
+                if (i == dim / 2 ||
+                    j == dim / 2 ||
+                    k == dim / 2){
+                    array[index] = 1;
+                }
+                else{
+                    array[index] = 0;
+                }
+                if (i > dim / 2 ||
+                    j > dim / 2 ||
+                    k > dim / 2){
+                    barray[index] = 1;
+                }
+                else{
+                    barray[index] = 0;
+                }
+                sum[index] = 0;
+            }
+        }
+    }
+
+    cudaMemcpy(darray, array, sizeof(double)*dim*dim*dim, 
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(dbarray, barray, sizeof(double)*dim*dim*dim, 
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(dsum, sum, sizeof(double)*dim*dim*dim, 
+               cudaMemcpyHostToDevice);
+
+    dim3 grid = {1, dim, dim};
+    dim3 threads = {dim, 1, 1};
+
+    std::cout << "All arrays initialized\n";
+
+    // Now to create the grid and threads
+    dim3 temp_grid = {1, dim, 1};
+    dim3 temp_threads = {1, 1, dim};
+    scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 0, dim); 
+
+    threshold_sum<<<grid, threads>>>(dsum, check, dsum);
+    
+    temp_grid = {1, 1, dim};
+    temp_threads = {dim, 1, 1};
+    scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 1, dim); 
+
+    threshold_sum<<<grid, threads>>>(dsum, check, dsum);
+
+    temp_grid = {dim, 1, 1};
+    temp_threads = {1, dim, 1};
+    scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 2, dim); 
+
+    threshold_sum<<<grid, threads>>>(dsum, check, dsum);
+
+    bool *ans, *dans;
+    ans = (bool *)malloc(sizeof(bool));
+    ans[0] = 0;
+    cudaMalloc((void **) &dans, sizeof(bool));
+
+    is_eq<<<grid, threads>>>(dsum, dbarray, dans);
+
+    cudaMemcpy(ans, dans, sizeof(bool), cudaMemcpyDeviceToHost);
+
+    std::cout << ans[0] << '\n';
     
 }

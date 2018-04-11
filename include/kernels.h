@@ -37,11 +37,14 @@ __device__ unsigned int getGid3d3d();
 * @ingroup	gpu
 */
 __device__ unsigned int getBid3d3d();
+
 /**
 * @brief	Indexing of threads in a block on device
 * @ingroup	gpu
 */
 __device__ unsigned int getTid3d3d();
+
+__global__ void is_eq(bool *a, bool *b, bool *ans);
 
 //##############################################################################
 /**
@@ -162,6 +165,7 @@ __global__ void l2_norm(double2 *in1, double2 *in2, double *out);
 * @param	out Pass by reference output for result
 */
 __global__ void scalarDiv(double2* in, double factor, double2* out);
+__global__ void scalarDiv(double* in, double factor, double* out);
 
 /**
 * @brief        Complex field scaling and renormalisation. Used mainly post-FFT.
@@ -233,6 +237,7 @@ __global__ void thread_test(double* input, double* output);
 * @param	pass Number of passes performed by routine
 */
 __global__ void multipass(double2* input, double2* output, int pass);
+__global__ void multipass(double* input, double* output, int pass);
 
 //##############################################################################
 
@@ -275,6 +280,10 @@ __device__ double2 im_ast(double val, double dt);
 
 // modified from: http://developer.download.nvidia.com/compute/cuda/1.1-Beta/x86_website/projects/reduction/doc/reduction.pdf
 __global__ void reduce(double *input, double *output);
+
+__global__ void zeros(bool *in, bool *out);
+
+__global__ void set_eq(double *in1, double *in2);
 
 //##############################################################################
 /**

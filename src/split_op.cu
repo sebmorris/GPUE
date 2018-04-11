@@ -47,6 +47,57 @@ int isError(int result, char* c){
     }
     return result;
 }
+/*
+ * Used to perform parallel summation on WFC for normalisation.
+ */
+void parSum(double* gpuWfc, double* gpuParSum, Grid &par){
+    // May need to add double l
+    int dimnum = par.ival("dimnum");
+    double dx = par.dval("dx");
+    double dy = par.dval("dy");
+    double dz = par.dval("dz");
+    dim3 threads = par.threads;
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+    dim3 grid_tmp(xDim, 1, 1);
+    int gsize = xDim;
+    double dg = dx;
+
+    // Setting option for 3d
+    if (dimnum > 1){
+        grid_tmp.x *= yDim;
+        gsize *= yDim;
+        dg *= dy;
+    }
+    if (dimnum > 2){
+        grid_tmp.x *= zDim;
+        gsize *= zDim;
+        dg *= dz;
+    }
+    dim3 block(grid_tmp.x/threads.x, 1, 1);
+    dim3 thread_tmp = threads;
+    int pass = 0;
+
+    dim3 grid = par.grid;
+    while((double)grid_tmp.x/threads.x > 1.0){
+        if(pass == 0){
+            multipass<<<block,threads,threads.x*sizeof(double2)>>>(&gpuWfc[0],
+                &gpuParSum[0],pass);
+        }
+        else{
+            multipass<<<block,thread_tmp,thread_tmp.x*sizeof(double2)>>>(
+                &gpuParSum[0],&gpuParSum[0],pass);
+        }
+        grid_tmp.x /= threads.x;
+        block = (int) ceil((double)grid_tmp.x/threads.x);
+        pass++;
+        //std::cout << grid_tmp.x << '\n';
+    }
+    thread_tmp = grid_tmp.x;
+    multipass<<<1,thread_tmp,thread_tmp.x*sizeof(double2)>>>(&gpuParSum[0],
+                                                           &gpuParSum[0], pass);
+}
 
 /*
  * Used to perform parallel summation on WFC for normalisation.

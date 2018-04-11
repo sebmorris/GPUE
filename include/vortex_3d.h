@@ -48,4 +48,9 @@ double find_thresh(Grid &par, double* edges);
 bool *threshold_wfc(Grid &par, double* edges, double threshold,
                     int xDim, int yDim, int zDim);
 
+__global__ void scan_2d(double* edges, bool* out, double threshold,
+                        int type, int n);
+
+__global__ void threshold_sum(bool *in, bool *in2, bool *out);
+
 #endif

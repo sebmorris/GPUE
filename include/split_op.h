@@ -64,6 +64,7 @@ int isError(int result, char* c); //Checks to see if an error has occurred.
 * @return	0 for success. See CUDA failure codes in cuda.h for other values.
 */
 void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par);
+void parSum(double* gpuWfc, double* gpuParSum, Grid &par);
 
 /**
 * @brief	Creates the optical lattice to match the vortex lattice constant

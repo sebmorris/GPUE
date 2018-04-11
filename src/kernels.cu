@@ -34,6 +34,16 @@ __device__ unsigned int getGid3d3d(){
     return threadId;
 }
 
+__global__ void is_eq(bool *a, bool *b, bool *ans){
+    int gid = getGid3d3d();
+    ans[0] = true;
+    if (a[gid] != b[gid]){
+        printf("%d\n",gid);
+        ans[0] = false;
+    }
+}
+
+
 // Function to convert a double* to double2*
 __global__ void make_cufftDoubleComplex(double *in, double2 *out){
     int gid = getGid3d3d();
@@ -305,12 +315,23 @@ __global__ void cMultDensity_ast(EqnNode_gpu *eqn, double2* in, double2* out,
  */
 __global__ void scalarDiv(double2* in, double factor, double2* out){
     double2 result;
-    //extern __shared__ double2 tmp_in[];
     unsigned int gid = getGid3d3d();
     result.x = (in[gid].x / factor);
     result.y = (in[gid].y / factor);
     out[gid] = result;
 }
+
+/**
+ * Divides both components of vector type "in", by the value "factor".
+ * Results given with "out".
+ */
+__global__ void scalarDiv(double* in, double factor, double* out){
+    double result;
+    unsigned int gid = getGid3d3d();
+    result = (in[gid] / factor);
+    out[gid] = result;
+}
+
 
 /**
  * Multiplies both components of vector type "in", by the value "factor".
@@ -410,6 +431,34 @@ __global__ void multipass(double2* input, double2* output, int pass){
     }
     if(tid==0){
         output[bid] = sdata[0];
+    }
+}
+
+/**
+ * Routine for parallel summation. Can be looped over from host.
+ */
+__global__ void multipass(double* input, double* output, int pass){
+    unsigned int tid = threadIdx.x + threadIdx.y*blockDim.x
+                       + threadIdx.z * blockDim.x * blockDim.y;
+    unsigned int bid = blockIdx.x + blockIdx.y * gridDim.x
+                       + gridDim.x * gridDim.y * blockIdx.z;
+
+    //unsigned int tid = getTid3d3d();
+    //unsigned int bid = getBid3d3d();
+    // printf("bid0=%d\n",bid);
+
+    unsigned int gid = getGid3d3d();
+    extern __shared__ double sdatad[];
+    sdatad[tid] = input[gid];
+    __syncthreads();
+    for(int i = blockDim.x>>1; i > 0; i>>=1){
+        if(tid < i){
+            sdatad[tid] += sdatad[tid + i];
+        }
+        __syncthreads();
+    }
+    if(tid==0){
+        output[bid] = sdatad[0];
     }
 }
 
@@ -583,6 +632,16 @@ __device__ double2 real_ast(double val, double dt){
 __device__ double2 im_ast(double val, double dt){
 
     return {exp(-val*dt), 0};
+}
+
+__global__ void zeros(bool *in, bool *out){
+    int gid = getGid3d3d();
+    out[gid] = 0;
+}
+
+__global__ void set_eq(double *in1, double *in2){
+    int gid = getGid3d3d();
+    in2[gid] = in1[gid];
 }
 
 
