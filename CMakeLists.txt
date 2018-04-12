@@ -7,22 +7,22 @@ set(
     ${CUDA_NVCC_FLAGS};
     -O3 -gencode arch=compute_37,code=sm_37 -lcufft -fopenmp
 )
-#add_library(
+
 add_executable(
     gpue
-    src/ds.cc
-    include/ds.h
-
     src/dynamic.cu
     include/dynamic.h
 
-    src/edge.cc
+    src/ds.cu
+    include/ds.h
+
+    src/edge.cu
     include/edge.h
 
     src/evolution.cu
     include/evolution.h
 
-    src/fileIO.cc
+    src/fileIO.cu
     include/fileIO.h
 
     src/kernels.cu
@@ -31,33 +31,33 @@ add_executable(
     src/manip.cu
     include/manip.h
 
-    src/lattice.cc
+    src/lattice.cu
     include/lattice.h
 
-    src/minions.cc
+    src/minions.cu
     include/minions.h
 
     src/multigpu.cu
 
-    src/node.cc
+    src/node.cu
     include/node.h
 
     src/operators.cu
     include/operators.h
 
-    src/parser.cc
+    src/parser.cu
     include/parser.h
 
     src/split_op.cu
     include/split_op.h
 
-    src/tracker.cc
+    src/tracker.cu
     include/tracker.h
 
     src/unit_test.cu
     include/unit_test.h
 
-    src/vort.cc
+    src/vort.cu
     include/vort.h
 
     src/vortex_3d.cu
