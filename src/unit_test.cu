@@ -1320,7 +1320,7 @@ void vortex3d_test(){
     double *array, *darray;
     bool *barray, *dbarray;
     bool *check, *sum, *dsum;
-    int dim = 64;
+    int dim = 4;
     double threshold = dim*dim*dim/2;
 
     array = (double *)malloc(sizeof(double)*dim*dim*dim);
@@ -1370,18 +1370,21 @@ void vortex3d_test(){
     std::cout << "All arrays initialized\n";
 
     // Now to create the grid and threads
+    std::cout << "summing along x\n";
     dim3 temp_grid = {1, dim, 1};
     dim3 temp_threads = {1, 1, dim};
     scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 0, dim); 
 
     threshold_sum<<<grid, threads>>>(dsum, check, dsum);
     
+    std::cout << "summing along y\n";
     temp_grid = {1, 1, dim};
     temp_threads = {dim, 1, 1};
     scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 1, dim); 
 
     threshold_sum<<<grid, threads>>>(dsum, check, dsum);
 
+    std::cout << "summing along z\n";
     temp_grid = {dim, 1, 1};
     temp_threads = {1, dim, 1};
     scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 2, dim); 

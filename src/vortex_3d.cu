@@ -1011,10 +1011,7 @@ __device__ void convolve_depth(double* density, double* edges, double* kernel,
 __global__ void scan_2d(double* edges, bool* out, double threshold,
                         int type, int n){
 
-    int xid = blockDim.x*blockIdx.x + threadIdx.x;
-    int yid = blockDim.y*blockIdx.y + threadIdx.y;
-    int zid = blockDim.z*blockIdx.z + threadIdx.z;
-
+    int gid = getGid3d3d();
     bool val = false;
     bool thresh_prev = false;
 
@@ -1023,18 +1020,35 @@ __global__ void scan_2d(double* edges, bool* out, double threshold,
         switch(type){
             // sweep through x
             case 0:
-                index = i + yid*blockDim.x + zid*blockDim.x*blockDim.y;
+                index = gid + i*gridDim.y*blockDim.z;
+/*
+                index = blockId * (blockDim.x * blockDim.y * blockDim.z)
+                        + (threadIdx.y * blockDim.x)
+                        + (threadIdx.z * (blockDim.x * blockDim.y)) + i;
                 break;
+*/
             // sweep through y
             case 1:
-                index = xid + i*blockDim.x + zid*blockDim.x*blockDim.y;
+                index = gid + i*blockDim.x*gridDim.z;
+/*
+                index = blockId * (blockDim.x * blockDim.y * blockDim.z)
+                        + (i * blockDim.x)
+                        + (threadIdx.z * (blockDim.x * blockDim.y)) 
+                        + threadIdx.x;
+*/
                 break;
             // sweep through z
             case 2:
-                index = xid + yid*blockDim.x + i*blockDim.x*blockDim.y;
+                index = gid + i*gridDim.x*blockDim.y;
+/*
+                index = blockId * (blockDim.x * blockDim.y * blockDim.z)
+                        + (threadIdx.y * blockDim.x)
+                        + (i * (blockDim.x * blockDim.y)) + threadIdx.x;
+*/
                 break;
         }
 
+        printf("%d\t%d\n",type, index);
         if (edges[index] > threshold){
             thresh_prev = true;
         }
