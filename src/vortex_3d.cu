@@ -1011,7 +1011,8 @@ __device__ void convolve_depth(double* density, double* edges, double* kernel,
 __global__ void scan_2d(double* edges, bool* out, double threshold,
                         int type, int n){
 
-    int gid = getGid3d3d();
+    int d1id = blockIdx.x*blockDim.x + threadIdx.x;
+    int d2id = blockIdx.y*blockDim.y + threadIdx.y;
     bool val = false;
     bool thresh_prev = false;
 
@@ -1020,35 +1021,17 @@ __global__ void scan_2d(double* edges, bool* out, double threshold,
         switch(type){
             // sweep through x
             case 0:
-                index = gid + i*gridDim.y*blockDim.z;
-/*
-                index = blockId * (blockDim.x * blockDim.y * blockDim.z)
-                        + (threadIdx.y * blockDim.x)
-                        + (threadIdx.z * (blockDim.x * blockDim.y)) + i;
+                index = i + d1id*blockDim.x + d2id*blockDim.x*gridDim.y;
                 break;
-*/
             // sweep through y
             case 1:
-                index = gid + i*blockDim.x*gridDim.z;
-/*
-                index = blockId * (blockDim.x * blockDim.y * blockDim.z)
-                        + (i * blockDim.x)
-                        + (threadIdx.z * (blockDim.x * blockDim.y)) 
-                        + threadIdx.x;
-*/
+                index = d2id + i*blockDim.x + d1id*blockDim.x*gridDim.y;
                 break;
             // sweep through z
             case 2:
-                index = gid + i*gridDim.x*blockDim.y;
-/*
-                index = blockId * (blockDim.x * blockDim.y * blockDim.z)
-                        + (threadIdx.y * blockDim.x)
-                        + (i * (blockDim.x * blockDim.y)) + threadIdx.x;
-*/
+                index = d1id + d2id*blockDim.x + i*blockDim.x*gridDim.y;
                 break;
         }
-
-        printf("%d\t%d\n",type, index);
         if (edges[index] > threshold){
             thresh_prev = true;
         }
@@ -1059,7 +1042,9 @@ __global__ void scan_2d(double* edges, bool* out, double threshold,
             thresh_prev = false;
         }
         out[index] = val;
+
     }
+
 }
 
 __global__ void threshold_sum(bool *in, bool *in2, bool *out){

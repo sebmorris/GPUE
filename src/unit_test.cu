@@ -1319,34 +1319,31 @@ void vortex3d_test(){
     // We are creating 
     double *array, *darray;
     bool *barray, *dbarray;
-    bool *check, *sum, *dsum;
-    int dim = 4;
-    double threshold = dim*dim*dim/2;
+    bool *dcheck, *check, *sum, *dsum;
+    int dim = 3;
+    double threshold = 0.5;
 
     array = (double *)malloc(sizeof(double)*dim*dim*dim);
     barray = (bool *)malloc(sizeof(bool)*dim*dim*dim);
     sum = (bool *)malloc(sizeof(bool)*dim*dim*dim);
+    check = (bool *)malloc(sizeof(bool)*dim*dim*dim);
 
     cudaMalloc((void **) &darray, sizeof(double)*dim*dim*dim);
     cudaMalloc((void **) &dbarray, sizeof(bool)*dim*dim*dim);
-    cudaMalloc((void **) &check, sizeof(bool)*dim*dim*dim);
+    cudaMalloc((void **) &dcheck, sizeof(bool)*dim*dim*dim);
     cudaMalloc((void **) &dsum, sizeof(bool)*dim*dim*dim);
 
     for (int i = 0; i < dim; ++i){
         for (int j = 0; j < dim; ++j){
             for (int k = 0; k < dim; ++k){
                 int index = k + j * dim + i * dim * dim;
-                if (i == dim / 2 ||
-                    j == dim / 2 ||
-                    k == dim / 2){
+                if (k == dim / 2){
                     array[index] = 1;
                 }
                 else{
                     array[index] = 0;
                 }
-                if (i > dim / 2 ||
-                    j > dim / 2 ||
-                    k > dim / 2){
+                if (k > dim / 2){
                     barray[index] = 1;
                 }
                 else{
@@ -1359,9 +1356,9 @@ void vortex3d_test(){
 
     cudaMemcpy(darray, array, sizeof(double)*dim*dim*dim, 
                cudaMemcpyHostToDevice);
-    cudaMemcpy(dbarray, barray, sizeof(double)*dim*dim*dim, 
+    cudaMemcpy(dbarray, barray, sizeof(bool)*dim*dim*dim, 
                cudaMemcpyHostToDevice);
-    cudaMemcpy(dsum, sum, sizeof(double)*dim*dim*dim, 
+    cudaMemcpy(dsum, sum, sizeof(bool)*dim*dim*dim, 
                cudaMemcpyHostToDevice);
 
     dim3 grid = {1, dim, dim};
@@ -1372,24 +1369,20 @@ void vortex3d_test(){
     // Now to create the grid and threads
     std::cout << "summing along x\n";
     dim3 temp_grid = {1, dim, 1};
-    dim3 temp_threads = {1, 1, dim};
-    scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 0, dim); 
+    dim3 temp_threads = {dim, 1, 1};
+    scan_2d<<<temp_grid, temp_threads>>>(darray, dcheck, threshold, 0, dim); 
 
-    threshold_sum<<<grid, threads>>>(dsum, check, dsum);
+    threshold_sum<<<grid, threads>>>(dsum, dcheck, dsum);
     
     std::cout << "summing along y\n";
-    temp_grid = {1, 1, dim};
-    temp_threads = {dim, 1, 1};
-    scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 1, dim); 
+    scan_2d<<<temp_grid, temp_threads>>>(darray, dcheck, threshold, 1, dim); 
 
-    threshold_sum<<<grid, threads>>>(dsum, check, dsum);
+    threshold_sum<<<grid, threads>>>(dsum, dcheck, dsum);
 
     std::cout << "summing along z\n";
-    temp_grid = {dim, 1, 1};
-    temp_threads = {1, dim, 1};
-    scan_2d<<<temp_grid, temp_threads>>>(darray, check, threshold, 2, dim); 
+    scan_2d<<<temp_grid, temp_threads>>>(darray, dcheck, threshold, 2, dim); 
 
-    threshold_sum<<<grid, threads>>>(dsum, check, dsum);
+    threshold_sum<<<grid, threads>>>(dsum, dcheck, dsum);
 
     bool *ans, *dans;
     ans = (bool *)malloc(sizeof(bool));
@@ -1400,6 +1393,11 @@ void vortex3d_test(){
 
     cudaMemcpy(ans, dans, sizeof(bool), cudaMemcpyDeviceToHost);
 
-    std::cout << ans[0] << '\n';
+    if (ans[0]){
+    }
+    else{
+        std::cout << "scan_2d function for vortex tracking failed!" << '\n';
+        exit(1);
+    }
     
 }

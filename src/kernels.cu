@@ -38,7 +38,6 @@ __global__ void is_eq(bool *a, bool *b, bool *ans){
     int gid = getGid3d3d();
     ans[0] = true;
     if (a[gid] != b[gid]){
-        printf("%d\n",gid);
         ans[0] = false;
     }
 }
