@@ -1047,9 +1047,58 @@ __global__ void scan_2d(double* edges, bool* out, double threshold,
 
 }
 
-__global__ void threshold_sum(bool *in, bool *in2, bool *out){
+__global__ void scan_2d_reverse(double* edges, bool* out, double threshold,
+                                int type, int n){
+
+    int d1id = blockIdx.x*blockDim.x + threadIdx.x;
+    int d2id = blockIdx.y*blockDim.y + threadIdx.y;
+    bool val = false;
+    bool thresh_prev = false;
+
+    for (int i = n-1; i >= 0; --i){
+        int index;
+        switch(type){
+            // sweep through x
+            case 0:
+                index = i + d1id*blockDim.x + d2id*blockDim.x*gridDim.y;
+                break;
+            // sweep through y
+            case 1:
+                index = d2id + i*blockDim.x + d1id*blockDim.x*gridDim.y;
+                break;
+            // sweep through z
+            case 2:
+                index = d1id + d2id*blockDim.x + i*blockDim.x*gridDim.y;
+                break;
+        }
+        if (edges[index] > threshold){
+            thresh_prev = true;
+        }
+        else{
+            if (thresh_prev){
+                val = !val;
+            }
+            thresh_prev = false;
+        }
+        out[index] = val;
+
+    }
+
+}
+
+__global__ void threshold_trim(bool *in1, bool *in2, bool *out){
     int gid = getGid3d3d();
-    if (in2[gid] == 1 || in[gid] == 1){
+    if (in1[gid] && in2[gid]){
+        out[gid] = 1;
+    }
+    else{
+        out[gid] = 0;
+    }
+}
+
+__global__ void threshold_sum(bool *in1, bool *in2, bool *out){
+    int gid = getGid3d3d();
+    if (in2[gid] == 1 || in1[gid] == 1){
         out[gid] = 1;
     }
     else{
@@ -1059,7 +1108,7 @@ __global__ void threshold_sum(bool *in, bool *in2, bool *out){
 
 // For this, we need to iterate through all points and find a single value
 // to act as a threshold. This can be done with parsum and by finding the max.
-double find_thresh(Grid &par, double* edges){
+double find_thresh(Grid &par, double* edges, double thresh_const){
 
     // Now we need to find the maximum element with some sort of reduction
     // For this purpose, we can assume our data is a large, 1D array
@@ -1080,6 +1129,7 @@ double find_thresh(Grid &par, double* edges){
     cudaMemcpy(threshold, gpuParSum, sizeof(double),
                cudaMemcpyDeviceToHost);
     threshold[0] /= gSize;
+    threshold[0] *= thresh_const;
     cudaFree(gpuParSum);
 
     std::cout << "threshold is: " << threshold[0] << '\n';
@@ -1089,41 +1139,80 @@ double find_thresh(Grid &par, double* edges){
 bool *threshold_wfc(Grid &par, double* edges, double threshold, 
                     int xDim, int yDim, int zDim){
 
-    bool *output, *temp;
+    bool *output, *output2, *temp, *temp2;
     int gridSize = xDim*yDim*zDim;
     cudaMalloc((void **) &output, sizeof(bool)*gridSize);
+    cudaMalloc((void **) &output2, sizeof(bool)*gridSize);
     cudaMalloc((void **) &temp, sizeof(bool)*gridSize);
+    cudaMalloc((void **) &temp2, sizeof(bool)*gridSize);
 
     dim3 grid = par.grid;
     dim3 threads = par.threads;
 
-    zeros<<<grid, threads>>>(temp, temp);
     zeros<<<grid, threads>>>(output, output);
+    zeros<<<grid, threads>>>(temp, temp);
 
-    for (int i = 0; i < 3; ++i){
+    zeros<<<grid, threads>>>(output2, output2);
+    zeros<<<grid, threads>>>(temp2, temp2);
+
+    for (int i = 0; i < 6; ++i){
         dim3 temp_grid, temp_threads;
         switch(i){
             case 0:
-                temp_grid = {1, yDim, 1};
-                temp_threads = {1, 1, zDim};
+                temp_grid = {1, zDim, 1};
+                temp_threads = {yDim, 1, 1};
                 scan_2d<<<temp_grid, temp_threads>>>(edges, temp, threshold, i,
                                                      xDim);
                 break;
             case 1:
-                temp_grid = {1, 1, zDim};
-                temp_threads = {xDim, 1, 1};
+                temp_grid = {1, xDim, 1};
+                temp_threads = {zDim, 1, 1};
                 scan_2d<<<temp_grid, temp_threads>>>(edges, temp, threshold, i,
                                                      yDim);
                 break;
             case 2:
-                temp_grid = {xDim, 1, 1};
-                temp_threads = {1, yDim, 1};
+                temp_grid = {1, yDim, 1};
+                temp_threads = {xDim, 1, 1};
                 scan_2d<<<temp_grid, temp_threads>>>(edges, temp, threshold, i,
                                                      zDim);
                 break;
+            case 3:
+                temp_grid = {1, zDim, 1};
+                temp_threads = {yDim, 1, 1};
+                scan_2d_reverse<<<temp_grid, temp_threads>>>(edges, temp2,
+                                                             threshold, i-3, 
+                                                             xDim);
+                break;
+            case 4:
+                temp_grid = {1, xDim, 1};
+                temp_threads = {zDim, 1, 1};
+                scan_2d_reverse<<<temp_grid, temp_threads>>>(edges, temp2,
+                                                             threshold, i-3,
+                                                             yDim);
+                break;
+            case 5:
+                temp_grid = {1, yDim, 1};
+                temp_threads = {xDim, 1, 1};
+                scan_2d_reverse<<<temp_grid, temp_threads>>>(edges, temp2,
+                                                             threshold, i-3,
+                                                             zDim);
+                break;
         }
-        threshold_sum<<<grid, threads>>>(output, temp, output);
+        if (i < 3){
+            threshold_sum<<<grid, threads>>>(output, temp, output);
+        }
+        else{
+            threshold_sum<<<grid, threads>>>(output2, temp2, output2);
+        }
     }
+
+    // After thresholding in xyz both ways, there will be extraneous lines
+    // to be removed
+    threshold_trim<<<grid, threads>>>(output, output2, output);
+
+    cudaFree(output2);
+    cudaFree(temp);
+    cudaFree(temp2);
 
     return output;
 

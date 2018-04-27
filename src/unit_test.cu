@@ -1320,7 +1320,7 @@ void vortex3d_test(){
     double *array, *darray;
     bool *barray, *dbarray;
     bool *dcheck, *check, *sum, *dsum;
-    int dim = 3;
+    int dim = 8;
     double threshold = 0.5;
 
     array = (double *)malloc(sizeof(double)*dim*dim*dim);
@@ -1392,8 +1392,16 @@ void vortex3d_test(){
     is_eq<<<grid, threads>>>(dsum, dbarray, dans);
 
     cudaMemcpy(ans, dans, sizeof(bool), cudaMemcpyDeviceToHost);
+/*
+    cudaMemcpy(sum, dsum, sizeof(bool)*dim*dim*dim, cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < dim*dim*dim; ++i){
+        std::cout << sum[i] << '\t' << barray[i] << '\n';
+    }
+*/
 
     if (ans[0]){
+        std::cout << "scan_2d function for vortex tracking succeeded!" << '\n';
     }
     else{
         std::cout << "scan_2d function for vortex tracking failed!" << '\n';

@@ -66,7 +66,7 @@ Grid parseArgs(int argc, char** argv){
     optind = 1;
 
     while ((opt = getopt (argc, argv, 
-           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:I:;")) !=-1)
+           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:I:j:;")) !=-1)
     {
         switch (opt)
         {
@@ -82,6 +82,13 @@ Grid parseArgs(int argc, char** argv){
                 double box_size = atof(optarg);
                 printf("Argument for box_size is given as %E\n",box_size);
                 par.store("box_size",(double)box_size);
+                break;
+            }
+            case 'j':
+            {
+                double thresh_const = atof(optarg);
+                printf("Threshold constant is given as %E\n", thresh_const);
+                par.store("thresh_const",(double)thresh_const);
                 break;
             }
             case 'y':

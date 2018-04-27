@@ -682,6 +682,7 @@ void evolve(Grid &par,
     double interaction = par.dval("interaction");
     double laser_power = par.dval("laser_power");
     double gDenConst = par.dval("gDenConst");
+    double thresh_const = par.dval("thresh_const");
     double *x = par.dsval("x");
     double *y;
     double *z;
@@ -890,24 +891,26 @@ void evolve(Grid &par,
                             }
 
                             // Creating boolean array to work with
-                            double thresh = find_thresh(par,edges_gpu);
-                            bool *threshold = threshold_wfc(par, edges_gpu, 
+                            double thresh = find_thresh(par,edges_gpu, 
+                                                        thresh_const);
+                            //std::cout << "threshold is: " << thresh << '\n';
+                            bool *threshold_gpu = threshold_wfc(par, edges_gpu, 
                                                             thresh,
                                                             xDim, yDim, zDim);
 
-                            bool *threshold_gpu = 
+                            bool *threshold_cpu = 
                                 (bool *)malloc(sizeof(bool)*gridSize);
 
-                            cudaMemcpy(threshold_gpu, threshold, 
+                            cudaMemcpy(threshold_cpu, threshold_gpu, 
                                        sizeof(bool)*gridSize,
                                        cudaMemcpyDeviceToHost);
 
                             if (write_it){
                                 FileIO::writeOutBool(buffer, data_dir+"Thresh",
-                                                     threshold_gpu,gridSize,i);
+                                                     threshold_cpu,gridSize,i);
                             }
 
-                            cudaFree(threshold_gpu);
+                            cudaFree(threshold_cpu);
                             free(edges);
                         }
 

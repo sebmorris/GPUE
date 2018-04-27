@@ -43,7 +43,7 @@ __device__ void convolve_col(double* density, double* edges, double* kernel,
 __device__ void convolve_depth(double* density, double* edges, double* kernel,
                                int width, int height, int depth);
 
-double find_thresh(Grid &par, double* edges);
+double find_thresh(Grid &par, double* edges, double thresh_const);
 
 bool *threshold_wfc(Grid &par, double* edges, double threshold,
                     int xDim, int yDim, int zDim);
