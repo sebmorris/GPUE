@@ -62,6 +62,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("conv_type", (std::string)"FFT");
     par.store("charge", 0);
     par.store("flip", false);
+    par.store("thresh_const", 1.0);
 
     optind = 1;
 
