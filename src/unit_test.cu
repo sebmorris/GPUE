@@ -28,6 +28,8 @@ void realCompMult_test();
 void cMult_test();
 
 // Tests for quantum operations
+__global__ void make_complex_kernel(double *in, int *evolution_type, 
+                                    double2 *out);
 void make_complex_test();
 void cMultPhi_test();
 void cMultDens_test();
@@ -107,7 +109,8 @@ void test_all(){
     //fft_test();
     //dynamic_test();
     //bessel_test();
-    vortex3d_test();
+    //vortex3d_test();
+    make_complex_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
 }
@@ -1405,6 +1408,83 @@ void vortex3d_test(){
     }
     else{
         std::cout << "scan_2d function for vortex tracking failed!" << '\n';
+        exit(1);
+    }
+    
+}
+
+__global__ void make_complex_kernel(double *in, int *evolution_type, 
+                                    double2 *out){
+
+    //int id = threadIdx.x + blockIdx.x*blockDim.x;
+    //out[id] = make_complex(in[id], evolution_type[id]);
+    for (int i = 0; i < 3; ++i){
+        out[i] = make_complex(in[i], evolution_type[i]);
+    }
+}
+
+void make_complex_test(){
+
+    // Creating a simple array to hold the 3 possible make_complex options
+    double *input_array, *dinput_array;
+    double2 *output_array, *doutput_array;
+    int *evolution_type, *devolution_type;
+
+    input_array = (double *)malloc(sizeof(double)*3);
+    output_array = (double2 *)malloc(sizeof(double2)*3);
+    evolution_type = (int *)malloc(sizeof(int)*3);
+
+    input_array[0] = 10;
+    input_array[1] = 10;
+    input_array[2] = 10;
+
+    evolution_type[0] = 0;
+    evolution_type[1] = 1;
+    evolution_type[2] = 2;
+
+    cudaMalloc((void **)&dinput_array, sizeof(double)*3);
+    cudaMalloc((void **)&doutput_array, sizeof(double2)*3);
+    cudaMalloc((void **)&devolution_type, sizeof(int)*3);
+
+    cudaMemcpy(dinput_array, input_array, sizeof(double)*3,
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(devolution_type, evolution_type, sizeof(int)*3,
+               cudaMemcpyHostToDevice);
+
+    dim3 threads = {1,1,1};
+    dim3 grid = {1,1,1};
+
+    make_complex_kernel<<<1,1>>>(dinput_array, devolution_type,
+                                           doutput_array);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(output_array, doutput_array, sizeof(double2)*3, 
+               cudaMemcpyDeviceToHost);
+
+    bool pass = true;
+    double thresh = 0.000001;
+
+    if (abs(output_array[0].x - input_array[0]) > thresh || 
+        (output_array[0].y) > thresh){
+        std::cout << "failed 1\n";
+        pass = false;
+    }
+    if (abs(output_array[1].x - exp(-input_array[1])) > thresh || 
+        abs(output_array[1].y) > thresh){
+        std::cout << "failed 2\n";
+        pass = false;
+    }
+    if (abs(output_array[2].x - cos(-input_array[2])) > thresh || 
+        abs(output_array[2].y - sin(-input_array[2])) > thresh){
+        std::cout << "failed 3\n";
+        pass = false;
+    }
+
+    if(pass){
+        std::cout << "make_complex test passed!\n";
+    }
+    else{
+        std::cout << "make_complex test failed!\n";
         exit(1);
     }
     
