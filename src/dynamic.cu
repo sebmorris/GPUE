@@ -20,7 +20,7 @@ __device__ double factorial(double val){
 }
 
 // Simple functions to subtract, add, multiply and divide
-double subtract(double a, double b){
+double ast_subtract(double a, double b){
     return a-b;
 }
 
@@ -28,7 +28,7 @@ __device__ double subtract_gpu(double a, double b){
     return a - b;
 }
 
-double add(double a, double b){
+double ast_add(double a, double b){
     return a+b;
 }
 
@@ -36,7 +36,7 @@ __device__ double add_gpu(double a, double b){
     return a + b;
 }
 
-double multiply(double a, double b){
+double ast_multiply(double a, double b){
     return a*b;
 }
 
@@ -44,7 +44,7 @@ __device__ double multiply_gpu(double a, double b){
     return a * b;
 }
 
-double divide(double a, double b){
+double ast_divide(double a, double b){
     return a/b;
 }
 
@@ -52,7 +52,7 @@ __device__ double divide_gpu(double a, double b){
     return a/b;
 }
 
-double cos(double a, double b){
+double ast_cos(double a, double b){
     return cos(a);
 }
 
@@ -60,7 +60,7 @@ __device__ double cos_gpu(double a, double b){
     return cos(a);
 }
 
-double sin(double a, double b){
+double ast_sin(double a, double b){
     return sin(a);
 }
 
@@ -68,7 +68,7 @@ __device__ double sin_gpu(double a, double b){
     return sin(a);
 }
 
-double tan(double a, double b){
+double ast_tan(double a, double b){
     return tan(a);
 }
 
@@ -76,7 +76,7 @@ __device__ double tan_gpu(double a, double b){
     return tan(a);
 }
 
-double sqrt(double a, double b){
+double ast_sqrt(double a, double b){
     return sqrt(a);
 }
 
@@ -90,7 +90,7 @@ __device__ double pow_gpu(double a, double b){
 }
 
 
-double exp(double a, double b){
+double ast_exp(double a, double b){
     return exp(a);
 }
 
@@ -167,6 +167,7 @@ void allocate_eqn(Grid &par, std::string val_string, std::string eqn_string){
     int num = 0;
     find_element_num(eqn_tree, num);
     int element_num = num;
+    std::cout << "final element_num is: " << element_num << '\n';
 
     eqn_cpu = (EqnNode_gpu *)malloc(sizeof(EqnNode_gpu)*element_num);
 
@@ -239,10 +240,10 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     // we need a map for these operators
     typedef double (*functionPtr_mop)(double, double);
     std::unordered_map<char, functionPtr_mop> moperator_map;
-    moperator_map['-'] = subtract;
-    moperator_map['+'] = add;
-    moperator_map['*'] = multiply;
-    moperator_map['/'] = divide;
+    moperator_map['-'] = ast_subtract;
+    moperator_map['+'] = ast_add;
+    moperator_map['*'] = ast_multiply;
+    moperator_map['/'] = ast_divide;
     moperator_map['^'] = pow;
 
     // And another vector for brackets of various types which indicate recursive
@@ -261,13 +262,13 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     // We also need a specific map for the functions above
     typedef double (*functionPtr)(double, double);
     std::unordered_map<std::string, functionPtr> mfunctions_map;
-    mfunctions_map["cos"] = cos;
-    mfunctions_map["sin"] = sin;
-    mfunctions_map["cos"] = cos;
-    mfunctions_map["tan"] = tan;
-    mfunctions_map["exp"] = exp;
+    mfunctions_map["cos"] = ast_cos;
+    mfunctions_map["sin"] = ast_sin;
+    mfunctions_map["cos"] = ast_cos;
+    mfunctions_map["tan"] = ast_tan;
+    mfunctions_map["exp"] = ast_exp;
     //mfunctions_map["erf"] = erf;
-    mfunctions_map["sqrt"] = sqrt;
+    mfunctions_map["sqrt"] = ast_sqrt;
     mfunctions_map["pow"] = pow;
     mfunctions_map["jn"] = jn_gpu;
     mfunctions_map["yn"] = yn_gpu;
@@ -503,17 +504,17 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
 
     // Now to create a map for all the functions
     std::unordered_map<fnPtr, int> ptr_map1, ptr_map2;
-    ptr_map1[add] = 1;
-    ptr_map1[subtract] = 2;
-    ptr_map1[multiply] = 3;
-    ptr_map1[divide] = 4;
+    ptr_map1[ast_add] = 1;
+    ptr_map1[ast_subtract] = 2;
+    ptr_map1[ast_multiply] = 3;
+    ptr_map1[ast_divide] = 4;
     ptr_map1[pow] = 5;
 
-    ptr_map2[cos] = 6;
-    ptr_map2[sin] = 7;
-    ptr_map2[tan] = 8;
-    ptr_map2[sqrt] = 9;
-    ptr_map2[exp] = 10;
+    ptr_map2[ast_cos] = 6;
+    ptr_map2[ast_sin] = 7;
+    ptr_map2[ast_tan] = 8;
+    ptr_map2[ast_sqrt] = 9;
+    ptr_map2[ast_exp] = 10;
     ptr_map2[jn_gpu] = 11;
     ptr_map2[yn_gpu] = 12;
     ptr_map2[k2n_gpu] = 13;
@@ -561,8 +562,18 @@ void find_element_num(EqnNode eqn_tree, int &element_num){
         return;
     }
     else{
-        find_element_num(eqn_tree.right[0], element_num);
         find_element_num(eqn_tree.left[0], element_num);
+        // For single operators, the right node doesn't exist...
+        if(eqn_tree.op != ast_cos &&
+           eqn_tree.op != ast_sin &&
+           eqn_tree.op != ast_tan &&
+           eqn_tree.op != ast_sqrt &&
+           eqn_tree.op != ast_exp &&
+           eqn_tree.op != jn_gpu &&
+           eqn_tree.op != yn_gpu &&
+           eqn_tree.op != k2n_gpu){
+            find_element_num(eqn_tree.right[0], element_num);
+        }
     }
 }
 

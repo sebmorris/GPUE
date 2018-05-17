@@ -1,4 +1,4 @@
-import gen_data
+from gen_data import *
 '''
 proj_var2d(xDim, yDim, zDim, "data", "fieldz")
 proj_2d(xDim, yDim, zDim,"data","wfc",50000)
@@ -122,12 +122,12 @@ to_vtk(item, xDim, yDim, zDim, 1, "wfc_%s.vtk" %num)
 proj_var2d(xDim, yDim, zDim, "data", "V_0")
 #proj_2d(xDim, yDim, zDim, "data", "wfc_ev", 0)
 '''
-#item = var(xDim, yDim, zDim,"data","Thresh_0")
-#to_vtk(item, xDim, yDim, zDim, 1, "test.vtk")
+item = var(xDim, yDim, zDim,"data","Az_0")
+to_vtk(item, xDim, yDim, zDim, 1, "test.vtk")
 #item = var(xDim, yDim, zDim,"data","Edges_0")
-#to_vtk(item, xDim, yDim, zDim, 1, "test_wfc.vtk")
+#to_bvox(item, xDim, yDim, zDim, 1, "test_wfc.bvox")
 
-comx, comy = wfc_com(xDim, yDim, zDim, "data", "wfc", 0)
-print(comx)
-print(comy)
+#comx, comy = wfc_com(xDim, yDim, zDim, "data", "wfc", 0)
+#print(comx)
+#print(comy)
 

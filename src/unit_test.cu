@@ -107,10 +107,12 @@ void test_all(){
     //grid_test3d();
     //parSum_test();
     //fft_test();
-    //dynamic_test();
-    //bessel_test();
+    dynamic_test();
+    bessel_test();
     //vortex3d_test();
     make_complex_test();
+    cMultPhi_test();
+    cMultDens_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
 }
@@ -1489,3 +1491,130 @@ void make_complex_test(){
     }
     
 }
+
+void cMultPhi_test(){
+    // first, we are creating a double2 array to work with
+    int n = 32;
+    double2 *in1, *out;
+    double *in2;
+    double2 *din1, *dout;
+    double *din2;
+
+    in1 = (double2 *)malloc(sizeof(double2)*n);
+    in2 = (double *)malloc(sizeof(double)*n);
+    out = (double2 *)malloc(sizeof(double2)*n);
+
+    cudaMalloc((void **)&din1, sizeof(double2)*n);
+    cudaMalloc((void **)&din2, sizeof(double)*n);
+    cudaMalloc((void **)&dout, sizeof(double2)*n);
+
+    for (int i = 0; i < n; ++i){
+        in1[i].x = i;
+        in1[i].y = n-i;
+        in2[i] = n-i;
+    }
+
+    cudaMemcpy(din1, in1, sizeof(double2)*n, cudaMemcpyHostToDevice);
+    cudaMemcpy(din2, in2, sizeof(double)*n, cudaMemcpyHostToDevice);
+
+    cMultPhi<<<1,n>>>(din1, din2, dout);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
+
+    double thresh = 0.000001;
+    bool result = true;
+    for (int i = 0; i < n; ++i){
+        if (abs(out[i].x-cos(in2[i])*in1[i].x-in1[i].y*sin(in2[i])) < thresh ||
+            abs(out[i].y-in1[i].x*sin(in2[i])+in1[i].y*cos(in2[i])) < thresh){
+            result = false;
+        }
+    }
+
+    if (result){
+        std::cout << "cMultPhi test passed!\n";
+    }
+    else{
+        std::cout << "cMultPhi test failed!\n";
+        exit(1);
+    }
+
+}
+
+void cMultDens_test(){
+    // first, we are creating a double2 array to work with
+    int n = 32;
+    double2 *in1, *in2, *out;
+    double2 *din1, *din2, *dout;
+
+    in1 = (double2 *)malloc(sizeof(double2)*n);
+    in2 = (double2 *)malloc(sizeof(double2)*n);
+    out = (double2 *)malloc(sizeof(double2)*n);
+
+    cudaMalloc((void **)&din1, sizeof(double2)*n);
+    cudaMalloc((void **)&din2, sizeof(double2)*n);
+    cudaMalloc((void **)&dout, sizeof(double2)*n);
+
+    for (int i = 0; i < n; ++i){
+        in1[i].x = i;
+        in1[i].y = n-i;
+        in2[i].x = n-i;
+        in2[i].y = i;
+    }
+
+    cudaMemcpy(din1, in1, sizeof(double2)*n, cudaMemcpyHostToDevice);
+    cudaMemcpy(din2, in2, sizeof(double2)*n, cudaMemcpyHostToDevice);
+
+    // Testing imaginary-time evolution
+    cMultDensity<<<1, n>>>(din1, din2, dout, 1, 1, 0, 1);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
+
+    double thresh = 0.000001;
+    bool result = true;
+    for (int i = 0; i < n; ++i){
+        if (abs(out[i].x-in1[i].x*exp(-1)*in2[i].x-in1[i].y*in2[i].y)<thresh ||
+            abs(out[i].y-in1[i].x*exp(-1)*in2[i].y+in1[i].y*in2[i].x)<thresh){
+            result = false;
+        }
+    }
+
+    if (result){
+        std::cout << "cMultDens imaginary time test passed!\n";
+    }
+    else{
+        std::cout << "cMultDens imaginary time test failed!\n";
+        exit(1);
+    }
+
+
+    // Testing real-time evolution
+    cMultDensity<<<1, n>>>(din1, din2, dout, 1, 1, 1, 1);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
+
+    result = true;
+    for (int i = 0; i < n; ++i){
+        double2 tmp;
+        tmp.x = in1[i].x*cos(-1) - in1[i].y*sin(-1);
+        tmp.y = in1[i].y*cos(-1) + in1[i].x*sin(-1);
+
+        if (abs(out[i].x - tmp.x*in2[i].x - tmp.y*in2[i].y) < thresh ||
+            abs(out[i].y - tmp.x*in2[i].y + tmp.y*in2[i].x) < thresh){
+            result = false;
+        }
+    }
+
+    if (result){
+        std::cout << "cMultDens real-time test passed!\n";
+    }
+    else{
+        std::cout << "cMultDens real-time test failed!\n";
+        exit(1);
+    }
+
+
+}
+
