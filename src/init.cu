@@ -14,6 +14,7 @@ int init(Grid &par){
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
     bool write_file = par.bval("write_file");
+    bool cyl_coord = par.bval("cyl_coord");
     dim3 threads;
     unsigned int gSize = xDim;
     if (dimnum > 1){
@@ -34,9 +35,6 @@ int init(Grid &par){
     double *Energy;
     double *r;
     double *V_opt;
-    double *Bz;
-    double *Bx;
-    double *By;
     double *Energy_gpu;
     cufftDoubleComplex *wfc;
     if (par.bval("read_wfc") == true){
@@ -147,9 +145,6 @@ int init(Grid &par){
     r = (double *) malloc(sizeof(double) * gSize);
     V_opt = (double *) malloc(sizeof(double) * gSize);
     EV_opt = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    Bz = (double *) malloc(sizeof(double) * gSize);
-    Bx = (double *) malloc(sizeof(double) * gSize);
-    By = (double *) malloc(sizeof(double) * gSize);
     EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
                                                          gSize);
 
@@ -207,6 +202,9 @@ int init(Grid &par){
     }
 
     if (write_file){
+        double *Bz;
+        double *Bx;
+        double *By;
         if (dimnum == 2){
             Bz = curl2d(par, Ax, Ay);
         }
@@ -221,6 +219,33 @@ int init(Grid &par){
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
         //hdfWriteDouble(xDim, V, 0, "V_0"); //HDF COMING SOON!
         //hdfWriteComplex(xDim, wfc, 0, "wfc_0");
+        if (cyl_coord && dimnum > 2){
+            double *Br = curl3d_r(par, Bx, By);
+            double *Bphi = curl3d_phi(par, Bx, By);
+
+            FileIO::writeOutDouble(buffer, data_dir + "Br",Br,gSize,0);
+            FileIO::writeOutDouble(buffer, data_dir + "Bphi",Bphi,gSize,0);
+            FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+
+            free(Br);
+            free(Bx);
+            free(By);
+            free(Bz);
+            free(Bphi);
+        }
+        else{
+            if (dimnum > 1){
+                FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+                free(Bz);
+            }
+            if (dimnum > 2){
+                FileIO::writeOutDouble(buffer, data_dir + "Bx",Bx,gSize,0);
+                FileIO::writeOutDouble(buffer, data_dir + "By",By,gSize,0);
+                free(Bx);
+                free(By);
+            }
+        }
+
         FileIO::writeOutDouble(buffer, data_dir + "V",V,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "K",K,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "pAy",pAy,gSize,0);
@@ -231,13 +256,6 @@ int init(Grid &par){
         FileIO::writeOutDouble(buffer, data_dir + "x",x,xDim,0);
         FileIO::writeOutDouble(buffer, data_dir + "y",y,yDim,0);
         FileIO::writeOutDouble(buffer, data_dir + "z",z,zDim,0);
-        if (dimnum > 1){
-            FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
-        }
-        if (dimnum == 2){
-            FileIO::writeOutDouble(buffer, data_dir + "Bx",Bx,gSize,0);
-            FileIO::writeOutDouble(buffer, data_dir + "By",By,gSize,0);
-        }
         FileIO::writeOut(buffer, data_dir + "WFC",wfc,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAz",EpAz,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAy",EpAy,gSize,0);

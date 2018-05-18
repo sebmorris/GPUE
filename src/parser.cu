@@ -55,6 +55,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("energy_calc", false);
     par.store("use_param_file", false);
     par.store("param_file","param.cfg");
+    par.store("cyl_coord",false);
     par.Afn = "rotation";
     par.Kfn = "rotation_K";
     par.Vfn = "2d";
@@ -67,7 +68,7 @@ Grid parseArgs(int argc, char** argv){
     optind = 1;
 
     while ((opt = getopt (argc, argv, 
-           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:I:j:;")) !=-1)
+           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:I:j:J;")) !=-1)
     {
         switch (opt)
         {
@@ -236,6 +237,12 @@ Grid parseArgs(int argc, char** argv){
             {
                 printf("No longer writing initial variables to file.\n");
                 par.store("write_file", false);
+                break;
+            }
+            case 'J':
+            {
+                printf("Using cylindrical coordinates for B field\n");
+                par.store("cyl_coord", true);
                 break;
             }
             case 'q':

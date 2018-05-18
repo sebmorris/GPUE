@@ -22,6 +22,7 @@ Options:
 -I "param.cfg"  Set Input parameter file
 -i 1            Set interaction strength between particles
 -j 1            Set threshold multiplier for easier vortex detection 
+-J              Set cylindrical coordinate output for B-field (no letters)
 -K 0            Selects vortex with specified ID to be 
                     killed/flipped/mutliply-charged
 -k 0            Set kick_it, kicking for Moire lattice simulations

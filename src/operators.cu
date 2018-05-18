@@ -39,6 +39,39 @@ double *curl2d(Grid &par, double *Ax, double *Ay){
     return curl;
 }
 
+double *curl3d_r(Grid &par, double *Bx, double *By){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int size = sizeof(double) * xDim * yDim * zDim;
+    double *curl;
+    curl = (double *)malloc(size);
+
+    for (int i = 0; i < xDim*yDim*zDim; ++i){
+        curl[i] = sqrt(Bx[i]*Bx[i] + By[i] * By[i]);
+    }
+
+    return curl;
+}
+
+double *curl3d_phi(Grid &par, double *Bx, double *By){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int size = sizeof(double) * xDim * yDim * zDim;
+    double *curl;
+    curl = (double *)malloc(size);
+
+    for (int i = 0; i < xDim*yDim*zDim; ++i){
+        curl[i] = atan2(By[i], Bx[i]);
+    }
+
+    return curl;
+}
+
+
 // Function to take the curl of Ax and Ay in 2d
 // note: This is on the cpu, there should be a GPU version too.
 // Not complete yet!
@@ -60,7 +93,7 @@ double *curl3d_x(Grid &par, double *Ax, double *Ay, double *Az){
             for (int k = 0; k < zDim - 1; k++){
                 index = k + zDim * j + zDim * yDim * i;
                 curl[index] = (Az[index] - Az[index + xDim])
-                              -(Ay[index] - Ay[index + 1]);
+                              -(Ay[index] - Ay[index + xDim*yDim]);
             }
         }
     }
@@ -88,8 +121,8 @@ double *curl3d_y(Grid &par, double *Ax, double *Ay, double *Az){
         for (int j = 0; j < yDim; j++){
             for (int k = 0; k < zDim - 1; k++){
                 index = k + zDim * j + zDim * yDim * i;
-                curl[index] = -(Az[index] - Az[index + xDim*yDim])
-                              +(Ax[index] - Ax[index + 1]);
+                curl[index] = -(Az[index] - Az[index + 1])
+                              -(Ax[index] - Ax[index + xDim*yDim]);
             }
         }
     }
@@ -117,7 +150,7 @@ double *curl3d_z(Grid &par, double *Ax, double *Ay, double *Az){
         for (int j = 0; j < yDim-1; j++){
             for (int k = 0; k < zDim; k++){
                 index = k + zDim * j + zDim * yDim * i;
-                curl[index] = (Ay[index] - Ay[index + xDim*yDim])
+                curl[index] = (Ay[index] - Ay[index + 1])
                               -(Ax[index] - Ax[index + xDim]);
             }
         }

@@ -167,7 +167,7 @@ void allocate_eqn(Grid &par, std::string val_string, std::string eqn_string){
     int num = 0;
     find_element_num(eqn_tree, num);
     int element_num = num;
-    std::cout << "final element_num is: " << element_num << '\n';
+    //std::cout << "final element_num is: " << element_num << '\n';
 
     eqn_cpu = (EqnNode_gpu *)malloc(sizeof(EqnNode_gpu)*element_num);
 
@@ -222,7 +222,7 @@ void parse_param_file(Grid &par){
 // We assume that we have already removed unnecessary spaces and such from 
 // our eqn_string
 EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
-    std::cout << eqn_string << '\n';
+    //std::cout << eqn_string << '\n';
 
     // Because this will be called recursively, we need to return if the string
     // length is 0

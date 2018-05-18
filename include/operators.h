@@ -48,6 +48,27 @@ double *curl3d_y(Grid &par, double *Ax, double *Ay, double *Az);
  */
 double *curl3d_z(Grid &par, double *Ax, double *Ay, double *Az);
 
+ /**
+ * @brief       Finds Bz, the curl of the gauge field
+ * @ingroup     data
+ * @param       Grid simulation data
+ * @param       gauge field Ax
+ * @param       gauge field Ay
+ * @return      Br, the curl of A
+ */
+double *curl3d_r(Grid &par, double *Bx, double *By);
+
+ /**
+ * @brief       Finds Bz, the curl of the gauge field
+ * @ingroup     data
+ * @param       Grid simulation data
+ * @param       gauge field Ax
+ * @param       gauge field Ay
+ * @return      Bphi, the curl of A
+ */
+double *curl3d_phi(Grid &par, double *Bx, double *By);
+
+
 // Function to check whether a file exists
 std::string filecheck(std::string filename);
 
