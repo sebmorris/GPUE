@@ -105,7 +105,7 @@ void test_all(){
 
     //grid_test2d();
     //grid_test3d();
-    //parSum_test();
+    parSum_test();
     //fft_test();
     dynamic_test();
     bessel_test();
@@ -1571,11 +1571,14 @@ void cMultDens_test(){
 
     cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
 
-    double thresh = 0.000001;
+    double thresh = 0.00001;
     bool result = true;
     for (int i = 0; i < n; ++i){
-        if (abs(out[i].x-in1[i].x*exp(-1)*in2[i].x-in1[i].y*in2[i].y)<thresh ||
-            abs(out[i].y-in1[i].x*exp(-1)*in2[i].y+in1[i].y*in2[i].x)<thresh){
+        double gDensity = sqrt(in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
+        if (abs(out[i].x-(in1[i].x*exp(-gDensity)*in2[i].x
+                                      -in1[i].y*in2[i].y)) > thresh ||
+            abs(out[i].y-(in1[i].x*exp(-gDensity)*in2[i].y
+                                      +in1[i].y*in2[i].x)) > thresh){
             result = false;
         }
     }
@@ -1598,11 +1601,15 @@ void cMultDens_test(){
     result = true;
     for (int i = 0; i < n; ++i){
         double2 tmp;
-        tmp.x = in1[i].x*cos(-1) - in1[i].y*sin(-1);
-        tmp.y = in1[i].y*cos(-1) + in1[i].x*sin(-1);
+        double gDensity = sqrt(in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
+        tmp.x = in1[i].x*cos(-gDensity) - in1[i].y*sin(-gDensity);
+        tmp.y = in1[i].y*cos(-gDensity) + in1[i].x*sin(-gDensity);
 
-        if (abs(out[i].x - tmp.x*in2[i].x - tmp.y*in2[i].y) < thresh ||
-            abs(out[i].y - tmp.x*in2[i].y + tmp.y*in2[i].x) < thresh){
+        std::cout << out[i].x << '\t' <<  (tmp.x*in2[i].x - tmp.y*in2[i].y) << '\t'
+                  << out[i].y << '\t' << (tmp.x*in2[i].y + tmp.y*in2[i].x) << '\n';
+
+        if (abs(out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y)) > thresh ||
+            abs(out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x)) > thresh){
             result = false;
         }
     }

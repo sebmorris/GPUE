@@ -122,6 +122,7 @@ to_vtk(item, xDim, yDim, zDim, 1, "wfc_%s.vtk" %num)
 proj_var2d(xDim, yDim, zDim, "data", "V_0")
 #proj_2d(xDim, yDim, zDim, "data", "wfc_ev", 0)
 '''
+'''
 item = var(xDim, yDim, zDim,"data","Bx_0")
 to_vtk(item, xDim, yDim, zDim, 1, "test_Bx.vtk")
 item = var(xDim, yDim, zDim,"data","By_0")
@@ -138,4 +139,8 @@ to_vtk(item, xDim, yDim, zDim, 1, "test_Bphi.vtk")
 #comx, comy = wfc_com(xDim, yDim, zDim, "data", "wfc", 0)
 #print(comx)
 #print(comy)
+'''
 
+item = var(xDim, yDim, zDim,"data_lin","Edges_0")
+to_vtk(item, xDim, yDim, zDim, 1, "Edges.vtk")
+#proj_var1d(xDim, yDim, zDim, "data", "Az_0", "Az_1d.dat")

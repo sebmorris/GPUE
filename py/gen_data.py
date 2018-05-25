@@ -123,6 +123,17 @@ def proj_var2d(xdim, yDim, zDim, data_dir, pltval):
             file.write(str(var_data[k][j][zDim/2])+'\n')
     file.close
 
+def proj_var1d(xdim, yDim, zDim, data_dir, pltval, file_string):
+    filename = "../" + data_dir + "/" + file_string
+    file = open(filename,"w")
+    data = "../" + data_dir + "/" + pltval
+    lines = np.loadtxt(data)
+    var_data = np.reshape(lines, (xDim, yDim, zDim))
+    for i in range(0,xDim):
+        file.write(str(var_data[zDim/2][yDim/2][i])+'\n')
+    file.close
+
+
 
 def proj_2d(xDim, yDim, zDim, data_dir, pltval, i):
     filename = "../" + data_dir + "/wfc_%s" %i
