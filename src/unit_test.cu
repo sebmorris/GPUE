@@ -1,4 +1,3 @@
-
 #include "../include/ds.h"
 #include "../include/unit_test.h"
 #include "../include/parser.h"
@@ -103,10 +102,10 @@ void test_all(){
     //parser_test();
     //evolve_2d_test();
 
-    //grid_test2d();
-    //grid_test3d();
+    grid_test2d();
+    grid_test3d();
     parSum_test();
-    //fft_test();
+    fft_test();
     dynamic_test();
     bessel_test();
     //vortex3d_test();
@@ -380,7 +379,8 @@ __global__ void bessel_test_kernel(double *j, double *j_poly, bool *val){
 
     if (!close(j[xid],j_poly[xid], 0.0001)){
         val[0] = false;
-        printf("Error at element %u in Bessel test!\n", xid);
+        printf("Error at element %u in Bessel test!\tValues: %f, %f\n", 
+               xid, j[xid], j_poly[xid]);
     }
 }
 

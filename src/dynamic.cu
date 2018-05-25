@@ -99,7 +99,7 @@ __device__ double exp_gpu(double a, double b){
 }
 
 __device__ double poly_j(int v, double x, int n){
-    double jval;
+    double jval = 0;
     double sigma, b;
     for (int i = 0; i < n; ++i){
         b = pow(-1,i)*(factorial(n+i-1) * pow(n,1-2*i))/
