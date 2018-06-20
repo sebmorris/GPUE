@@ -1571,10 +1571,10 @@ void cMultDens_test(){
 
     cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
 
-    double thresh = 0.00001;
+    double thresh = 0.001;
     bool result = true;
     for (int i = 0; i < n; ++i){
-        double gDensity = sqrt(in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
+        double gDensity = (in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
         if (abs(out[i].x-(in1[i].x*exp(-gDensity)*in2[i].x
                                       -in1[i].y*in2[i].y)) > thresh ||
             abs(out[i].y-(in1[i].x*exp(-gDensity)*in2[i].y
@@ -1591,7 +1591,6 @@ void cMultDens_test(){
         exit(1);
     }
 
-
     // Testing real-time evolution
     cMultDensity<<<1, n>>>(din1, din2, dout, 1, 1, 1, 1);
     cudaDeviceSynchronize();
@@ -1601,15 +1600,17 @@ void cMultDens_test(){
     result = true;
     for (int i = 0; i < n; ++i){
         double2 tmp;
-        double gDensity = sqrt(in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
+        double gDensity = (in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
         tmp.x = in1[i].x*cos(-gDensity) - in1[i].y*sin(-gDensity);
         tmp.y = in1[i].y*cos(-gDensity) + in1[i].x*sin(-gDensity);
 
-        std::cout << out[i].x << '\t' <<  (tmp.x*in2[i].x - tmp.y*in2[i].y) << '\t'
-                  << out[i].y << '\t' << (tmp.x*in2[i].y + tmp.y*in2[i].x) << '\n';
+        std::cout << in1[i].x << '\t' << in1[i].y << '\t' << tmp.x << '\t' << tmp.y << '\t' << gDensity << '\n';
+        std::cout << out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y) << '\t'
+                  << out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x) << '\n';
 
         if (abs(out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y)) > thresh ||
             abs(out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x)) > thresh){
+            std::cout << i << '\t' << (abs(out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y))) << '\n';
             result = false;
         }
     }
@@ -1621,7 +1622,6 @@ void cMultDens_test(){
         std::cout << "cMultDens real-time test failed!\n";
         exit(1);
     }
-
 
 }
 
