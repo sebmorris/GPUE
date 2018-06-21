@@ -1543,6 +1543,7 @@ void cMultPhi_test(){
 
 void cMultDens_test(){
     // first, we are creating a double2 array to work with
+    double thresh = 0.001;
     int n = 32;
     double2 *in1, *in2, *out;
     double2 *din1, *din2, *dout;
@@ -1571,7 +1572,6 @@ void cMultDens_test(){
 
     cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
 
-    double thresh = 0.001;
     bool result = true;
     for (int i = 0; i < n; ++i){
         double gDensity = (in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
@@ -1604,13 +1604,18 @@ void cMultDens_test(){
         tmp.x = in1[i].x*cos(-gDensity) - in1[i].y*sin(-gDensity);
         tmp.y = in1[i].y*cos(-gDensity) + in1[i].x*sin(-gDensity);
 
+/*
         std::cout << in1[i].x << '\t' << in1[i].y << '\t' << tmp.x << '\t' << tmp.y << '\t' << gDensity << '\n';
         std::cout << out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y) << '\t'
                   << out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x) << '\n';
+*/
 
         if (abs(out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y)) > thresh ||
             abs(out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x)) > thresh){
-            std::cout << i << '\t' << (abs(out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y))) << '\n';
+                std::cout << in1[i].x << '\t' << in1[i].y << '\t' << tmp.x << '\t' << tmp.y << '\t' << gDensity << '\n';
+                std::cout << out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y) << '\t'
+                          << out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x) << '\n';
+
             result = false;
         }
     }

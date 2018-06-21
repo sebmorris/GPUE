@@ -267,7 +267,7 @@ __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt
         double2 tmp;
         tmp.x = tin1.x*cos(-gDensity) - tin1.y*sin(-gDensity);
         tmp.y = tin1.y*cos(-gDensity) + tin1.x*sin(-gDensity);
-        printf("%d\t%f\t%f\t%f\t%f\t%f\n", gid, tin1.x, tin1.y, tmp.x, tmp.y, gDensity);
+        //printf("%d\t%f\t%f\t%f\t%f\t%f\n", gid, tin1.x, tin1.y, tmp.x, tmp.y, gDensity);
         
         result.x = (tmp.x)*tin2.x - (tmp.y)*tin2.y;
         result.y = (tmp.x)*tin2.y + (tmp.y)*tin2.x;
