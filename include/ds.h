@@ -32,6 +32,57 @@
 #include <iostream>
 
 /*----------------------------------------------------------------------------//
+* GPU STACK
+* Note: It is clear that a stack implementation on GPU's for tree traversal is
+*       not a universally good idea; however, there is an array of these trees,
+*       so there is still a need for parallelization. I feel a massively
+*       parallel CPU system would be a bit better for this purpose, but we
+*       cannot afford the transfer time every timestep.
+*-----------------------------------------------------------------------------*/
+/*
+
+struct stack {
+    void **data;
+    size_t top, capacity, size;
+};
+
+stack get_stack(size_t size) {
+    stack stk;
+
+    stk.data = malloc(4 * size);
+    stk.capacity = 4;
+    stk.top = 0;
+
+    return stk;
+}
+
+bool stack_empty(stack *stk){
+    return (stk->top == 0);
+}
+
+void stack_push(stack *stk, void *element) {
+    if (stk->top == stk->capacity) {
+        stk->capacity *= 2;
+        stk->data = realloc(stk->data, stk->capacity * sizeof(stk->data[0]));
+    }
+
+    stk->data[stk->top++] = element;
+}
+
+void *stack_pop(struct stack *stk) {
+    if (stack_empty(stk)) {
+        return NULL;
+    }
+
+    return stk->data[--stk->top];
+}
+
+void free_stack(struct stack stk) {
+    free(stk.data);
+}
+*/
+
+/*----------------------------------------------------------------------------//
 * CLASSES
 *-----------------------------------------------------------------------------*/
 

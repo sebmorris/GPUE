@@ -46,7 +46,7 @@ Grid parseArgs(int argc, char** argv){
     par.store("ramp_type", 1);
     par.store("dimnum", 2);
     par.store("write_file", true);
-    par.store("fudge", 1.0);
+    par.store("fudge", 0.0);
     par.store("kill_idx", -1);
     par.store("DX",0.0);
     par.store("mask_2d", 1.5e-4);

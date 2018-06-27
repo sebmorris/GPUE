@@ -24,6 +24,7 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
                                    double z, double time, int element_num);
 
 __global__ void find_field(double *field, double dx, double dy, double dz, 
+                           double xMax, double yMax, double zMax,
                            double time, EqnNode_gpu *eqn);
 
 __global__ void zeros(double *field, int n);

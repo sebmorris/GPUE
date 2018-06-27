@@ -367,7 +367,7 @@ void generate_gauge(Grid &par){
 
     double xMax = par.dval("xMax");
     double yMax = par.dval("yMax");
-    double zMax;
+    double zMax = 1;
     if (dimnum == 3){
         double zMax = par.dval("zMax");
     }
@@ -407,9 +407,17 @@ void generate_gauge(Grid &par){
             double dx = par.dval("dx");
             double dy = par.dval("dy");
             double dz = par.dval("dz");
+            double xMax = par.dval("xMax");
+            double yMax = par.dval("yMax");
+            double zMax = 0;
+            if (dimnum == 3){ 
+                zMax = par.dval("zMax");
+            }
+
             EqnNode_gpu *eqn = par.astval("Ax");
 
-            find_field<<<par.grid, par.threads>>>(Ax_gpu, dx, dy, dz, 0, eqn);
+            find_field<<<par.grid, par.threads>>>(Ax_gpu, dx, dy, dz, 
+                                                  xMax, yMax, zMax, 0, eqn);
         }
         else{
             par.Ax_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
@@ -421,9 +429,17 @@ void generate_gauge(Grid &par){
             double dx = par.dval("dx");
             double dy = par.dval("dy");
             double dz = par.dval("dz");
+            double xMax = par.dval("xMax");
+            double yMax = par.dval("yMax");
+            double zMax = 0;
+            if (dimnum == 3){
+                zMax = par.dval("zMax");
+            }
+
             EqnNode_gpu *eqn = par.astval("Ay");
 
-            find_field<<<par.grid, par.threads>>>(Ay_gpu, dx, dy, dz, 0, eqn);
+            find_field<<<par.grid, par.threads>>>(Ay_gpu, dx, dy, dz,
+                                                  xMax, yMax, zMax , 0, eqn);
         }
         else{
             par.Ay_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
@@ -436,9 +452,18 @@ void generate_gauge(Grid &par){
                 double dx = par.dval("dx");
                 double dy = par.dval("dy");
                 double dz = par.dval("dz");
+
+                double xMax = par.dval("xMax");
+                double yMax = par.dval("yMax");
+                double zMax = 0;
+                if (dimnum == 3){
+                    zMax = par.dval("zMax");
+                }
+
                 EqnNode_gpu *eqn = par.astval("Az");
 
-                find_field<<<par.grid, par.threads>>>(Az_gpu, dx, dy, dz, 
+                find_field<<<par.grid, par.threads>>>(Az_gpu, dx, dy, dz,
+                                                      xMax, yMax, zMax,  
                                                       0, eqn);
             }
             else{
@@ -621,8 +646,16 @@ void generate_fields(Grid &par){
         double dy = par.dval("dy");
         double dz = par.dval("dz");
 
+        double xMax = par.dval("xMax");
+        double yMax = par.dval("yMax");
+        double zMax = 0;
+        if (dimnum == 3){ 
+            zMax = par.dval("zMax");
+        }
+
         EqnNode_gpu *eqn = par.astval("V");
-        find_field<<<par.grid, par.threads>>>(V_gpu, dx, dy, dz, 0, eqn);
+        find_field<<<par.grid, par.threads>>>(V_gpu, dx, dy, dz, 
+                                              xMax, yMax, zMax, 0, eqn);
     }
     else{
         par.V_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, items_gpu,
@@ -815,10 +848,10 @@ __global__ void ktorus_V(double *x, double *y, double *z, double* items,
 
     double rad = sqrt((x[xid] - items[6]) * (x[xid] - items[6])
                       + (y[yid] - items[7]) * (y[yid] - items[7])) 
-                      - 0.5*items[0]*items[12];
+                      - 0.4*items[0];
     double omegaR = (items[3]*items[3] + items[4]*items[4]);
     double V_tot = (2*items[5]*items[5]*(z[zid] - items[8])*(z[zid] - items[8])
-                    + omegaR*rad*rad);
+                    + omegaR*(rad*rad + items[12]*rad*z[zid]));
     V[gid] = 0.5*items[9]*(V_tot
                            + Ax[gid]*Ax[gid]
                            + Ay[gid]*Ay[gid]

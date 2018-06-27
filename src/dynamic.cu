@@ -167,7 +167,7 @@ void allocate_eqn(Grid &par, std::string val_string, std::string eqn_string){
     int num = 0;
     find_element_num(eqn_tree, num);
     int element_num = num;
-    //std::cout << "final element_num is: " << element_num << '\n';
+    std::cout << "final element_num is: " << element_num << '\n';
 
     eqn_cpu = (EqnNode_gpu *)malloc(sizeof(EqnNode_gpu)*element_num);
 
@@ -202,6 +202,9 @@ void parse_param_file(Grid &par){
             }
             else{
                 if (val_string != ""){
+                    if (val_string == "V"){
+                        eqn_string+="+0.5*mass*(Ax*Ax+Ay*Ay+Az*Az)";
+                    }
                     allocate_eqn(par, val_string, eqn_string);
                     val_string = "";
                     eqn_string = "";
@@ -670,13 +673,16 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
 }
 
 __global__ void find_field(double *field, double dx, double dy, double dz, 
+                           double xMax, double yMax, double zMax,
                            double time, EqnNode_gpu *eqn){
     int gid = getGid3d3d();
     int xid = blockIdx.x*blockDim.x + threadIdx.x;
     int yid = blockIdx.y*blockDim.y + threadIdx.y;
     int zid = blockIdx.z*blockDim.z + threadIdx.z;
 
-    field[gid] = evaluate_eqn_gpu(eqn, dx*xid, dy*yid, dz*zid, time, 0);
+    field[gid] = evaluate_eqn_gpu(eqn, dx*xid - xMax,
+                                       dy*yid - yMax,
+                                       dz*zid - zMax, time, 0);
 }
 
 __global__ void zeros(double *field, int n){

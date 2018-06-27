@@ -310,10 +310,20 @@ __global__ void complexMag2_test(double2 *in, double *out){
 void dynamic_test(){
 
     std::cout << "Beginning test of dynamic functions..." <<'\n';
-    std::string eqn_string = "(((3*x)+7)+(5-7)+cos(0))+pow(120,2)";
+    std::string eqn_string = "(((3*x)+7)+(5-7)+cos(0)*1)+pow(120,2)";
 
     Grid par;
-    par.store("x",5);
+    par.store("x",5.0);
+    par.store("y",5.0);
+    par.store("z",5.0);
+    par.store("omegaX",5.0);
+    par.store("omegaY",5.0);
+    par.store("omegaZ",5.0);
+    par.store("xMax",5.0);
+    par.store("yMax",5.0);
+    par.store("zMax",5.0);
+    par.store("fudge",5.0);
+    par.store("mass",5.0);
     std::string val_string = "check_var";
 
     EqnNode eqn_tree = parse_eqn(par, eqn_string, val_string);
@@ -356,7 +366,7 @@ void dynamic_test(){
     int grid = (int)ceil((float)n/threads);
 
     //zeros<<<grid, threads>>>(array_gpu, n);
-    find_field<<<grid, threads>>>(array_gpu, 1, 0.0, 0.0, 0.0, eqn_gpu);
+    find_field<<<grid, threads>>>(array_gpu, 1, 0.0, 0.0, 0.0, 1,1,1,eqn_gpu);
 
     cudaMemcpy(array, array_gpu, sizeof(double)*n, cudaMemcpyDeviceToHost);
 
@@ -368,6 +378,15 @@ void dynamic_test(){
     std::cout << "Testing simple parameter parsing." << '\n';
     par.store("param_file", (std::string)"src/example.cfg");
     parse_param_file(par);
+    EqnNode_gpu *eqn = par.astval("V");
+    find_field<<<grid, threads>>>(array_gpu, 0.1, 0.1, 0.1, 1, 1, 1, 0, eqn);
+    cudaDeviceSynchronize();
+    
+    cudaMemcpy(array, array_gpu, sizeof(double)*n, cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < n; ++i){
+        std::cout << array[i] << '\n';
+    }
 
     std::cout << "Dynamic tests passed" <<'\n';
 }
