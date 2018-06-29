@@ -123,7 +123,7 @@ def proj_var2d(xdim, yDim, zDim, data_dir, pltval, file_string):
     var_data = np.reshape(lines, (xDim, yDim, zDim))
     for k in range(0,xDim):
         for j in range(0,yDim):
-            file.write(str(var_data[xDim/2][j][k])+'\n')
+            file.write(str(var_data[k][j][xDim/2])+'\n')
     file.close
 
 def proj_var1d(xdim, yDim, zDim, data_dir, pltval, file_string):

@@ -523,6 +523,47 @@ __global__ void krotation_Ay(double *x, double *y, double *z,
     A[gid] = x[xid] * omega * omegaY;
 }
 
+// Kernel for simple rotational case, Ax
+__global__ void kring_rotation_Ax(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    int zid = blockDim.z*blockIdx.z + threadIdx.z;
+    double theta = atan2(y[yid],x[xid]);
+    A[gid] = z[zid]*cos(theta)*omega*omegaX;
+    A[gid] = 0;
+}
+
+// Kernel for simple rotational case, Ay
+__global__ void kring_rotation_Ay(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    int zid = blockDim.z*blockIdx.z + threadIdx.z;
+    double theta = atan2(y[yid],x[xid]);
+    A[gid] = z[zid]*sin(theta)*omega*omegaX;
+    A[gid] = 0;
+}
+
+// Kernel for simple rotational case, Az
+__global__ void kring_rotation_Az(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    double r = sqrt(x[xid]*x[xid] + y[yid]*y[yid]);
+    A[gid] = r*omega*omegaX;
+}
+
+
 // kernel for a simple vortex ring
 __global__ void kring_Az(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,

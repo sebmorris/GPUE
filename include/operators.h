@@ -111,6 +111,24 @@ __global__ void krotation_Ay(double *x, double *y, double *z,
                              double omegaX, double omegaY, double omegaZ,
                              double omega, double fudge, double *A);
 
+__global__ void kring_rotation_Ax(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A);
+
+// Kernel for simple rotational case, Ay
+__global__ void kring_rotation_Ay(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A);
+
+// Kernel for simple rotational case, Az
+__global__ void kring_rotation_Az(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A);
+
+
 // Kernel for testing Ay
 __global__ void ktest_Ay(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,

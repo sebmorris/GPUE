@@ -323,6 +323,11 @@ void Grid::set_A_fn(std::string id){
         Ay_fn = krotation_Ay;
         Az_fn = kconstant_A;
     }
+    else if (id == "ring_rotation"){
+        Ax_fn = kring_rotation_Ax;
+        Ay_fn = kring_rotation_Ay;
+        Az_fn = kring_rotation_Az;
+    }
     else if (id == "constant"){
         Ax_fn = kconstant_A;
         Ay_fn = kconstant_A;
