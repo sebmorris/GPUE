@@ -360,22 +360,19 @@ void generate_gauge(Grid &par){
     double *Ax, *Ay, *Az, *Ax_gpu, *Ay_gpu, *Az_gpu;
     double *x_gpu = par.dsval("x_gpu");
     double *y_gpu = par.dsval("y_gpu");
-    double *z_gpu;
-    if (dimnum == 3){
-        double *z_gpu = par.dsval("z_gpu");
-    }
+    double *z_gpu = par.dsval("z_gpu");
 
     double xMax = par.dval("xMax");
     double yMax = par.dval("yMax");
     double zMax = 1;
     if (dimnum == 3){
-        double zMax = par.dval("zMax");
+        zMax = par.dval("zMax");
     }
     double omegaX = par.dval("omegaX");
     double omegaY = par.dval("omegaY");
     double omegaZ;
     if (dimnum == 3){
-        double omegaZ = par.dval("omegaZ");
+        omegaZ = par.dval("omegaZ");
     }
     double omega = par.dval("omega");
     double fudge = par.dval("fudge");
@@ -534,7 +531,6 @@ __global__ void kring_rotation_Ax(double *x, double *y, double *z,
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
     double theta = atan2(y[yid],x[xid]);
     A[gid] = z[zid]*cos(theta)*omega*omegaX;
-    A[gid] = 0;
 }
 
 // Kernel for simple rotational case, Ay
@@ -548,7 +544,6 @@ __global__ void kring_rotation_Ay(double *x, double *y, double *z,
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
     double theta = atan2(y[yid],x[xid]);
     A[gid] = z[zid]*sin(theta)*omega*omegaX;
-    A[gid] = 0;
 }
 
 // Kernel for simple rotational case, Az
