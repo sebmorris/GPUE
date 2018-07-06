@@ -530,7 +530,7 @@ __global__ void kring_rotation_Ax(double *x, double *y, double *z,
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
     double theta = atan2(y[yid],x[xid]);
-    A[gid] = z[zid]*cos(theta)*omega*omegaX;
+    A[gid] = (z[zid]+zMax)*cos(theta)*omega*omegaX;
 }
 
 // Kernel for simple rotational case, Ay
@@ -543,7 +543,7 @@ __global__ void kring_rotation_Ay(double *x, double *y, double *z,
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
     double theta = atan2(y[yid],x[xid]);
-    A[gid] = z[zid]*sin(theta)*omega*omegaX;
+    A[gid] = (z[zid]+zMax)*sin(theta)*omega*omegaX;
 }
 
 // Kernel for simple rotational case, Az
