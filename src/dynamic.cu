@@ -320,7 +320,6 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
         temp_string = eqn_string;
     
         // Now we remove the parentheses from the eqn_string
-        int offset = 0;
         std::vector<int> temp_positions = ignored_positions;
         for (int i = 0; i < temp_positions.size(); i += 2){
             temp_string.erase(temp_positions[i],
@@ -626,47 +625,36 @@ __device__ double evaluate_eqn_gpu(EqnNode_gpu *eqn, double x, double y,
     //return add_gpu(val1, val2);
     switch(eqn[element_num].op_num){
         case 0:
-            printf("GPU kernel failure! Improper equation tree!");
-            break;
+            {
+                printf("GPU kernel failure! Improper equation tree!");
+                break;
+            }
         case 1:
             return add_gpu(val1, val2);
-            break;
         case 2:
             return subtract_gpu(val1, val2);
-            break;
         case 3:
             return multiply_gpu(val1, val2);
-            break;
         case 4:
             return divide_gpu(val1, val2);
-            break;
         case 5:
             return pow_gpu(val1, val2);
-            break;
         case 6:
             return cos_gpu(val1, val2);
-            break;
         case 7:
             return sin_gpu(val1, val2);
-            break;
         case 8:
             return tan_gpu(val1, val2);
-            break;
         case 9:
             return sqrt_gpu(val1, val2);
-            break;
         case 10:
             return exp_gpu(val1, val2);
-            break;
         case 11:
             return jn_gpu(val1, val2);
-            break;
         case 12:
             return yn_gpu(val1, val2);
-            break;
         case 13:
             return k2n_gpu(val1, val2);
-            break;
     }
     return 0;
 

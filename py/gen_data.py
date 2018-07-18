@@ -32,14 +32,16 @@ def to_vtk(item, xDim, yDim, zDim, nframes, filename):
 # Function to plot wfc with pltvar as a variable to modify the type of plot
 def wfc_density(xDim, yDim, zDim, data_dir, pltval, i):
     print(i)
-    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
-    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+    data_real = data_dir + "/wfc_0_const_%s" % i
+    data_im = data_dir + "/wfc_0_consti_%s" % i
     if (pltval == "wfc_ev"):
-        data_real = "../" + data_dir + "/wfc_ev_%s" % i
-        data_im = "../" + data_dir + "/wfc_evi_%s" % i
+        data_real = data_dir + "/wfc_ev_%s" % i
+        data_im = data_dir + "/wfc_evi_%s" % i
     elif (pltval == "wfc_ramp"):
-        data_real = "../" + data_dir + "/wfc_0_ramp_%s" % i
-        data_im = "../" + data_dir + "/wfc_0_rampi_%s" % i
+        data_real = data_dir + "/wfc_0_ramp_%s" % i
+        data_im = data_dir + "/wfc_0_rampi_%s" % i
     lines_real = np.loadtxt(data_real)
     lines_im = np.loadtxt(data_im)
     print(len(lines_real))
@@ -55,14 +57,16 @@ def wfc_density(xDim, yDim, zDim, data_dir, pltval, i):
 
 def wfc_phase(xDim, yDim, zDim, data_dir, pltval, i):
     print(i)
-    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
-    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+    data_real = data_dir + "/wfc_0_const_%s" % i
+    data_im = data_dir + "/wfc_0_consti_%s" % i
     if (pltval == "wfc_ev"):
-        data_real = "../" + data_dir + "/wfc_ev_%s" % i
-        data_im = "../" + data_dir + "/wfc_evi_%s" % i
+        data_real = data_dir + "/wfc_ev_%s" % i
+        data_im = data_dir + "/wfc_evi_%s" % i
     elif (pltval == "wfc_ramp"):
-        data_real = "../" + data_dir + "/wfc_0_ramp_%s" % i
-        data_im = "../" + data_dir + "/wfc_0_rampi_%s" % i
+        data_real = data_dir + "/wfc_0_ramp_%s" % i
+        data_im = data_dir + "/wfc_0_rampi_%s" % i
     lines_real = np.loadtxt(data_real)
     lines_im = np.loadtxt(data_im)
     wfc_real = np.reshape(lines_real, (xDim,yDim, zDim));
@@ -78,16 +82,18 @@ def wfc_phase(xDim, yDim, zDim, data_dir, pltval, i):
     return wfc
 
 def proj_phase_2d(xDim, yDim, zDim, data_dir, pltval, i):
-    filename = "../" + data_dir + "/wfc_ph_%s" %i
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+    filename = data_dir + "/wfc_ph_%s" %i
     print(i)
-    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
-    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    data_real = data_dir + "/wfc_0_const_%s" % i
+    data_im = data_dir + "/wfc_0_consti_%s" % i
     if (pltval == "wfc_ev"):
-        data_real = "../" + data_dir + "/wfc_ev_%s" % i
-        data_im = "../" + data_dir + "/wfc_evi_%s" % i
+        data_real = data_dir + "/wfc_ev_%s" % i
+        data_im = data_dir + "/wfc_evi_%s" % i
     elif (pltval == "wfc_ramp"):
-        data_real = "../" + data_dir + "/wfc_0_ramp_%s" % i
-        data_im = "../" + data_dir + "/wfc_0_rampi_%s" % i
+        data_real = data_dir + "/wfc_0_ramp_%s" % i
+        data_im = data_dir + "/wfc_0_rampi_%s" % i
     lines_real = np.loadtxt(data_real)
     lines_im = np.loadtxt(data_im)
     print(len(lines_real))
@@ -103,7 +109,9 @@ def proj_phase_2d(xDim, yDim, zDim, data_dir, pltval, i):
 
 
 def var(xDim, yDim, zDim, data_dir, pltval):
-    data = "../" + data_dir + "/" + pltval
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+    data = data_dir + "/" + pltval
     lines = np.loadtxt(data)
     maximum = max(lines)
     minimum = min(lines)
@@ -116,9 +124,12 @@ def proj_var2d(xdim, yDim, zDim, data_dir, pltval):
     proj_var2d(xdim, yDim, zDim, data_dir, pltval, "var")
 
 def proj_var2d(xdim, yDim, zDim, data_dir, pltval, file_string):
-    filename = "../" + data_dir + "/" + file_string
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+
+    filename = data_dir + "/" + file_string
     file = open(filename,"w")
-    data = "../" + data_dir + "/" + pltval
+    data = data_dir + "/" + pltval
     lines = np.loadtxt(data)
     var_data = np.reshape(lines, (xDim, yDim, zDim))
     for k in range(0,xDim):
@@ -127,9 +138,12 @@ def proj_var2d(xdim, yDim, zDim, data_dir, pltval, file_string):
     file.close
 
 def proj_var1d(xdim, yDim, zDim, data_dir, pltval, file_string):
-    filename = "../" + data_dir + "/" + file_string
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+
+    filename = data_dir + "/" + file_string
     file = open(filename,"w")
-    data = "../" + data_dir + "/" + pltval
+    data = data_dir + "/" + pltval
     lines = np.loadtxt(data)
     var_data = np.reshape(lines, (xDim, yDim, zDim))
     for i in range(0,xDim):
@@ -139,16 +153,19 @@ def proj_var1d(xdim, yDim, zDim, data_dir, pltval, file_string):
 
 
 def proj_2d(xDim, yDim, zDim, data_dir, pltval, i):
-    filename = "../" + data_dir + "/wfc_%s" %i
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+
+    filename = data_dir + "/Pwfc_%s" %i
     print(i)
-    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
-    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    data_real = data_dir + "/wfc_0_const_%s" % i
+    data_im = data_dir + "/wfc_0_consti_%s" % i
     if (pltval == "wfc_ev"):
-        data_real = "../" + data_dir + "/wfc_ev_%s" % i
-        data_im = "../" + data_dir + "/wfc_evi_%s" % i
+        data_real = data_dir + "/wfc_ev_%s" % i
+        data_im = data_dir + "/wfc_evi_%s" % i
     elif (pltval == "wfc_ramp"):
-        data_real = "../" + data_dir + "/wfc_0_ramp_%s" % i
-        data_im = "../" + data_dir + "/wfc_0_rampi_%s" % i
+        data_real = data_dir + "/wfc_0_ramp_%s" % i
+        data_im = data_dir + "/wfc_0_rampi_%s" % i
     lines_real = np.loadtxt(data_real)
     lines_im = np.loadtxt(data_im)
     print(len(lines_real))
@@ -163,10 +180,13 @@ def proj_2d(xDim, yDim, zDim, data_dir, pltval, i):
     file.close()
 
 def proj_k2d(xDim, yDim, zDim, data_dir, pltval, i):
-    filename = "../" + data_dir + "/wfc_1"
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+
+    filename = data_dir + "/wfc_1"
     print(i)
-    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
-    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    data_real = data_dir + "/wfc_0_const_%s" % i
+    data_im = data_dir + "/wfc_0_consti_%s" % i
     lines_real = np.loadtxt(data_real)
     lines_im = np.loadtxt(data_im)
     print(len(lines_real))
@@ -190,16 +210,19 @@ def to_bvox(item, xDim, yDim, zDim, nframes, filename):
 
 # find Center of Mass of toroidal condensate
 def wfc_com(xDim, yDim, zDim, data_dir, pltval, i):
-    filename = "../" + data_dir + "/wfc_%s" %i
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+
+    filename = data_dir + "/wfc_%s" %i
     print(i)
-    data_real = "../" + data_dir + "/wfc_0_const_%s" % i
-    data_im = "../" + data_dir + "/wfc_0_consti_%s" % i
+    data_real = data_dir + "/wfc_0_const_%s" % i
+    data_im = data_dir + "/wfc_0_consti_%s" % i
     if (pltval == "wfc_ev"):
-        data_real = "../" + data_dir + "/wfc_ev_%s" % i
-        data_im = "../" + data_dir + "/wfc_evi_%s" % i
+        data_real = data_dir + "/wfc_ev_%s" % i
+        data_im = data_dir + "/wfc_evi_%s" % i
     elif (pltval == "wfc_ramp"):
-        data_real = "../" + data_dir + "/wfc_0_ramp_%s" % i
-        data_im = "../" + data_dir + "/wfc_0_rampi_%s" % i
+        data_real = data_dir + "/wfc_0_ramp_%s" % i
+        data_im = data_dir + "/wfc_0_rampi_%s" % i
     lines_real = np.loadtxt(data_real)
     lines_im = np.loadtxt(data_im)
     print(len(lines_real))
