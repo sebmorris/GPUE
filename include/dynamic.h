@@ -7,9 +7,6 @@
 EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str);
 void find_element_num(EqnNode eqn_tree, int &element_num);
 
-double evaluate_eqn(EqnNode *eqn, double x, double y, double z, 
-                    double time);
-
 void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num);
 
 void allocate_equation(EqnNode_gpu *eqn_cpu, EqnNode_gpu *eqn_gpu, int n);

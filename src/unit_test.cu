@@ -371,7 +371,11 @@ void dynamic_test(){
     cudaMemcpy(array, array_gpu, sizeof(double)*n, cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < n; ++i){
-        std::cout << array[i] << '\n';
+        double eqn_val = (((3*i)+7)+(5-7)+cos(0)*1)+pow(120,2);
+        if (array[i] != eqn_val){
+            std::cout << "GPU evaluation failed in dynamic test!\n";
+            assert(array[i] == eqn_val);
+        }
     }
 
     // Now testing simple parsing of example "example.cfg"

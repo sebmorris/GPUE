@@ -241,13 +241,12 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     };
 
     // we need a map for these operators
-    typedef double (*functionPtr_mop)(double, double);
-    std::unordered_map<char, functionPtr_mop> moperator_map;
-    moperator_map['-'] = ast_subtract;
-    moperator_map['+'] = ast_add;
-    moperator_map['*'] = ast_multiply;
-    moperator_map['/'] = ast_divide;
-    moperator_map['^'] = pow;
+    std::unordered_map<char, int> moperator_map;
+    moperator_map['+'] = 1;
+    moperator_map['-'] = 2;
+    moperator_map['*'] = 3;
+    moperator_map['/'] = 4;
+    moperator_map['^'] = 5;
 
     // And another vector for brackets of various types which indicate recursive
     // parsing of the equation
@@ -263,19 +262,17 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     };
 
     // We also need a specific map for the functions above
-    typedef double (*functionPtr)(double, double);
-    std::unordered_map<std::string, functionPtr> mfunctions_map;
-    mfunctions_map["cos"] = ast_cos;
-    mfunctions_map["sin"] = ast_sin;
-    mfunctions_map["cos"] = ast_cos;
-    mfunctions_map["tan"] = ast_tan;
-    mfunctions_map["exp"] = ast_exp;
-    //mfunctions_map["erf"] = erf;
-    mfunctions_map["sqrt"] = ast_sqrt;
-    mfunctions_map["pow"] = pow;
-    mfunctions_map["jn"] = jn_gpu;
-    mfunctions_map["yn"] = yn_gpu;
-    mfunctions_map["k2n"] = k2n_gpu;
+    std::unordered_map<std::string, int> mfunctions_map;
+    mfunctions_map["cos"] = 6;
+    mfunctions_map["sin"] = 7;
+    mfunctions_map["tan"] = 8;
+    mfunctions_map["sqrt"] = 9;
+    mfunctions_map["exp"] = 10;
+    //mfunctions_map["erf"] = ;
+    mfunctions_map["pow"] = 5;
+    mfunctions_map["jn"] = 11;
+    mfunctions_map["yn"] = 12;
+    mfunctions_map["k2n"] = 13;
 
     // first, we need to parse the equation string and remove parentheses
     // Then we'll sort according to the math operators (mops)
@@ -390,7 +387,8 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
                 std::string check_string = eqn_string.substr(mop_point+1, 
                                            eqn_string.size() - mop_point-1);
                 if(check_string.find(",") < check_string.size()){
-                    eqn_tree.op = mfunctions_map[temp_string];
+                    eqn_tree.op_num = mfunctions_map[temp_string];
+                    eqn_tree.has_op = true;
                     eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
                     eqn_tree.right = (EqnNode *)malloc(sizeof(EqnNode));
 
@@ -403,7 +401,8 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
                                             val_str);
                 }
                 else{
-                    eqn_tree.op = mfunctions_map[temp_string];
+                    eqn_tree.op_num = mfunctions_map[temp_string];
+                    eqn_tree.has_op = true;
                     eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
                     eqn_tree.left[0] = parse_eqn(par, check_string, val_str);
                 }
@@ -456,7 +455,8 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     //std::cout << "mop point is: " << mop_point << '\n';
 
     // Now we need to store the operator into the eqn_tree
-    eqn_tree.op = moperator_map[eqn_string[mop_point]];
+    eqn_tree.op_num = moperator_map[eqn_string[mop_point]];
+    eqn_tree.has_op = true;
 
     // Now we need to parse the left and right banches...
     eqn_tree.left = (EqnNode *)malloc(sizeof(EqnNode));
@@ -469,73 +469,22 @@ EqnNode parse_eqn(Grid &par, std::string eqn_string, std::string val_str){
     return eqn_tree;
 }
 
-double evaluate_eqn(EqnNode *eqn, double x, double y, double z, 
-                    double time){
-
-    if (eqn->op == NULL){
-        if (eqn->is_dynamic){
-            if(eqn->var == 'x'){
-                return x;
-            }
-            if(eqn->var == 'y'){
-                return y;
-            }
-            if(eqn->var == 'z'){
-                return z;
-            }
-            if(eqn->var == 't'){
-                return time;
-            }
-        }
-        else{
-            return eqn->val;
-        }
-    }
-
-    double val1 = evaluate_eqn(eqn->left, x, y, z, time);
-    double val2 = evaluate_eqn(eqn->right, x, y, z, time);
-    return eqn->op(val1, val2);
-
-}
-
 void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
 
     eqn_array[element_num].val = eqn.val;
     eqn_array[element_num].var = eqn.var;
     eqn_array[element_num].is_dynamic = eqn.is_dynamic;
 
-    // Now to create a map for all the functions
-    std::unordered_map<fnPtr, int> ptr_map1, ptr_map2;
-    ptr_map1[ast_add] = 1;
-    ptr_map1[ast_subtract] = 2;
-    ptr_map1[ast_multiply] = 3;
-    ptr_map1[ast_divide] = 4;
-    ptr_map1[pow] = 5;
-
-    ptr_map2[ast_cos] = 6;
-    ptr_map2[ast_sin] = 7;
-    ptr_map2[ast_tan] = 8;
-    ptr_map2[ast_sqrt] = 9;
-    ptr_map2[ast_exp] = 10;
-    ptr_map2[jn_gpu] = 11;
-    ptr_map2[yn_gpu] = 12;
-    ptr_map2[k2n_gpu] = 13;
+    // variable defining difference between functions that use 1 or 2 inputs.
+    int function_thresh = 6;
 
     bool only_left = false;
-    auto it = ptr_map1.find(eqn.op);
-    auto it2 = ptr_map2.find(eqn.op);
-    if (it != ptr_map1.end()){
-        eqn_array[element_num].op_num = ptr_map1[eqn.op];
-    }
-    else if (it2 != ptr_map2.end()){
-        eqn_array[element_num].op_num = ptr_map2[eqn.op];
+    eqn_array[element_num].op_num = eqn.op_num;
+    if (eqn.op_num >= function_thresh){
         only_left = true;
     }
-    else{
-        eqn_array[element_num].op_num = 0;
-    }
 
-    if (eqn.op == NULL){
+    if (eqn.has_op == false){
         eqn_array[element_num].left = -1;
         eqn_array[element_num].right = -1;
         return;
@@ -560,20 +509,13 @@ void tree_to_array(EqnNode eqn, EqnNode_gpu *eqn_array, int &element_num){
 void find_element_num(EqnNode eqn_tree, int &element_num){
 
     element_num++;
-    if (eqn_tree.op == NULL){
+    if (eqn_tree.has_op == false){
         return;
     }
     else{
         find_element_num(eqn_tree.left[0], element_num);
         // For single operators, the right node doesn't exist...
-        if(eqn_tree.op != ast_cos &&
-           eqn_tree.op != ast_sin &&
-           eqn_tree.op != ast_tan &&
-           eqn_tree.op != ast_sqrt &&
-           eqn_tree.op != ast_exp &&
-           eqn_tree.op != jn_gpu &&
-           eqn_tree.op != yn_gpu &&
-           eqn_tree.op != k2n_gpu){
+        if(eqn_tree.op_num < 6 ){
             find_element_num(eqn_tree.right[0], element_num);
         }
     }

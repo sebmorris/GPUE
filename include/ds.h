@@ -99,7 +99,8 @@ struct EqnNode{
 
     EqnNode *left, *right;
 
-    fnPtr op = NULL;
+    int op_num;
+    bool has_op = false;
 };
 
 // For ease of allocating, we will store the entire GPU tree into an array that
