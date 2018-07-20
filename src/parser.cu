@@ -48,7 +48,6 @@ Grid parseArgs(int argc, char** argv){
     par.store("write_file", true);
     par.store("fudge", 0.0);
     par.store("kill_idx", -1);
-    par.store("DX",0.0);
     par.store("mask_2d", 1.5e-4);
     par.store("box_size", -0.01);
     par.store("found_sobel", false);
@@ -439,13 +438,6 @@ Grid parseArgs(int argc, char** argv){
                 int kill_idx = atoi(optarg);
                 printf("Argument for kill_idx is %d\n",kill_idx);
                 par.store("kill_idx",kill_idx);
-                break;
-            }
-            case 'D':
-            {
-                double DX = atof(optarg);
-                printf("Argument for DX is %lf\n",DX);
-                par.store("DX",DX);
                 break;
             }
 

@@ -56,7 +56,7 @@ void parameter_test();
 void parser_test();
 
 // Testing the evolve_2d function in evolution.cu
-void evolve_2d_test();
+void evolve_test();
 
 // Testing the parSum function
 void parSum_test();
@@ -100,7 +100,7 @@ void test_all(){
 
     // Do not uncomment these 2
     //parser_test();
-    //evolve_2d_test();
+    //evolve_test();
 
     grid_test2d();
     grid_test3d();
@@ -534,7 +534,7 @@ void grid_test2d(){
 
     std::cout << "testing grid / threads and stuff" << '\n';
 
-    int max_threads = 128;
+    int max_threads = 256;
 
     int xDim = 1024;
     int yDim = 1024;
@@ -548,6 +548,14 @@ void grid_test2d(){
     dim3 block;
     dim3 grid;
 
+    Grid par;
+    par.store("xDim",xDim);
+    par.store("yDim",yDim);
+    par.store("zDim",zDim);
+    par.store("dimnum", 2);
+
+    generate_grid(par);
+
     if (xDim <= max_threads){
         block.x = xDim;
         block.y = 1;
@@ -582,6 +590,19 @@ void grid_test2d(){
     grid.y=yD; 
     grid.z=zD; 
 
+    if (grid.x != par.grid.x || block.x != par.threads.x ||
+        grid.y != par.grid.y || block.y != par.threads.y ||
+        grid.z != par.grid.z || block.z != par.threads.z){
+        std::cout << "Gridding test 2D failed! Improper generation of threads!"
+                  << '\n';
+        assert(grid.x == par.grid.x);
+        assert(grid.y == par.grid.y);
+        assert(grid.z == par.grid.z);
+        assert(block.x == par.threads.x);
+        assert(block.y == par.threads.y);
+        assert(block.z == par.threads.z);
+    }
+
     int total_threads = block.x * block.y * block.z;
 
     // Now we need to initialize our double * and send it to the gpu
@@ -608,15 +629,17 @@ void grid_test2d(){
                cudaMemcpyDeviceToHost);
     
     
-/*
-    for (int i = 0; i < gsize; i++){
-        std::cout << i << '\t' <<  host_array[i] << '\n';
+    for (int i = 0; i < xDim; ++i){
+        for (int j = 0; j < yDim; ++j){
+            int index = i*yDim + j;
+            if (host_array[index] != index){
+                std::cout << "Threadding values improperly set!\n";
+                assert(host_array[index] == index);
+            }
+        }
     }
-*/
-    std::cout << "1024 x 1024 is: " << host_array[gsize-1] << '\n';
-    assert(host_array[gsize-1] == 1024*1024-1);
 
-    std::cout << "2d grid tests completed. now for 3d cases" << '\n';
+    std::cout << "2d grid tests completed. Now for 3d cases" << '\n';
 
 }
 
@@ -625,7 +648,7 @@ void grid_test3d(){
 
     std::cout << "testing grid / threads and stuff for 3d" << '\n';
 
-    int max_threads = 128;
+    int max_threads = 256;
 
     int xDim = 256;
     int yDim = 256;
@@ -639,6 +662,15 @@ void grid_test3d(){
     dim3 block;
     dim3 grid;
 
+    Grid par;
+    par.store("xDim",xDim);
+    par.store("yDim",yDim);
+    par.store("zDim",zDim);
+    par.store("dimnum", 3);
+
+    generate_grid(par);
+
+
     if (xDim <= max_threads){
         block.x = xDim;
         block.y = 1;
@@ -673,6 +705,20 @@ void grid_test3d(){
     grid.y=yD; 
     grid.z=zD; 
 
+    if (grid.x != par.grid.x || block.x != par.threads.x ||
+        grid.y != par.grid.y || block.y != par.threads.y ||
+        grid.z != par.grid.z || block.z != par.threads.z){
+        std::cout << "Gridding test 3D failed! Improper generation of threads!"
+                  << '\n';
+        assert(grid.x == par.grid.x);
+        assert(grid.y == par.grid.y);
+        assert(grid.z == par.grid.z);
+        assert(block.x == par.threads.x);
+        assert(block.y == par.threads.y);
+        assert(block.z == par.threads.z);
+    }
+
+
     int total_threads = block.x * block.y * block.z;
 
     // Now we need to initialize our double * and send it to the gpu
@@ -699,13 +745,17 @@ void grid_test3d(){
                cudaMemcpyDeviceToHost);
     
     
-/*
-    for (int i = 0; i < gsize; i++){
-        std::cout << i << '\t' <<  host_array[i] << '\n';
+    for (int i = 0; i < xDim; ++i){
+        for (int j = 0; j < yDim; ++j){
+            for (int k = 0; k < zDim; ++k){
+                int index = i*yDim*zDim + j*yDim + k;
+                if (host_array[index] != index){
+                    std::cout << "Threadding values improperly set!\n";
+                    assert(host_array[index] == index);
+                }
+            }
+        }
     }
-*/
-    std::cout << "256x256x256 is: " << host_array[gsize-1] << '\n';
-    assert(host_array[gsize-1] == 256*256*256-1);
 
     std::cout << "3d grid tests completed. now for 3d cases" << '\n';
 
@@ -722,7 +772,7 @@ void parSum_test(){
 
     // 2D test first
 
-    // For now, we will assume an 8x8 array for summing
+    // For now, we will assume an 64x64 array for summing
     dim3 threads(16, 1, 1);
     int total_threads = threads.x*threads.y*threads.z;
 
@@ -923,7 +973,6 @@ void parser_test(){
     assert(noarg_grid.bval("write_file") == true);
     assert(noarg_grid.dval("fudge") == 1.0);
     assert(noarg_grid.ival("kill_idx") == -1);
-    assert(noarg_grid.dval("DX") == 0.0);
     assert(noarg_grid.dval("mask_2d") == 1.5e-4);
     assert(noarg_grid.dval("box_size") == 2.5e-5);
     assert(noarg_grid.bval("found_sobel") == false);
@@ -1025,7 +1074,6 @@ void parser_test(){
     assert(fullarg_grid.bval("write_file") == false);
     assert(fullarg_grid.dval("fudge") == 1.0);
     assert(fullarg_grid.ival("kill_idx") == 0);
-    assert(fullarg_grid.dval("DX") == 0.0);
     assert(fullarg_grid.dval("mask_2d") == 1.5e-4);
     assert(fullarg_grid.dval("box_size") == 2.5e-5);
     assert(fullarg_grid.bval("found_sobel") == false);
@@ -1039,303 +1087,17 @@ void parser_test(){
 
 }
 
-// Testing the evolve_2d function in evolution.cu
-void evolve_2d_test(){
-    // First, we need to create all the necessary data structures for the
-    // The evolve_2d function, FOLLOWING INIT.CU
+// Testing the evolve function in evolution.cu
+// This test will also test the energy function
+// Run the simulation in imaginary time for a simple harmonic oscillator and 
+//     check energies in 1, 2, and 3D.
+// Run the simulation in real time to make sure the energy remains the same
+void evolve_test(){
 
-    std::cout << "Testing the evolve_2d function" << '\n';
-
-    // Note: the omega_z value (-o flag) is arbitrary
-    char * fake_argv[] = {strdup("./gpue"), 
-                          strdup("-C"), strdup("0"), 
-                          strdup("-e"), strdup("2.01e4"), 
-                          strdup("-G"), strdup("1.0"), 
-                          strdup("-g"), strdup("0"), 
-                          strdup("-i"), strdup("1.0"), 
-                          strdup("-k"), strdup("0"), 
-                          strdup("-L"), strdup("0"), 
-                          strdup("-n"), strdup("1e6"), 
-                          strdup("-O"), strdup("0.0"), 
-                          strdup("-Z"), strdup("10.0"), 
-                          strdup("-P"), strdup("0.0"), 
-                          strdup("-p"), strdup("1000"), 
-                          strdup("-S"), strdup("0.0"), 
-                          strdup("-T"), strdup("1e-4"), 
-                          strdup("-t"), strdup("1e-4"), 
-                          strdup("-U"), strdup("0"), 
-                          strdup("-V"), strdup("0"), 
-                          strdup("-w"), strdup("0.0"), 
-                          strdup("-X"), strdup("1.0"), 
-                          strdup("-x"), strdup("256"), 
-                          strdup("-Y"), strdup("1.0"), 
-                          strdup("-y"), strdup("256"), 
-                          strdup("-W"), 
-                          strdup("-D"), strdup("data"), NULL};
-    int fake_argc = sizeof(fake_argv) / sizeof(char *) - 1;
-
-    // Now to read into gpue and see what happens
+    // first setting up the 1D test.
     Grid par;
-    par = parseArgs(fake_argc, fake_argv);
-
-    std::cout << "omegaX is: " << par.dval("omegaX") << '\n';
-    std::cout << "x / yDim are: " << par.ival("xDim") << '\t' 
-              << par.ival("yDim") << '\n';
-    int device = par.ival("device");
-    cudaSetDevice(device);
-
-    std::string buffer;
-
-    //************************************************************//
-    /*
-    * Initialise the Params data structure to track params and variables
-    */
-    //************************************************************//
-
+    par.store("dimnum",1);
     init(par);
-
-    // Re-establishing variables from parsed Grid class
-    double dx = par.dval("dx");
-    double dy = par.dval("dy");
-    double *x = par.dsval("x");
-    double *y = par.dsval("y");
-    double *V_opt = par.dsval("V_opt");
-    double *pAy = par.dsval("pAy");
-    double *pAx = par.dsval("pAx");
-    double *pAy_gpu = par.dsval("pAy_gpu");
-    double *pAx_gpu = par.dsval("pAx_gpu");
-    int xDim = par.ival("xDim");
-    int yDim = par.ival("yDim");
-    bool read_wfc = par.bval("read_wfc");
-    int gsteps = par.ival("gsteps");
-    int esteps = par.ival("esteps");
-    cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
-    cufftDoubleComplex *V_gpu = par.cufftDoubleComplexval("V_gpu");
-    cufftDoubleComplex *GK = par.cufftDoubleComplexval("GK");
-    cufftDoubleComplex *GV = par.cufftDoubleComplexval("GV");
-    cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
-    cufftDoubleComplex *EK = par.cufftDoubleComplexval("EK");
-    cufftDoubleComplex *EpAy = par.cufftDoubleComplexval("EpAy");
-    cufftDoubleComplex *EpAx = par.cufftDoubleComplexval("EpAx");
-    cufftDoubleComplex *GpAx = par.cufftDoubleComplexval("GpAx");
-    cufftDoubleComplex *GpAy = par.cufftDoubleComplexval("GpAy");
-    cufftDoubleComplex *wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
-    cufftDoubleComplex *K_gpu = par.cufftDoubleComplexval("K_gpu");
-    cufftDoubleComplex *par_sum = par.cufftDoubleComplexval("par_sum");
-    cudaError_t err;
-
-    std::cout << "variables re-established" << '\n';
-    std::cout << read_wfc << '\n';
-
-    std::cout << "omegaY is: " << par.ival("omegaY") << '\t'
-              << "omegaX is: " << par.dval("omegaX") << '\n';
-
-/*
-    for (int i = 0; i < xDim * yDim; ++i){
-        std::cout << i << '\t' << wfc[i].x << '\t' << wfc[i].y << '\n';
-    }
-*/
-
-    std::cout << "gsteps: " << gsteps << '\n';
-   
-    if(gsteps > 0){
-        err=cudaMemcpy(K_gpu, GK, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy K_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(V_gpu, GV, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy V_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(pAy_gpu, GpAy, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy pAy_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(pAx_gpu, GpAx, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy pAx_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(wfc_gpu, wfc, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy wfc_gpu to device" << '\n';
-            exit(1);
-        }
-    
-        evolve_2d(par, par_sum, gsteps, 0, buffer);
-        wfc = par.cufftDoubleComplexval("wfc");
-        wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
-        cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*xDim*yDim,
-                   cudaMemcpyDeviceToHost);
-    }
-
-    std::cout << GV[0].x << '\t' << GK[0].x << '\t'
-              << pAy[0] << '\t' << pAx[0] << '\n';
-
-    //free(GV); free(GK); free(pAy); free(pAx);
-
-    // Re-initializing wfc after evolution
-    wfc = par.cufftDoubleComplexval("wfc");
-    wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
-
-    std::cout << "evolution started..." << '\n';
-    std::cout << "esteps: " << esteps << '\n';
-
-    //************************************************************//
-    /*
-    * Evolution
-    */
-    //************************************************************//
-    if(esteps > 0){
-        err=cudaMemcpy(pAy_gpu, EpAy, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy pAy_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(pAx_gpu, EpAx, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy pAx_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(K_gpu, EK, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy K_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(V_gpu, EV, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy V_gpu to device" << '\n';
-            exit(1);
-        }
-        err=cudaMemcpy(wfc_gpu, wfc, sizeof(cufftDoubleComplex)*xDim*yDim,
-                       cudaMemcpyHostToDevice);
-        if(err!=cudaSuccess){
-            std::cout << "ERROR: Could not copy wfc_gpu to device" << '\n';
-            exit(1);
-        }
-
-        evolve_2d(par, par_sum,
-               esteps, 1, buffer);
-
-    }
-
-    std::cout << "done evolving, checking result" << '\n';
-
-    // At this point, we have a wavefunction that is testable, which we will be
-    // doing in much the same way as in the linear/perf branch of GPUE.
-    // For this, we must recreate the en.py file in a testable format in cpp
-    // Note that we could be using the GPUs for this, but because it is a unit
-    // test and we do not care that much about perfomance, we will be using the 
-    // CPU instead. We may later add in the appropriate GPU kernels.
-
-    // We first need to grab the wavefunctions from the evolve_2d function
-    // After evolution
-    wfc = par.cufftDoubleComplexval("wfc");
-    wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
-    unsigned int gSize = xDim * yDim;
-
-    // Now to grab K and V, note that these are different than the values used 
-    // for K / V_gpu or for E / G K / V in the evolve_2d function
-    // The additional 0 in the gpu variable name indicate this (sorry)
-    double *K_0_gpu = par.dsval("K");
-    double *K = par.dsval("K");
-    double *V_0_gpu = par.dsval("V");
-    double *V = par.dsval("V");
-
-    // Now we need som CUDA specific variables for the kernels later on...
-    int threads = par.ival("threads");
-    dim3 grid = par.grid;
-
-    // Momentum-space (p) wavefunction
-    double2 *wfc_p = wfc;
-    double2 *wfc_p_gpu = wfc_gpu;
-
-    // Conjugate (c) wavefunction
-    double2 *wfc_c = wfc;
-    double2 *wfc_c_gpu = wfc_gpu;
-
-    // Energies
-    double2 *Energy_1, *Energy_2, *Energy_k, *Energy_v;
-    Energy_1 = wfc_gpu;
-    Energy_2 = wfc_gpu;
-
-    // Plan for 2d FFT
-    cufftHandle plan_2d = par.ival("plan_2d");
-
-    std::cout << "allocating space on device..." << '\n';
-
-    // Allocating space on GPU
-    cudaMalloc((void **) &wfc_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void **) &K_0_gpu, sizeof(double) * gSize);
-    cudaMalloc((void **) &V_0_gpu, sizeof(double) * gSize);
-    cudaMalloc((void **) &wfc_p_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void **) &wfc_c_gpu, sizeof(cufftDoubleComplex) * gSize);
-    cudaMalloc((void **) &par_sum, sizeof(cufftDoubleComplex)*(gSize/threads));
-
-    std::cout << "copying contents... " << '\n';
-
-    // Copy variables over to device
-    cudaMemcpy(wfc_gpu, wfc, sizeof(cufftDoubleComplex) * gSize,
-               cudaMemcpyHostToDevice);
-    std::cout << "wfc copied..." << '\n';
-    cudaMemcpy(K_0_gpu, K, sizeof(cufftDoubleComplex) * gSize,
-               cudaMemcpyHostToDevice);
-    std::cout << "K copied..." << '\n';
-    cudaMemcpy(V_0_gpu, GV, sizeof(cufftDoubleComplex) * gSize,
-               cudaMemcpyHostToDevice);
-    std::cout << "V copied..." << '\n';
-    cudaMemcpy(wfc_p_gpu, wfc_p, sizeof(cufftDoubleComplex) * gSize,
-               cudaMemcpyHostToDevice);
-    std::cout << "wfc_p copied..." << '\n';
-    cudaMemcpy(wfc_c_gpu, wfc_c, sizeof(cufftDoubleComplex) * gSize,
-               cudaMemcpyHostToDevice);
-    std::cout << "wfc_c copied..." << '\n';
-
-    std::cout << "performing energy calculations..." << '\n';
-
-
-    // In the example python code, it was necessary to reshape everything, 
-    // But let's see what happens if I don't do that here...
-
-    // FFT for the wfc in momentum-space
-    cufftExecZ2Z(plan_2d, wfc_gpu, wfc_p, CUFFT_FORWARD);
-
-    // Conjugate for the wfc
-    vecConjugate<<<grid,threads>>>(wfc_gpu, wfc_c);
-
-    // K * wfc
-    vecMult<<<grid,threads>>>(wfc_gpu,K_0_gpu,wfc_p);
-    cufftExecZ2Z(plan_2d, wfc_p, Energy_1, CUFFT_INVERSE); 
-
-    vecMult<<<grid,threads>>>(wfc_gpu, V_0_gpu, Energy_2);
-
-/*
-    for (int i = 0; i < xDim * yDim; ++i){
-        std::cout << Energy_1[i].y << '\t' << Energy_2[i].x << '\n';
-    }
-*/
-
-    //std::cout << wfc_gpu[0].x << '\t' << wfc_gpu[0].y << '\n';
-
-    free(EV); free(EK); free(EpAy); free(EpAx);
-    free(x);free(y);
-    cudaFree(wfc_gpu); cudaFree(K_gpu); cudaFree(V_gpu); cudaFree(pAx_gpu);
-    cudaFree(pAy_gpu); cudaFree(par_sum);
-
-    std::cout << "Evolution test complete." << '\n';
-    std::cout << "EVOLUTION TEST UNFINISHED!" << '\n';
     
 }
 

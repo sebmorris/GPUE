@@ -21,7 +21,6 @@ void evolve_2d(Grid &par,
     double interaction = par.dval("interaction");
     double laser_power = par.dval("laser_power");
     double gDenConst = par.dval("gDenConst");
-    double DX = par.dval("DX");
     double mask_2d = par.dval("mask_2d");
     double *x = par.dsval("x");
     double *y = par.dsval("y");
