@@ -5,6 +5,7 @@
 #------------------------------------------------------------------------------#
 
 import numpy as np
+import math
 
 #xDim = yDim = zDim = 128
 xDim = yDim = zDim = 256
@@ -118,6 +119,26 @@ def var(xDim, yDim, zDim, data_dir, pltval):
     for i in range(0,len(lines)):
         lines[i] = (lines[i] - minimum) / (maximum - minimum)
     val = np.reshape(lines, (xDim,yDim,zDim));
+    return val
+
+def var_r2(xDim, yDim, zDim, data_dir):
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+    data_ax = data_dir + "/Ax_0"
+    data_ay = data_dir + "/Ay_0"
+
+    lines_ax = np.loadtxt(data_ax)
+    lines_ay = np.loadtxt(data_ay)
+
+    lines_out = [0 for i in range(len(lines_ax))]
+    for i in range(0,len(lines_ax)):
+        lines_out[i] = np.sqrt(lines_ay[i]**2 + lines_ax[i]**2)
+
+    maximum = max(lines_out)
+    minimum = min(lines_out)
+    for i in range(0,len(lines_out)):
+        lines_out[i] = (lines_out[i] - minimum) / (maximum - minimum)
+    val = np.reshape(lines_out, (xDim,yDim,zDim));
     return val
 
 def proj_var2d(xdim, yDim, zDim, data_dir, pltval):

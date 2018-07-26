@@ -252,23 +252,24 @@ void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
 **/
 double energy_angmom(double2 *V_op, double2 *K_op,
                      double2 *gpuWfc, int gState, Grid &par){
+    bool corotating = par.bval("corotating");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
-    int zDim = 1;
+    int zDim = par.ival("zDim");
     double dx = par.dval("dx");
     double dy = par.dval("dy");
-    double dz = 1;
+    double dz = par.dval("dz");
 
-    // in case of 3d
-    if (par.ival("dimnum") == 3){
-        zDim = par.ival("zDim");
-        dz = par.dval("dz");
-    }
+    std::cout << dx << '\t' << dy << '\t' << dz << '\t' << xDim << '\t' 
+              << yDim << '\t' << zDim << '\n';
+
     int gSize = xDim * yDim * zDim;
     double dt = par.dval("dt");
     double gDenConst = par.dval("gDenConst");
 
     double mass = par.dval("mass");
+    double omegaX = par.dval("omegaX");
+    double omegaY = par.dval("omegaY");
     double omegaZ = par.dval("omegaZ");
 
     dim3 threads = par.threads;
@@ -279,6 +280,9 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     cufftResult result;
     cudaError_t err;
 
+    if (par.ival("dimnum") == 1){
+        plan = par.ival("plan_1d");
+    }
     if (par.ival("dimnum") == 2){
         plan = par.ival("plan_2d");
     }
@@ -286,18 +290,19 @@ double energy_angmom(double2 *V_op, double2 *K_op,
         plan = par.ival("plan_3d");
     }
 
-
-    double renorm_factor_2d=1.0/pow(gSize,0.5);
+    double renorm_factor=1.0/pow(gSize,0.5);
     double out;
 
     // now allocating space on CPU and GPU for energy
-    double2 *energy, *energy_gpu, *tmp_wfc;
+    double2 *energy, *energy_gpu, *tmp_wfc, *wfc_c;
 
     energy = (double2*)malloc(sizeof(double2)*gSize);
-    //tmp_wfc = (double2*)malloc(sizeof(double2)*gSize);
 
     cudaMalloc((void**) &energy_gpu, sizeof(double2)*gSize);
     cudaMalloc((void**) &tmp_wfc, sizeof(double2)*gSize);
+    cudaMalloc((void**) &wfc_c, sizeof(double2)*gSize);
+
+    vecConjugate<<<grid, threads>>>(gpuWfc, wfc_c);
 
     for (int i=0; i < gSize; ++i){
         energy[i].x = 0.0; 
@@ -308,16 +313,28 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     cudaMemcpy(energy_gpu, energy, sizeof(double2)*gSize,
                cudaMemcpyHostToDevice);
 
-    energyCalc<<<grid,threads>>>( tmp_wfc, V_op, 0.5*dt, energy_gpu, gState,1,
-                                  0.5*sqrt(omegaZ/mass), gDenConst);
+    int op_space = 2;
+
     result = cufftExecZ2Z( plan, gpuWfc, tmp_wfc, CUFFT_FORWARD );
 
-    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor_2d, tmp_wfc);//Normalise
-    energyCalc<<<grid,threads>>>( tmp_wfc, K_op, dt, energy_gpu, gState,0, 
-                                  0.5*sqrt(omegaZ/mass), gDenConst);
+    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor, tmp_wfc);//Normalise
+
+    energyCalc<<<grid,threads>>>(tmp_wfc, K_op, dt, energy_gpu, gState,1,
+                                 0.5*sqrt(omegaZ/mass), gDenConst);
     result = cufftExecZ2Z( plan, tmp_wfc, tmp_wfc, CUFFT_INVERSE );
-    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor_2d, tmp_wfc);//Normalise
-    
+
+    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor, tmp_wfc);//Normalise
+
+    if (corotating){
+        op_space = 0;
+    }
+    else{
+        op_space = 1;
+    }
+
+    energyCalc<<<grid,threads>>>(gpuWfc, V_op, dt, energy_gpu, gState,op_space,
+                                 0.5*sqrt(omegaZ/mass), gDenConst);
+
     err=cudaMemcpy(energy, energy_gpu, 
                    sizeof(cufftDoubleComplex)*gSize, 
                    cudaMemcpyDeviceToHost);
@@ -326,9 +343,8 @@ double energy_angmom(double2 *V_op, double2 *K_op,
         exit(1);
     }
     
-    for(int i=0; i<gSize; i++){
+    for(int i=0; i < gSize; i++){
         out += energy[i].x + energy[i].y;
-        //printf("En=%E\n",result*dx*dy*dz);
     }
 
     cudaFree(energy_gpu);

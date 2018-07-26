@@ -100,7 +100,6 @@ void test_all(){
 
     // Do not uncomment these 2
     //parser_test();
-    //evolve_test();
 
     grid_test2d();
     grid_test3d();
@@ -111,7 +110,8 @@ void test_all(){
     //vortex3d_test();
     make_complex_test();
     cMultPhi_test();
-    cMultDens_test();
+    evolve_test();
+    //cMultDens_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
 }
@@ -1094,10 +1094,110 @@ void parser_test(){
 // Run the simulation in real time to make sure the energy remains the same
 void evolve_test(){
 
-    // first setting up the 1D test.
+    std::cout << "Starting test of evolution function in nD...\n";
+
+    // Setting default values
     Grid par;
-    par.store("dimnum",1);
-    init(par);
+
+    par.store("xDim", 256);
+    par.store("omega", 0.0);
+    par.store("gammaY", 1.0);
+    par.store("gdt", 1e-4);
+    par.store("dt", 1e-4);
+    par.store("device", 0);
+    par.store("atoms", 1);
+    par.store("read_wfc", false);
+    par.store("winding", 0.0);
+    par.store("corotating", false);
+    par.store("gpe", false);
+    par.store("omegaZ", 6.283);
+    par.store("interaction",1.0);
+    par.store("laser_power",0.0);
+    par.store("angle_sweep",0.0);
+    par.store("kick_it", 0);
+    par.store("x0_shift",0.0);
+    par.store("y0_shift",0.0);
+    par.store("z0_shift",0.0);
+    par.store("sepMinEpsilon",0.0);
+    par.store("graph", false);
+    par.store("unit_test",false);
+    par.store("omegaX", 6.283);
+    par.store("omegaY", 6.283);
+    par.store("data_dir", (std::string)"data/");
+    par.store("ramp", false);
+    par.store("ramp_type", 1);
+    par.store("dimnum", 2);
+    par.store("fudge", 0.0);
+    par.store("kill_idx", -1);
+    par.store("mask_2d", 1.5e-4);
+    par.store("box_size", -0.01);
+    par.store("found_sobel", false);
+    par.store("use_param_file", false);
+    par.store("param_file","param.cfg");
+    par.store("cyl_coord",false);
+    par.Afn = "rotation";
+    par.Kfn = "rotation_K";
+    par.Vfn = "2d";
+    par.Wfcfn = "2d";
+    par.store("conv_type", (std::string)"FFT");
+    par.store("charge", 0);
+    par.store("flip", false);
+    par.store("thresh_const", 1.0);
+
+
+    double thresh = 0.0001;
+    std::string buffer;
+    int gsteps = 1001;
+    int esteps = 1001;
+    par.store("esteps", esteps);
+    par.store("gsteps", gsteps);
+    par.store("printSteps", 1000);
+    par.store("write_file", false);
+    par.store("write_it", true);
+    par.store("energy_calc", true);
+    par.store("yDim", 1);
+    par.store("zDim", 1);
+
+    // Running through all the dimensions to check the energy
+    for (int i = 1; i <= 3; ++i){
+        if (i == 2){
+            par.store("yDim", 256);
+        }
+        if (i == 3){
+            par.store("zDim", 256);
+        }
+        par.store("dimnum",i);
+        init(par);
+
+        double omegaX = par.dval("omegaX");
+        double2 *par_sum = par.cufftDoubleComplexval("par_sum");
+        set_variables(par, 0);
+
+        // Evolve and find the energy
+        evolve(par, par_sum, gsteps, 0, buffer);
+
+        // Check that the energy is correct
+        double energy = par.dval("energy");
+        double energy_check = 0;
+        energy_check = (double)i * 0.5 * HBAR * omegaX;
+
+        if (abs(energy - energy_check) > thresh*energy_check){
+            std::cout << "Energy is not correct in imaginary-time for " 
+                      << i << "D!\n";
+            assert(energy == energy_check);
+        }
+
+        // Run in real time to make sure that the energy is constant
+        set_variables(par, 1);
+        evolve(par, par_sum, esteps, 1, buffer);
+        double energy_ev = par.dval("energy");
+
+        if (abs(energy - energy_ev) > thresh*energy_check){
+            std::cout << "Energy is not constant in real-time for " 
+                      << i << "D!\n";
+            assert(energy == energy_ev);
+        }
+    }
     
 }
 

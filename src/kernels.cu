@@ -472,16 +472,23 @@ __global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy
     double g_local = 0.0;
     double2 result;
     double opLocal;
-    if(op_space)
+    if(op_space == 0){
         g_local = gDenConst*sqrt_omegaz_mass*complexMagnitudeSquared(wfc[gid]);
+    }
+
     if(!gnd_state){
         opLocal = -log(op[gid].x + g_local)*hbar_dt;
     }
     else{
-        opLocal = cos(op[gid].x + g_local)*hbar_dt;
+        opLocal = acos(op[gid].x + g_local)*hbar_dt;
     }
-    result = braKetMult(wfc[gid], realCompMult(opLocal,wfc[gid]));
-    //printf("oplocal=%e    Resx=%e    Resy=%e\n",opLocal,result.x,result.y);
+
+    if (op_space < 2){
+        result = braKetMult(wfc[gid], realCompMult(opLocal,wfc[gid]));
+    }
+    else{
+        result = realCompMult(opLocal,wfc[gid]);
+    }
     energy[gid].x += result.x;
     energy[gid].y += result.y;
 }
