@@ -131,6 +131,11 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     dim3 thread_tmp = threads;
     int pass = 0;
 
+    cufftDoubleComplex *density;
+    cudaMalloc((void**) &density, sizeof(double2)*gsize);
+
+    complexMagnitudeSquared<<<par.grid, par.threads>>>(gpuWfc, density);
+
 /*
     std::cout << "grid / threads = " << '\t'
               << (double)grid_tmp.x/threads.x << '\n'
@@ -140,7 +145,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
         if(pass == 0){
-            multipass<<<block,threads,threads.x*sizeof(double2)>>>(&gpuWfc[0],
+            multipass<<<block,threads,threads.x*sizeof(double2)>>>(&density[0],
                 &gpuParSum[0],pass);
         }
         else{
@@ -162,9 +167,7 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     sum = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex)*gsize / threads.x);
     cudaMemcpy(sum,gpuParSum,sizeof(cufftDoubleComplex)*gsize/threads.x,
                cudaMemcpyDeviceToHost);
-    for (int i = 0; i < gsize/threads.x; i++){
-        std::cout << sum[i].x << '\n';
-    }
+    std::cout << sqrt((sum[0].x + sum[0].y)*dg) << '\n';
 */
     scalarDiv_wfcNorm<<<grid,threads>>>(gpuWfc, dg, gpuParSum, gpuWfc);
 }
@@ -250,8 +253,7 @@ void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
 ** Calculates energy and angular momentum of current state.
 ** Implementation not fully finished.
 **/
-double energy_angmom(double2 *V_op, double2 *K_op,
-                     double2 *gpuWfc, int gState, Grid &par){
+double energy_angmom(double2 *gpuWfc, int gState, Grid &par){
     bool corotating = par.bval("corotating");
     int xDim = par.ival("xDim");
     int yDim = par.ival("yDim");
@@ -294,15 +296,14 @@ double energy_angmom(double2 *V_op, double2 *K_op,
     double out;
 
     // now allocating space on CPU and GPU for energy
-    double2 *energy, *energy_gpu, *tmp_wfc, *wfc_c;
+    double2 *energy, *energy_gpu, *tmp_wfc, *op;
 
     energy = (double2*)malloc(sizeof(double2)*gSize);
 
     cudaMalloc((void**) &energy_gpu, sizeof(double2)*gSize);
     cudaMalloc((void**) &tmp_wfc, sizeof(double2)*gSize);
-    cudaMalloc((void**) &wfc_c, sizeof(double2)*gSize);
+    cudaMalloc((void**) &op, sizeof(double2)*gSize);
 
-    vecConjugate<<<grid, threads>>>(gpuWfc, wfc_c);
 
     for (int i=0; i < gSize; ++i){
         energy[i].x = 0.0; 
@@ -319,11 +320,13 @@ double energy_angmom(double2 *V_op, double2 *K_op,
 
     scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor, tmp_wfc);//Normalise
 
-    energyCalc<<<grid,threads>>>(tmp_wfc, K_op, dt, energy_gpu, gState,1,
-                                 0.5*sqrt(omegaZ/mass), gDenConst);
-    result = cufftExecZ2Z( plan, tmp_wfc, tmp_wfc, CUFFT_INVERSE );
+    op = par.cufftDoubleComplexval("K_gpu");
 
-    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor, tmp_wfc);//Normalise
+    energyCalc<<<grid,threads>>>(tmp_wfc, op, dt, energy_gpu, gState,op_space,
+                                 0.5*sqrt(omegaZ/mass), gDenConst);
+    result = cufftExecZ2Z( plan, energy_gpu, energy_gpu, CUFFT_INVERSE );
+
+    scalarMult<<<grid,threads>>>(energy_gpu, renorm_factor, energy_gpu);
 
     if (corotating){
         op_space = 0;
@@ -332,7 +335,9 @@ double energy_angmom(double2 *V_op, double2 *K_op,
         op_space = 1;
     }
 
-    energyCalc<<<grid,threads>>>(gpuWfc, V_op, dt, energy_gpu, gState,op_space,
+    op = par.cufftDoubleComplexval("V_gpu");
+
+    energyCalc<<<grid,threads>>>(gpuWfc, op, dt, energy_gpu, gState,op_space,
                                  0.5*sqrt(omegaZ/mass), gDenConst);
 
     err=cudaMemcpy(energy, energy_gpu, 

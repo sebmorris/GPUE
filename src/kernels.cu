@@ -173,6 +173,12 @@ __global__ void complexMagnitudeSquared(double2 *in, double *out){
     out[gid] = in[gid].x*in[gid].x + in[gid].y*in[gid].y;
 }
 
+__global__ void complexMagnitudeSquared(double2 *in, double2 *out){
+    int gid = getGid3d3d();
+    out[gid].x = in[gid].x*in[gid].x + in[gid].y*in[gid].y;
+    out[gid].y = 0;
+}
+
 __host__ __device__ double2 complexMultiply(double2 in1, double2 in2){
     double2 result;
     result.x = (in1.x*in2.x - in1.y*in2.y);
@@ -417,10 +423,6 @@ __global__ void multipass(double2* input, double2* output, int pass){
     unsigned int gid = getGid3d3d();
     extern __shared__ double2 sdata[];
     sdata[tid] = input[gid];
-    if(pass == 0){
-        sdata[tid].x *= sdata[tid].x;
-        sdata[tid].y *= sdata[tid].y;    
-    }
     __syncthreads();
     for(int i = blockDim.x>>1; i > 0; i>>=1){
         if(tid < i){
@@ -468,29 +470,25 @@ __global__ void multipass(double* input, double* output, int pass){
 */
 __global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy, int gnd_state, int op_space, double sqrt_omegaz_mass, double gDenConst){
     unsigned int gid = getGid3d3d();
-    double hbar_dt = HBAR/dt;
-    double g_local = 0.0;
+    //double hbar_dt = HBAR/dt;
     double2 result;
-    double opLocal;
     if(op_space == 0){
-        g_local = gDenConst*sqrt_omegaz_mass*complexMagnitudeSquared(wfc[gid]);
-    }
-
-    if(!gnd_state){
-        opLocal = -log(op[gid].x + g_local)*hbar_dt;
-    }
-    else{
-        opLocal = acos(op[gid].x + g_local)*hbar_dt;
+        double g_local = gDenConst*sqrt_omegaz_mass*complexMagnitudeSquared(wfc[gid]);
+        op[gid].x += g_local;
     }
 
     if (op_space < 2){
-        result = braKetMult(wfc[gid], realCompMult(opLocal,wfc[gid]));
+        result = braKetMult(wfc[gid], energy[gid]);
+        energy[gid].x += result.x;
+        energy[gid].y += result.y;
     }
     else{
-        result = realCompMult(opLocal,wfc[gid]);
+        result = complexMultiply(op[gid],wfc[gid]);
     }
+    result = braKetMult(wfc[gid], complexMultiply(op[gid],wfc[gid]));
     energy[gid].x += result.x;
     energy[gid].y += result.y;
+
 }
 
 // Kernel for 2d transpose, note global for now...

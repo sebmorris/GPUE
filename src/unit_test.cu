@@ -780,9 +780,9 @@ void parSum_test(){
     par.store("xDim", 64);
     par.store("yDim", 64);
     par.store("zDim", 1);
-    par.store("dx",1.0);
-    par.store("dy",1.0);
-    par.store("dz",1.0);
+    par.store("dx",0.1);
+    par.store("dy",0.1);
+    par.store("dz",0.1);
     par.threads = threads;
 
     // Now we need to initialize the grid for the getGid3d3d kernel
@@ -801,8 +801,8 @@ void parSum_test(){
 
     // init wfc
     for (int i = 0; i < gsize; i++){
-        wfc[i].x = 1;
-        wfc[i].y = 0;
+        wfc[i].x = 2;
+        wfc[i].y = 2;
     }
 
     double2 *gpu_wfc;
@@ -833,14 +833,15 @@ void parSum_test(){
         exit(1);
     }
 
-    // The output value should be 4096
+    // The output value should be 8192
     std::cout << "2d parSum is:" << '\n';
     std::cout << host_sum[0].x << " + " << host_sum[0].y << " i" << '\n';
 
-    if (host_sum[0].x != 4096){
+    if (host_sum[0].x != 32768 || host_sum[0].y != 0){
         std::cout << "parSum 2d test has failed! Sum is: "
                   << host_sum[0].x << '\n';
-        assert((int)host_sum[0].x == 4096);
+        assert((int)host_sum[0].x == 8192);
+        assert((int)host_sum[0].y == 8192);
     }
 
     // Now for the 3d case
@@ -849,9 +850,9 @@ void parSum_test(){
     par.store("xDim", 16);
     par.store("yDim", 16);
     par.store("zDim", 16);
-    par.store("dx",1.0);
-    par.store("dy",1.0);
-    par.store("dz",1.0);
+    par.store("dx",0.1);
+    par.store("dy",0.1);
+    par.store("dz",0.1);
 
     // Now we need to initialize the grid for the getGid3d3d kernel
     grid.x = 1;
@@ -878,9 +879,10 @@ void parSum_test(){
     std::cout << "3d parSum is:" << '\n';
     std::cout << host_sum[0].x << " + " << host_sum[0].y << " i" << '\n';
 
-    if (host_sum[0].x != 4096){
+    if (host_sum[0].x != 32768 || host_sum[0].y != 0){
         std::cout << "parSum 3d test has failed!" << '\n';
-        assert((int)host_sum[0].x == 4096);
+        assert((int)host_sum[0].x == 8192);
+        assert((int)host_sum[0].y == 8192);
     }
 
 }
@@ -1105,12 +1107,10 @@ void evolve_test(){
     par.store("gdt", 1e-4);
     par.store("dt", 1e-4);
     par.store("device", 0);
-    par.store("atoms", 1);
     par.store("read_wfc", false);
     par.store("winding", 0.0);
     par.store("corotating", false);
     par.store("gpe", false);
-    par.store("omegaZ", 6.283);
     par.store("interaction",1.0);
     par.store("laser_power",0.0);
     par.store("angle_sweep",0.0);
@@ -1121,8 +1121,6 @@ void evolve_test(){
     par.store("sepMinEpsilon",0.0);
     par.store("graph", false);
     par.store("unit_test",false);
-    par.store("omegaX", 6.283);
-    par.store("omegaY", 6.283);
     par.store("data_dir", (std::string)"data/");
     par.store("ramp", false);
     par.store("ramp_type", 1);
@@ -1130,7 +1128,6 @@ void evolve_test(){
     par.store("fudge", 0.0);
     par.store("kill_idx", -1);
     par.store("mask_2d", 1.5e-4);
-    par.store("box_size", -0.01);
     par.store("found_sobel", false);
     par.store("use_param_file", false);
     par.store("param_file","param.cfg");
@@ -1147,19 +1144,25 @@ void evolve_test(){
 
     double thresh = 0.0001;
     std::string buffer;
-    int gsteps = 1001;
-    int esteps = 1001;
+    int gsteps = 10001;
+    int esteps = 10001;
+
+    par.store("atoms", 1);
+    par.store("omegaZ", 10000000.0);
+    par.store("omegaX", 10000000.0);
+    par.store("omegaY", 10000000.0);
     par.store("esteps", esteps);
     par.store("gsteps", gsteps);
     par.store("printSteps", 1000);
     par.store("write_file", false);
     par.store("write_it", true);
     par.store("energy_calc", true);
+    par.store("box_size", 0.000000001);
     par.store("yDim", 1);
     par.store("zDim", 1);
 
     // Running through all the dimensions to check the energy
-    for (int i = 1; i <= 3; ++i){
+    for (int i = 2; i <= 3; ++i){
         if (i == 2){
             par.store("yDim", 256);
         }

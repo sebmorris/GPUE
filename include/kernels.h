@@ -71,6 +71,7 @@ __global__ void complexMagnitude(double2 *in, double *out);
 */
 __device__ double complexMagnitudeSquared(double2 in);
 __global__ void complexMagnitudeSquared(double2 *in, double *out);
+__global__ void complexMagnitudeSquared(double2 *in, double2 *out);
 /**
 * @brief	Returns conjugate of the a complex number
 * @ingroup	gpu

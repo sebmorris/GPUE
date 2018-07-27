@@ -603,6 +603,8 @@ void generate_fields(Grid &par){
     int dimnum = par.ival("dimnum");
     int winding = par.dval("winding");
 
+    bool energy_calc = par.bval("energy_calc");
+
     double dt = par.dval("dt");
     double gdt = par.dval("gdt");
     double *x_gpu = par.dsval("x_gpu");
@@ -819,8 +821,14 @@ void generate_fields(Grid &par){
     cudaFree(py_gpu);
     cudaFree(pz_gpu);
 
-    cudaFree(K_gpu);
-    cudaFree(V_gpu);
+    if (!energy_calc){
+        cudaFree(K_gpu);
+        cudaFree(V_gpu);
+    }
+    else{
+        par.store("V_gpu", V_gpu);
+        par.store("K_gpu", K_gpu);
+    }
 
     par.store("V",V);
     //par.store("V_gpu",V_gpu);

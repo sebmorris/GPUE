@@ -96,7 +96,6 @@ void optLatSetup(const std::shared_ptr<Vtx::Vortex> centre, const double* V,
 * @param	gState Indicate if imaginary or real time evolution
 * @return	$\langle \Psi | H | \Psi \rangle$
 */
-double energy_angmom(double2 *V_op, double2 *K_op,                     
-                     double2 *gpuWfc, int gState, Grid &par);
+double energy_angmom(double2 *gpuWfc, int gState, Grid &par);
 
 #endif

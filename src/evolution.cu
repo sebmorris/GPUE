@@ -488,8 +488,7 @@ void evolve(Grid &par,
             }
             //std::cout << "written" << '\n';
             if (par.bval("energy_calc")){
-                double energy = energy_angmom(V_gpu,K_gpu, gpuWfc,
-                                              gstate, par);
+                double energy = energy_angmom(gpuWfc,gstate, par);
                 // Now opening and closing file for writing.
                 std::ofstream energy_out;
                 std::string mode = "energyi.dat";
