@@ -1144,20 +1144,20 @@ void evolve_test(){
 
     double thresh = 0.0001;
     std::string buffer;
-    int gsteps = 10001;
-    int esteps = 10001;
+    int gsteps = 20001;
+    int esteps = 20001;
 
     par.store("atoms", 1);
-    par.store("omegaZ", 10000000.0);
-    par.store("omegaX", 10000000.0);
-    par.store("omegaY", 10000000.0);
+    par.store("omegaZ", 1.0);
+    par.store("omegaX", 1.0);
+    par.store("omegaY", 1.0);
     par.store("esteps", esteps);
     par.store("gsteps", gsteps);
     par.store("printSteps", 1000);
     par.store("write_file", false);
     par.store("write_it", true);
     par.store("energy_calc", true);
-    par.store("box_size", 0.000000001);
+    par.store("box_size", 0.0001);
     par.store("yDim", 1);
     par.store("zDim", 1);
 

@@ -170,6 +170,8 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     std::cout << sqrt((sum[0].x + sum[0].y)*dg) << '\n';
 */
     scalarDiv_wfcNorm<<<grid,threads>>>(gpuWfc, dg, gpuParSum, gpuWfc);
+
+    cudaFree(density);
 }
 
 /**
@@ -354,6 +356,7 @@ double energy_angmom(double2 *gpuWfc, int gState, Grid &par){
 
     cudaFree(energy_gpu);
     cudaFree(tmp_wfc);
+    cudaFree(op);
     free(energy);
     return out*dx*dy*dz;
 
