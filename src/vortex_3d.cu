@@ -1118,9 +1118,9 @@ double find_thresh(Grid &par, double* edges, double thresh_const){
     dim3 grid = par.grid;
     dim3 threads = par.threads;
     int gSize = xDim*yDim*zDim;
-    double *gpuParSum;
+    double* gpuParSum;
 
-    cudaMalloc((void**)&gpuParSum, sizeof(double)*gSize);
+    cudaMalloc((void **) &gpuParSum, sizeof(double)*gSize);
 
     parSum(edges, gpuParSum, par);
 
@@ -1130,7 +1130,8 @@ double find_thresh(Grid &par, double* edges, double thresh_const){
                cudaMemcpyDeviceToHost);
     threshold[0] /= gSize;
     threshold[0] *= thresh_const;
-    cudaFree(gpuParSum);
+
+    free(gpuParSum);
 
     std::cout << "threshold is: " << threshold[0] << '\n';
     return threshold[0];

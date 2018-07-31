@@ -776,13 +776,17 @@ void parSum_test(){
     dim3 threads(16, 1, 1);
     int total_threads = threads.x*threads.y*threads.z;
 
+    double dx = 0.1;
+    double dy = 0.1;
+    double dz = 0.1;
+
     par.store("dimnum", 2);
     par.store("xDim", 64);
     par.store("yDim", 64);
     par.store("zDim", 1);
-    par.store("dx",0.1);
-    par.store("dy",0.1);
-    par.store("dz",0.1);
+    par.store("dx",dx);
+    par.store("dy",dy);
+    par.store("dz",dz);
     par.threads = threads;
 
     // Now we need to initialize the grid for the getGid3d3d kernel
@@ -817,31 +821,27 @@ void parSum_test(){
     }
 
     // Creating parsum on device
-    double2 *par_sum;
-    cudaMalloc((void**) &par_sum, 
-                   sizeof(cufftDoubleComplex)*gsize/total_threads);
 
-    parSum(gpu_wfc, par_sum, par);
+    parSum(gpu_wfc, par);
 
     // copying parsum back
-    err = cudaMemcpy(host_sum, par_sum, 
-                     sizeof(cufftDoubleComplex)*gsize / total_threads, 
+    err = cudaMemcpy(wfc, gpu_wfc, 
+                     sizeof(cufftDoubleComplex)*gsize, 
                      cudaMemcpyDeviceToHost);
     if (err!=cudaSuccess){
         std::cout << err << '\n';
-        std::cout << "ERROR: Could not copy par_sum to the host!" << '\n';
+        std::cout << "ERROR: Could not copy wfc to the host!" << '\n';
         exit(1);
     }
 
-    // The output value should be 8192
-    std::cout << "2d parSum is:" << '\n';
-    std::cout << host_sum[0].x << " + " << host_sum[0].y << " i" << '\n';
-
-    if (host_sum[0].x != 32768 || host_sum[0].y != 0){
-        std::cout << "parSum 2d test has failed! Sum is: "
-                  << host_sum[0].x << '\n';
-        assert((int)host_sum[0].x == 8192);
-        assert((int)host_sum[0].y == 8192);
+    for (int i = 0; i < gsize; ++i){
+        if (wfc[i].x != 2/sqrt(32768.0*dx*dy) ||
+            wfc[i].y != 2/sqrt(32768.0*dx*dy)){
+            std::cout << "Wavefunction not normalized!" << '\n';
+            std::cout << i << '\t' << wfc[i].x << '\t' << wfc[i].y << '\n';
+            assert(wfc[i].x == 2/sqrt(32768.0*dx*dy));
+            assert(wfc[i].y == 2/sqrt(32768.0*dx*dy));
+        }
     }
 
     // Now for the 3d case
@@ -850,12 +850,12 @@ void parSum_test(){
     par.store("xDim", 16);
     par.store("yDim", 16);
     par.store("zDim", 16);
-    par.store("dx",0.1);
-    par.store("dy",0.1);
-    par.store("dz",0.1);
+    par.store("dx",dx);
+    par.store("dy",dy);
+    par.store("dz",dz);
 
     // Now we need to initialize the grid for the getGid3d3d kernel
-    grid.x = 1;
+    grid.x = 16;
     grid.y = 16;
     grid.z = 16;
 
@@ -865,24 +865,25 @@ void parSum_test(){
     err = cudaMemcpy(gpu_wfc, wfc, sizeof(cufftDoubleComplex)*gsize,
                      cudaMemcpyHostToDevice);
 
-    parSum(gpu_wfc, par_sum, par);
+    parSum(gpu_wfc, par);
 
     // copying parsum back
-    err = cudaMemcpy(host_sum, par_sum, 
-                     sizeof(cufftDoubleComplex)*gsize / total_threads, 
+    err = cudaMemcpy(wfc, gpu_wfc, 
+                     sizeof(cufftDoubleComplex)*gsize, 
                      cudaMemcpyDeviceToHost);
     if (err!=cudaSuccess){
-        std::cout << "ERROR: Could not copy par_sum to the host!" << '\n';
+        std::cout << "ERROR: Could not copy wfc to the host!" << '\n';
         exit(1);
     }
 
-    std::cout << "3d parSum is:" << '\n';
-    std::cout << host_sum[0].x << " + " << host_sum[0].y << " i" << '\n';
-
-    if (host_sum[0].x != 32768 || host_sum[0].y != 0){
-        std::cout << "parSum 3d test has failed!" << '\n';
-        assert((int)host_sum[0].x == 8192);
-        assert((int)host_sum[0].y == 8192);
+    for (int i = 0; i < gsize; ++i){
+        if (wfc[i].x != 2/sqrt(32768.0*dx*dy*dz) ||
+            wfc[i].y != 2/sqrt(32768.0*dx*dy*dz)){
+            std::cout << "Wavefunction not normalized!" << '\n';
+            std::cout << wfc[i].x << '\t' << wfc[i].y << '\n';
+            assert(wfc[i].x == 2/sqrt(32768.0*dx*dy*dz));
+            assert(wfc[i].y == 2/sqrt(32768.0*dx*dy*dz));
+        }
     }
 
 }
@@ -1104,8 +1105,6 @@ void evolve_test(){
     par.store("xDim", 256);
     par.store("omega", 0.0);
     par.store("gammaY", 1.0);
-    par.store("gdt", 1e-4);
-    par.store("dt", 1e-4);
     par.store("device", 0);
     par.store("read_wfc", false);
     par.store("winding", 0.0);
@@ -1144,9 +1143,11 @@ void evolve_test(){
 
     double thresh = 0.0001;
     std::string buffer;
-    int gsteps = 20001;
-    int esteps = 20001;
+    int gsteps = 30001;
+    int esteps = 30001;
 
+    par.store("gdt", 1e-4);
+    par.store("dt", 1e-4);
     par.store("atoms", 1);
     par.store("omegaZ", 1.0);
     par.store("omegaX", 1.0);
@@ -1157,7 +1158,7 @@ void evolve_test(){
     par.store("write_file", false);
     par.store("write_it", true);
     par.store("energy_calc", true);
-    par.store("box_size", 0.0001);
+    par.store("box_size", 0.00007);
     par.store("yDim", 1);
     par.store("zDim", 1);
 
@@ -1173,11 +1174,10 @@ void evolve_test(){
         init(par);
 
         double omegaX = par.dval("omegaX");
-        double2 *par_sum = par.cufftDoubleComplexval("par_sum");
         set_variables(par, 0);
 
         // Evolve and find the energy
-        evolve(par, par_sum, gsteps, 0, buffer);
+        evolve(par, gsteps, 0, buffer);
 
         // Check that the energy is correct
         double energy = par.dval("energy");
@@ -1192,7 +1192,7 @@ void evolve_test(){
 
         // Run in real time to make sure that the energy is constant
         set_variables(par, 1);
-        evolve(par, par_sum, esteps, 1, buffer);
+        evolve(par, esteps, 1, buffer);
         double energy_ev = par.dval("energy");
 
         if (abs(energy - energy_ev) > thresh*energy_check){

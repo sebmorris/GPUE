@@ -44,8 +44,6 @@ int init(Grid &par){
     cufftDoubleComplex *EV_opt;
     cufftDoubleComplex *wfc_backup;
     cufftDoubleComplex *EappliedField;
-    double2 *par_sum;
-    cudaMalloc((void**) &par_sum, sizeof(double2)*gSize);
 
     std::cout << "gSize is: " << gSize << '\n';
     cufftResult result;
@@ -318,7 +316,6 @@ int init(Grid &par){
     par.store("V_opt", V_opt);
     par.store("wfc_backup", wfc_backup);
     par.store("EappliedField", EappliedField);
-    par.store("par_sum", par_sum);
 
     par.store("result", result);
     par.store("plan_1d", plan_1d);
@@ -464,15 +461,6 @@ void set_variables(Grid &par, bool ev_type){
         cufftDoubleComplex *EpAx = par.cufftDoubleComplexval("EpAx");
         cufftDoubleComplex *EpAy = nullptr;
         cufftDoubleComplex *EpAz = nullptr;
-        if(!par.bval("Ax_time")){
-            err=cudaMemcpy(pAx_gpu, EpAx, sizeof(cufftDoubleComplex)*gsize,
-                           cudaMemcpyHostToDevice);
-            if(err!=cudaSuccess){
-                std::cout << "ERROR: Could not copy pAx_gpu to device" << '\n';
-                exit(1);
-            }
-            par.store("pAx_gpu", pAx_gpu);
-        }
         if (!par.bval("K_time")){
             err=cudaMemcpy(K_gpu, EK, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
@@ -482,6 +470,17 @@ void set_variables(Grid &par, bool ev_type){
             }
             par.store("K_gpu", K_gpu);
         }
+        if(!par.bval("Ax_time")){
+            err=cudaMemcpy(pAx_gpu, EpAx, sizeof(cufftDoubleComplex)*gsize,
+                           cudaMemcpyHostToDevice);
+            if(err!=cudaSuccess){
+                std::cout << "ERROR: Could not copy pAx_gpu to device" << '\n';
+                std::cout << err << '\n';
+                exit(1);
+            }
+            par.store("pAx_gpu", pAx_gpu);
+        }
+
         if (!par.bval("V_time")){
             err=cudaMemcpy(V_gpu, EV, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
@@ -574,7 +573,6 @@ int main(int argc, char **argv){
 
     init(par);
 
-    cufftDoubleComplex *par_sum = par.cufftDoubleComplexval("par_sum");
     int gsteps = par.ival("gsteps");
     int esteps = par.ival("esteps");
     std::string data_dir = par.sval("data_dir");
@@ -588,13 +586,13 @@ int main(int argc, char **argv){
         std::cout << "Imaginary-time evolution started..." << '\n';
         set_variables(par, 0);
 
-        evolve(par, par_sum, gsteps, 0, buffer);
+        evolve(par, gsteps, 0, buffer);
     }
 
     if(esteps > 0){
         std::cout << "real-time evolution started..." << '\n';
         set_variables(par, 1);
-        evolve(par, par_sum, esteps, 1, buffer);
+        evolve(par, esteps, 1, buffer);
     }
 
     std::cout << "done evolving" << '\n';

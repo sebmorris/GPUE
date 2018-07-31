@@ -211,7 +211,7 @@ __global__ void scalarDiv2D(double2*, double2*);
 * @param	dr Smallest area element of grid (dx*dy)
 * @param	pSum GPU array used to store intermediate results during parallel summation
 */
-__global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2* out);
+__global__ void scalarDiv_wfcNorm(double2* in, double dr, double* pSum, double2* out);
 
 //##############################################################################
 
@@ -238,7 +238,7 @@ __global__ void thread_test(double* input, double* output);
 * @param	pass Number of passes performed by routine
 */
 __global__ void multipass(double2* input, double2* output, int pass);
-__global__ void multipass(double* input, double* output, int pass);
+__global__ void multipass(double* input, double* output);
 
 //##############################################################################
 

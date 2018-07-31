@@ -355,10 +355,10 @@ __global__ void scalarMult(double2* in, double factor, double2* out){
 /**
  * As above, but normalises for wfc
  */
-__global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2* out){
+__global__ void scalarDiv_wfcNorm(double2* in, double dr, double* pSum, double2* out){
     unsigned int gid = getGid3d3d();
     double2 result;
-    double norm = sqrt((pSum[0].x + pSum[0].y)*dr);
+    double norm = sqrt((pSum[0])*dr);
     result.x = (in[gid].x/norm);
     result.y = (in[gid].y/norm);
     out[gid] = result;
@@ -439,7 +439,7 @@ __global__ void multipass(double2* input, double2* output, int pass){
 /**
  * Routine for parallel summation. Can be looped over from host.
  */
-__global__ void multipass(double* input, double* output, int pass){
+__global__ void multipass(double* input, double* output){
     unsigned int tid = threadIdx.x + threadIdx.y*blockDim.x
                        + threadIdx.z * blockDim.x * blockDim.y;
     unsigned int bid = blockIdx.x + blockIdx.y * gridDim.x
@@ -453,6 +453,7 @@ __global__ void multipass(double* input, double* output, int pass){
     extern __shared__ double sdatad[];
     sdatad[tid] = input[gid];
     __syncthreads();
+
     for(int i = blockDim.x>>1; i > 0; i>>=1){
         if(tid < i){
             sdatad[tid] += sdatad[tid + i];

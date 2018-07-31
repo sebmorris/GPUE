@@ -79,16 +79,12 @@ void parSum(double* gpuWfc, double* gpuParSum, Grid &par){
     dim3 thread_tmp = threads;
     int pass = 0;
 
+    set_eq<<<par.grid, par.threads>>>(gpuWfc, gpuParSum);
+
     dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
-        if(pass == 0){
-            multipass<<<block,threads,threads.x*sizeof(double2)>>>(&gpuWfc[0],
-                &gpuParSum[0],pass);
-        }
-        else{
-            multipass<<<block,thread_tmp,thread_tmp.x*sizeof(double2)>>>(
-                &gpuParSum[0],&gpuParSum[0],pass);
-        }
+        multipass<<<block,thread_tmp,thread_tmp.x*sizeof(double)>>>(
+            &gpuParSum[0],&gpuParSum[0]);
         grid_tmp.x /= threads.x;
         block = (int) ceil((double)grid_tmp.x/threads.x);
         pass++;
@@ -96,13 +92,13 @@ void parSum(double* gpuWfc, double* gpuParSum, Grid &par){
     }
     thread_tmp = grid_tmp.x;
     multipass<<<1,thread_tmp,thread_tmp.x*sizeof(double2)>>>(&gpuParSum[0],
-                                                           &gpuParSum[0], pass);
+                                                           &gpuParSum[0]);
 }
 
 /*
  * Used to perform parallel summation on WFC for normalisation.
  */
-void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
+void parSum(double2* gpuWfc, Grid &par){
     // May need to add double l
     int dimnum = par.ival("dimnum");
     double dx = par.dval("dx");
@@ -131,8 +127,8 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
     dim3 thread_tmp = threads;
     int pass = 0;
 
-    cufftDoubleComplex *density;
-    cudaMalloc((void**) &density, sizeof(double2)*gsize);
+    double *density;
+    cudaMalloc((void**) &density, sizeof(double)*gsize);
 
     complexMagnitudeSquared<<<par.grid, par.threads>>>(gpuWfc, density);
 
@@ -144,32 +140,26 @@ void parSum(double2* gpuWfc, double2* gpuParSum, Grid &par){
 */
     dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
-        if(pass == 0){
-            multipass<<<block,threads,threads.x*sizeof(double2)>>>(&density[0],
-                &gpuParSum[0],pass);
-        }
-        else{
-            multipass<<<block,thread_tmp,thread_tmp.x*sizeof(double2)>>>(
-                &gpuParSum[0],&gpuParSum[0],pass);
-        }
+        multipass<<<block,threads,threads.x*sizeof(double)>>>(&density[0],
+                                                              &density[0]);
         grid_tmp.x /= threads.x;
         block = (int) ceil((double)grid_tmp.x/threads.x);
         pass++;
-        //std::cout << grid_tmp.x << '\n';
+        //std::cout << pass << '\t' << grid_tmp.x << '\n';
     }
     thread_tmp = grid_tmp.x;
-    multipass<<<1,thread_tmp,thread_tmp.x*sizeof(double2)>>>(&gpuParSum[0],
-                                                           &gpuParSum[0], pass);
+    multipass<<<1,thread_tmp,thread_tmp.x*sizeof(double)>>>(&density[0],
+                                                            &density[0]);
 
-    // Writing out in the parSum Function (not recommended, for debugging)
 /*
-    double2 *sum;
-    sum = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex)*gsize / threads.x);
-    cudaMemcpy(sum,gpuParSum,sizeof(cufftDoubleComplex)*gsize/threads.x,
+    // Writing out in the parSum Function (not recommended, for debugging)
+    double *sum;
+    sum = (double *) malloc(sizeof(double)*gsize);
+    cudaMemcpy(sum,density,sizeof(double)*gsize,
                cudaMemcpyDeviceToHost);
-    std::cout << sqrt((sum[0].x + sum[0].y)*dg) << '\n';
+    std::cout << (sum[0]) << '\n';
 */
-    scalarDiv_wfcNorm<<<grid,threads>>>(gpuWfc, dg, gpuParSum, gpuWfc);
+    scalarDiv_wfcNorm<<<par.grid,par.threads>>>(gpuWfc, dg, density, gpuWfc);
 
     cudaFree(density);
 }
@@ -304,7 +294,6 @@ double energy_angmom(double2 *gpuWfc, int gState, Grid &par){
 
     cudaMalloc((void**) &energy_gpu, sizeof(double2)*gSize);
     cudaMalloc((void**) &tmp_wfc, sizeof(double2)*gSize);
-    cudaMalloc((void**) &op, sizeof(double2)*gSize);
 
 
     for (int i=0; i < gSize; ++i){
@@ -327,8 +316,10 @@ double energy_angmom(double2 *gpuWfc, int gState, Grid &par){
     energyCalc<<<grid,threads>>>(tmp_wfc, op, dt, energy_gpu, gState,op_space,
                                  0.5*sqrt(omegaZ/mass), gDenConst);
     result = cufftExecZ2Z( plan, energy_gpu, energy_gpu, CUFFT_INVERSE );
+    result = cufftExecZ2Z( plan, tmp_wfc, tmp_wfc, CUFFT_INVERSE );
 
     scalarMult<<<grid,threads>>>(energy_gpu, renorm_factor, energy_gpu);
+    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor, tmp_wfc);
 
     if (corotating){
         op_space = 0;
@@ -339,7 +330,7 @@ double energy_angmom(double2 *gpuWfc, int gState, Grid &par){
 
     op = par.cufftDoubleComplexval("V_gpu");
 
-    energyCalc<<<grid,threads>>>(gpuWfc, op, dt, energy_gpu, gState,op_space,
+    energyCalc<<<grid,threads>>>(tmp_wfc, op, dt, energy_gpu, gState,op_space,
                                  0.5*sqrt(omegaZ/mass), gDenConst);
 
     err=cudaMemcpy(energy, energy_gpu, 
@@ -356,7 +347,6 @@ double energy_angmom(double2 *gpuWfc, int gState, Grid &par){
 
     cudaFree(energy_gpu);
     cudaFree(tmp_wfc);
-    cudaFree(op);
     free(energy);
     return out*dx*dy*dz;
 

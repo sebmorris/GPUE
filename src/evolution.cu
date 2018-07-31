@@ -2,9 +2,9 @@
 #include "../include/vortex_3d.h"
 
 void evolve(Grid &par,
-               double2* gpuParSum, int numSteps,
-               unsigned int gstate,
-               std::string buffer){
+            int numSteps,
+            unsigned int gstate,
+            std::string buffer){
 
     // Re-establishing variables from parsed Grid class
     std::string data_dir = par.sval("data_dir");
@@ -875,7 +875,7 @@ void evolve(Grid &par,
         }
 
         if(gstate==0){
-            parSum(gpuWfc, gpuParSum, par);
+            parSum(gpuWfc, par);
         }
     }
 
