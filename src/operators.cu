@@ -826,12 +826,10 @@ void generate_fields(Grid &par){
         cudaFree(V_gpu);
     }
     else{
-        par.store("V_gpu", V_gpu);
-        par.store("K_gpu", K_gpu);
+        par.store("V_gpu",V_gpu);
     }
 
     par.store("V",V);
-    //par.store("V_gpu",V_gpu);
     par.store("items", items);
     //par.store("items_gpu", items_gpu);
     par.store("wfc", wfc);

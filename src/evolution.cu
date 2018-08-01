@@ -191,8 +191,8 @@ void evolve(Grid &par,
             time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
             printf("Time spent: %lf\n", time_spent);
             std::string fileName = "";
-            printf("ramp=%d        gstate=%d    rg=%d        \n",
-                   ramp, gstate, ramp | (gstate << 1));
+            //printf("ramp=%d        gstate=%d    rg=%d        \n",
+            //       ramp, gstate, ramp | (gstate << 1));
             switch (ramp | (gstate << 1)) {
                 case 0: //Groundstate solver, constant Omega value.
                 {
@@ -464,7 +464,6 @@ void evolve(Grid &par,
                         num_vortices[1] = num_vortices[0];
                         vortCoords->getVortices().swap(vortCoordsP->getVortices());
 		                vortCoords->getVortices().clear();
-			            std::cout << "I am here" << std::endl;
     
                     }
                     fileName = "wfc_ev";
@@ -488,7 +487,7 @@ void evolve(Grid &par,
             }
             //std::cout << "written" << '\n';
             if (par.bval("energy_calc")){
-                double energy = energy_angmom(gpuWfc,gstate, par);
+                double energy = energy_calc(par,gpuWfc);
                 // Now opening and closing file for writing.
                 std::ofstream energy_out;
                 std::string mode = "energyi.dat";

@@ -97,5 +97,6 @@ void optLatSetup(const std::shared_ptr<Vtx::Vortex> centre, const double* V,
 * @return	$\langle \Psi | H | \Psi \rangle$
 */
 double energy_angmom(double2 *gpuWfc, int gState, Grid &par);
+double energy_calc(Grid &par, double2* wfc);
 
 #endif

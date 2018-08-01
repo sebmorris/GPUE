@@ -159,6 +159,15 @@ __device__ double2 realCompMult(double scalar, double2 comp){
 __device__ double complexMagnitude(double2 in){
     return sqrt(in.x*in.x + in.y*in.y);
 }
+
+__global__ void complexAbsSum(double2 *in1, double2 *in2, double *out){
+    int gid = getGid3d3d();
+    double2 temp;
+    temp.x = in1[gid].x + in2[gid].x;
+    temp.y = in1[gid].y + in2[gid].y;
+    out[gid] = sqrt(temp.x*temp.x + temp.y*temp.y);
+}
+
 __global__ void complexMagnitude(double2 *in, double *out){
     int gid = getGid3d3d();
     out[gid] = sqrt(in[gid].x*in[gid].x + in[gid].y*in[gid].y);
@@ -185,6 +194,12 @@ __host__ __device__ double2 complexMultiply(double2 in1, double2 in2){
     result.y = (in1.x*in2.y + in1.y*in2.x);
     return result;
 }
+
+__global__ void complexMultiply(double2 *in1, double2 *in2, double2 *out){
+    int gid = getGid3d3d();
+    out[gid] = complexMultiply(in1[gid], in2[gid]);
+}
+
 
 /*
 * Used to perform conj(in1)*in2; == < in1 | in2 >
@@ -220,8 +235,8 @@ __global__ void cMultPhi(double2* in1, double* in2, double2* out){
 __global__ void vecMult(double2 *in, double *factor, double2 *out){
     double2 result;
     unsigned int gid = getGid3d3d();
-    result.x = (in[gid].x * factor[gid]);
-    result.y = (in[gid].y * factor[gid]);
+    result.x = in[gid].x * factor[gid];
+    result.y = in[gid].y * factor[gid];
     out[gid] = result;
 }
 
@@ -381,6 +396,7 @@ __global__ void scalarPow(double2* in, double param, double2* out){
 __global__ void vecConjugate(double2 *in, double2 *out){
     double2 result;
     unsigned int gid = getGid3d3d(); 
+    result.x = in[gid].x;
     result.y = -in[gid].y;
     out[gid] = result;
 }
@@ -464,7 +480,6 @@ __global__ void multipass(double* input, double* output){
         output[bid] = sdatad[0];
     }
 }
-
 
 /*
 * Calculates all of the energy of the current state. sqrt_omegaz_mass = sqrt(omegaZ/mass), part of the nonlin interaction term
@@ -650,6 +665,11 @@ __global__ void set_eq(double *in1, double *in2){
     in2[gid] = in1[gid];
 }
 
+__global__ void print_ds(double *vector){
+    int gid = getGid3d3d();
+    printf("%d\t%e\n",gid,vector[gid]);
+
+}
 
 //##############################################################################
 //##############################################################################

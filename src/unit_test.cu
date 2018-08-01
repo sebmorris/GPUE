@@ -388,9 +388,11 @@ void dynamic_test(){
     
     cudaMemcpy(array, array_gpu, sizeof(double)*n, cudaMemcpyDeviceToHost);
 
+/*
     for (int i = 0; i < n; ++i){
         std::cout << array[i] << '\n';
     }
+*/
 
     std::cout << "Dynamic tests passed" <<'\n';
 }
@@ -440,6 +442,8 @@ void bessel_test(){
 // In particular, we need to test the generate_plan_other3d function
 // These will be checked against 1d 
 void fft_test(){
+
+    std::cout << "Beginning cufft test.\n";
 
     // For these tests, we are assuming that the x, y and z dimensions are 
     // All the same (2x2x2)
@@ -500,9 +504,11 @@ void fft_test(){
         exit(1);
     }
 
+/*
     for (int i = 0; i < gsize; i++){
         std::cout << array[i].x << '\t' << array[i].y << '\n';
     }
+*/
 
     // Now to try the inverse direction
 
@@ -521,9 +527,13 @@ void fft_test(){
         exit(1);
     }
 
+/*
     for (int i = 0; i < gsize; i++){
         std::cout << array[i].x << '\t' << array[i].y << '\n';
     }
+*/
+
+    std::cout << "cufft test passed!\n";
 
 
 
@@ -764,6 +774,8 @@ void grid_test3d(){
 // Test of the parSum function in 3d
 void parSum_test(){
 
+    std::cout << "Beginning test of parallel summation.\n";
+
     // Setting error
     cudaError_t err;
 
@@ -885,6 +897,8 @@ void parSum_test(){
             assert(wfc[i].y == 2/sqrt(32768.0*dx*dy*dz));
         }
     }
+
+    std::cout << "Parallel summation test passed in 2 and 3D!\n";
 
 }
 
@@ -1141,7 +1155,7 @@ void evolve_test(){
     par.store("thresh_const", 1.0);
 
 
-    double thresh = 0.0001;
+    double thresh = 0.01;
     std::string buffer;
     int gsteps = 30001;
     int esteps = 30001;
@@ -1154,13 +1168,14 @@ void evolve_test(){
     par.store("omegaY", 1.0);
     par.store("esteps", esteps);
     par.store("gsteps", gsteps);
-    par.store("printSteps", 1000);
+    par.store("printSteps", 30000);
     par.store("write_file", false);
-    par.store("write_it", true);
+    par.store("write_it", false);
     par.store("energy_calc", true);
     par.store("box_size", 0.00007);
     par.store("yDim", 1);
     par.store("zDim", 1);
+
 
     // Running through all the dimensions to check the energy
     for (int i = 2; i <= 3; ++i){
@@ -1172,6 +1187,10 @@ void evolve_test(){
         }
         par.store("dimnum",i);
         init(par);
+
+        if (par.bval("write_file")){
+            FileIO::writeOutParam(buffer, par, "data/Params.dat");
+        }
 
         double omegaX = par.dval("omegaX");
         set_variables(par, 0);

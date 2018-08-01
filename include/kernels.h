@@ -59,9 +59,12 @@ __global__ void is_eq(bool *a, bool *b, bool *ans);
 * @return	Magnitude of complex number
 */
 __device__ double complexMagnitude(double2 in);
+__global__ void complexMultiply(double2 *in1, double2 *in2, double2 *out);
+__host__ __device__ double2 complexMultiply(double2 in1, double2 in2);
 
 __device__ double2 make_complex(double in, int evolution_type);
 
+__global__ void complexAbsSum(double2 *in1, double2 *in2, double *out);
 __global__ void complexMagnitude(double2 *in, double *out);
 /**
 * @brief	Return the squared magnitude of a complex number. $|(a+\textrm{i}b)*(a-\textrm{i}b)|$
@@ -285,6 +288,8 @@ __global__ void reduce(double *input, double *output);
 __global__ void zeros(bool *in, bool *out);
 
 __global__ void set_eq(double *in1, double *in2);
+
+__global__ void print_ds(double *vector);
 
 //##############################################################################
 /**

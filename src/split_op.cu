@@ -241,6 +241,89 @@ void optLatSetup(std::shared_ptr<Vtx::Vortex> centre, const double* V,
     par.store("V_opt",v_opt);
 }
 
+double energy_calc(Grid &par, double2* wfc){
+    double* K = par.dsval("K_gpu");
+    double* V = par.dsval("V_gpu");
+
+    dim3 grid = par.grid;
+    dim3 threads = par.threads;
+
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+    int gsize = xDim*yDim*zDim;
+
+    double dx = par.dval("dx");
+    double dy = par.dval("dy");
+    double dz = par.dval("dz");
+    double dg = dx*dy*dz;
+
+    cufftHandle plan;
+
+    if (par.ival("dimnum") == 1){
+        plan = par.ival("plan_1d");
+    }
+    if (par.ival("dimnum") == 2){
+        plan = par.ival("plan_2d");
+    }
+    if (par.ival("dimnum") == 3){
+        plan = par.ival("plan_3d");
+    }
+
+    double renorm_factor = 1.0/pow(gsize,0.5);
+
+    double2 *wfc_c, *wfc_k;
+    double2 *energy_r, *energy_k;
+    double *energy;
+
+    cudaMalloc((void **) &wfc_c, sizeof(double2)*gsize);
+    cudaMalloc((void **) &wfc_k, sizeof(double2)*gsize);
+    cudaMalloc((void **) &energy_r, sizeof(double2)*gsize);
+    cudaMalloc((void **) &energy_k, sizeof(double2)*gsize);
+
+    cudaMalloc((void **) &energy, sizeof(double)*gsize);
+
+    // Finding conjugate
+    vecConjugate<<<grid, threads>>>(wfc, wfc_c);
+
+    // Momentum-space energy
+    cufftExecZ2Z(plan, wfc, wfc_k, CUFFT_FORWARD);
+    scalarMult<<<grid, threads>>>(wfc_k, renorm_factor, wfc_k);
+
+    vecMult<<<grid, threads>>>(wfc_k, K, energy_k);
+
+    cufftExecZ2Z(plan, energy_k, energy_k, CUFFT_INVERSE);
+    scalarMult<<<grid, threads>>>(energy_k, renorm_factor, energy_k);
+
+    cMult<<<grid, threads>>>(wfc_c, energy_k, energy_k);
+
+    // Position-space energy
+    vecMult<<<grid, threads>>>(wfc, V, energy_r);
+    cMult<<<grid, threads>>>(wfc_c, energy_r, energy_r);
+
+    complexAbsSum<<<grid, threads>>>(energy_r, energy_k, energy);
+
+    double *energy_cpu;
+    energy_cpu = (double *)malloc(sizeof(double)*gsize);
+
+    cudaMemcpy(energy_cpu, energy, sizeof(double)*gsize,
+               cudaMemcpyDeviceToHost);
+
+    double sum = 0;
+    for (int i = 0; i < gsize; ++i){
+        sum += energy_cpu[i]*dg;
+    }
+
+    free(energy_cpu);
+    cudaFree(energy_r);
+    cudaFree(energy_k);
+    cudaFree(energy);
+    cudaFree(wfc_c);
+    cudaFree(wfc_k);
+
+    return sum;
+}
+
 /**
 ** Calculates energy and angular momentum of current state.
 ** Implementation not fully finished.
