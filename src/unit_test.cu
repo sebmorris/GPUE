@@ -1116,7 +1116,6 @@ void evolve_test(){
     // Setting default values
     Grid par;
 
-    par.store("xDim", 256);
     par.store("omega", 0.0);
     par.store("gammaY", 1.0);
     par.store("device", 0);
@@ -1173,6 +1172,7 @@ void evolve_test(){
     par.store("write_it", false);
     par.store("energy_calc", true);
     par.store("box_size", 0.00007);
+    par.store("xDim", 64);
     par.store("yDim", 1);
     par.store("zDim", 1);
 
@@ -1180,10 +1180,10 @@ void evolve_test(){
     // Running through all the dimensions to check the energy
     for (int i = 2; i <= 3; ++i){
         if (i == 2){
-            par.store("yDim", 256);
+            par.store("yDim", 64);
         }
         if (i == 3){
-            par.store("zDim", 256);
+            par.store("zDim", 64);
         }
         par.store("dimnum",i);
         init(par);

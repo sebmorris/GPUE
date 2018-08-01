@@ -220,6 +220,7 @@ void evolve(Grid &par,
                                                          *gridSize);
 
 
+/*
                         // calling the kernel to find the edges
                         if (dimnum > 1){
                             find_edges(par, wfc, edges);
@@ -254,6 +255,7 @@ void evolve(Grid &par,
                             cudaFree(threshold_cpu);
                             free(edges);
                         }
+*/
 
                     }
                     else if (dimnum == 2){
