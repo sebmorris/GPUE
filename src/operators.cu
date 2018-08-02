@@ -198,25 +198,40 @@ void generate_p_space(Grid &par){
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
     double xMax = par.dval("xMax");
-    double yMax = par.dval("yMax");
+    double yMax = 0;
+    if (dimnum > 1){
+        yMax = par.dval("yMax");
+    }
     double zMax = 0;
     if (dimnum == 3){
         zMax = par.dval("zMax");
     }
+
     double pxMax = par.dval("pxMax");
-    double pyMax = par.dval("pyMax");
+    double pyMax = 0;
+    if (dimnum > 1){
+        pyMax = par.dval("pyMax");
+    }
     double pzMax = 0;
     if (dimnum == 3){
         pzMax = par.dval("pzMax");
     }
+
     double dx = par.dval("dx");
-    double dy = par.dval("dy");
+    double dy = 0;
+    if (dimnum > 1){
+        dy = par.dval("dy");
+    }
     double dz = 0;
     if (dimnum == 3){
         dz = par.dval("dz");
     }
+
     double dpx = par.dval("dpx");
-    double dpy = par.dval("dpy");
+    double dpy = 0;
+    if (dimnum > 1){
+        dpy = par.dval("dpy");
+    }
     double dpz = 0;
     if (dimnum == 3){
         dpz = par.dval("dpz");
@@ -282,6 +297,24 @@ void generate_p_space(Grid &par){
             pz[i] = i*dpz;
             pz[i + (zDim/2)] = -pzMax + i*dpz;
 
+        }
+
+    }
+    else if (dimnum == 1){
+        for(int i=0; i<xDim/2; ++i){
+            x[i] = -xMax + i*dx;
+            x[i + (xDim/2)] = i*dx;
+
+            px[i] = i*dpx;
+            px[i + (xDim/2)] = -pxMax + i*dpx;
+
+        }
+
+        for(int i = 0; i < zDim; ++i){
+            z[i] = 0;
+            pz[i] = 0;
+            y[i] = 0;
+            py[i] = 0;
         }
 
     }
