@@ -1,36 +1,3 @@
-///@cond LICENSE
-/*** tracker.h - GPUE: Split Operator based GPU solver for Nonlinear
-Schrodinger Equation, Copyright (C) 2011-2015, Lee J. O'Riordan
-<loriordan@gmail.com>, Tadhg Morgan, Neil Crowley.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 ///@endcond
 //##############################################################################
 /**
@@ -55,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #elif __APPLE__
 #endif
 #include<math.h>
+#include<vector>
 #include<stdio.h>
 #include<cuda.h>
 #include<cuda_runtime.h>
@@ -91,7 +59,7 @@ namespace Tracker {
 	* @param	timestep Timestep in simulation
 	* @return	Number of found vortices of either rotation direction
 	*/
-    int findVortex(int *marker, double2* wfc, double radius, int xDim, double *x, int timestep);
+    int findVortex(int *marker, const double2* wfc, double radius, int xDim, const double *x, int timestep);
 
 	/**
 	* @brief	Accepts matrix of vortex locations as argument, returns array of x,y coordinates of locations and winding
@@ -101,7 +69,7 @@ namespace Tracker {
 	* @param	xDim Length of X dimension
 	* @param	wfc Wavefunction
 	*/
-    void vortPos(int *marker, struct Vtx::Vortex *vLocation, int xDim, double2 *wfc);
+    void vortPos(const int *marker, std::vector<std::shared_ptr<Vtx::Vortex> > &vLocation, int xDim, const double2 *wfc);
 
 	/**
 	* @brief	Accepts matrix of vortex locations as argument, returns array of x,y coordinates of locations and winding
@@ -120,44 +88,41 @@ namespace Tracker {
 	* @param	pMarker Previous vortex location matrix
 	* @param	x X grid
 	* @param	tolerance Maximum change acceptable for a vortex to have moved
-	* @param	numVortices Number of vortices
 	* @param	xDim Length of X dimension
 	* @return	Vortex struct pointer.
 	*/
-    struct Vtx::Vortex *vortPosDelta(int *cMarker, int2 *pMarker, double *x, double tolerance, int numVortices, int xDim);
+    [[deprecated]]
+    std::shared_ptr<Vtx::Vortex> vortPosDelta(int *cMarker, int2 *pMarker, double *x, double tolerance, int xDim);
 
 	/**
 	* @brief	Determines the most central vortex in the condensate
 	* @ingroup	data
 	* @param	cArray Array of vortices
-	* @param	length Number of vortices
 	* @param	xDim Length of X dimension
 	* @return	Central vortex struct
 	*/
-    struct Vtx::Vortex vortCentre(struct Vtx::Vortex *cArray, int length, int xDim);
+    std::shared_ptr<Vtx::Vortex> vortCentre(const std::vector<std::shared_ptr<Vtx::Vortex> > &cArray, int xDim);
 
 	/**
 	* @brief	Determines the rotation angle of the vortex lattice
 	* @ingroup	data
 	* @param	vortCoords Array of vortices
 	* @param	central Central vortex in lattice
-	* @param	numVort Number of vortices counted
 	* @return	$0 \leq \theta \leq 2\pi$, though between $0 \leq \theta \leq \pi\3$ is sufficient.
 	*/
-    double vortAngle(struct Vtx::Vortex *vortCoords, struct Vtx::Vortex central, int numVort);
+    double vortAngle(const std::vector<std::shared_ptr<Vtx::Vortex>> &vortCoords, const std::shared_ptr<Vtx::Vortex> central);
 
 	/**
 	* @brief	Determines average inter-vortex separation about the condensate centre
 	* @ingroup	data
 	* @param	vArray Vortices
 	* @param	centre Central vortex in lattice
-	* @param	length Number of counted vortices
 	* @return	Separation distance
 	*/
-    double vortSepAvg(struct Vtx::Vortex *vArray, struct Vtx::Vortex centre, int length);
+    double vortSepAvg(const std::vector<std::shared_ptr<Vtx::Vortex> > &vArray, const std::shared_ptr<Vtx::Vortex> centre);
 
 
-    double sigVOL(int2 *vArr, int2 *opLatt, double *x, int numVort);
+    double sigVOL(const std::vector<std::shared_ptr<Vtx::Vortex> > &vArr, const int2 *opLatt, const double *x);
 
 	/**
 	* @brief	Finds optical lattice maxima locations. Deprecated.
@@ -174,9 +139,8 @@ namespace Tracker {
 	* @ingroup	data
 	* @param	vCoordsC Current vortex locations
 	* @param	vCoordsP Previous vortex locations
-	* @param	length Number of vortices tracked
 	*/
-    void vortArrange(struct Vtx::Vortex *vCoordsC, struct Vtx::Vortex *vCoordsP, int length);
+    void vortArrange(std::vector<std::shared_ptr<Vtx::Vortex> > &vCoordsC, const std::vector<std::shared_ptr<Vtx::Vortex>> &vCoordsP);
 
 	/**
 	* @brief	Checks given coordinate for phase singularity of +ve winding
@@ -193,10 +157,9 @@ namespace Tracker {
 	* @ingroup	data
 	* @param	vortCoords Array of vortices. Result returned in struct double coordinates
 	* @param	wfc Wavefunction
-	* @param	numVort Number of vortices
 	* @param	xDim Length of X dimension
 	*/
-    void lsFit(struct Vtx::Vortex *vortCoords, double2 *wfc, int numVort, int xDim);
+    void lsFit(std::vector<std::shared_ptr<Vtx::Vortex>> &vortCoords, const double2 *wfc, int xDim);
 }
 
 #endif

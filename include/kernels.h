@@ -1,36 +1,3 @@
-///@cond LICENSE
-/*** kernels.h - GPUE: Split Operator based GPU solver for Nonlinear
-Schrodinger Equation, Copyright (C) 2011-2015, Lee J. O'Riordan
-<loriordan@gmail.com>, Tadhg Morgan, Neil Crowley.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 ///@endcond
 //##############################################################################
 /**
@@ -50,22 +17,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define KERNELS_H
 #include<stdio.h>
 
+__device__ double2 subtract(double2 a, double2 b);
+__device__ double2 add(double2 a, double2 b);
+__device__ double2 pow(double2 a, int b);
+__device__ double2 mult(double2 a, double b);
+__device__ double2 mult(double2 a, double2 b);
+
+// Function to convert a double* to double2*
+__global__ void make_cufftDoubleComplex(double *in, double2 *out);
+
 /**
 * @brief	Indexing of threads on grid
 * @ingroup	gpu
 */
-unsigned int getGid3d3d();;
+__device__ unsigned int getGid3d3d();
 
 /**
 * @brief	Indexing of blocks on device
 * @ingroup	gpu
 */
 __device__ unsigned int getBid3d3d();
+
 /**
 * @brief	Indexing of threads in a block on device
 * @ingroup	gpu
 */
 __device__ unsigned int getTid3d3d();
+
+__global__ void is_eq(bool *a, bool *b, bool *ans);
 
 //##############################################################################
 /**
@@ -80,6 +59,13 @@ __device__ unsigned int getTid3d3d();
 * @return	Magnitude of complex number
 */
 __device__ double complexMagnitude(double2 in);
+__global__ void complexMultiply(double2 *in1, double2 *in2, double2 *out);
+__host__ __device__ double2 complexMultiply(double2 in1, double2 in2);
+
+__device__ double2 make_complex(double in, int evolution_type);
+
+__global__ void complexAbsSum(double2 *in1, double2 *in2, double *out);
+__global__ void complexMagnitude(double2 *in, double *out);
 /**
 * @brief	Return the squared magnitude of a complex number. $|(a+\textrm{i}b)*(a-\textrm{i}b)|$
 * @ingroup	gpu
@@ -87,6 +73,8 @@ __device__ double complexMagnitude(double2 in);
 * @return	Absolute-squared complex number
 */
 __device__ double complexMagnitudeSquared(double2 in);
+__global__ void complexMagnitudeSquared(double2 *in, double *out);
+__global__ void complexMagnitudeSquared(double2 *in, double2 *out);
 /**
 * @brief	Returns conjugate of the a complex number
 * @ingroup	gpu
@@ -116,7 +104,7 @@ __device__ double2 realCompMult(double scalar, double2 comp);
 * @param	in2 Evolution operator input
 * @param	out Pass by reference output for multiplcation result
 */
-__global__ void cMult(cufftDoubleComplex* in1, cufftDoubleComplex* in2, cufftDoubleComplex* out);
+__global__ void cMult(double2* in1, double2* in2, double2* out);
 
 /**
 * @brief	Kernel for multiplcation with real array and complex array
@@ -125,7 +113,7 @@ __global__ void cMult(cufftDoubleComplex* in1, cufftDoubleComplex* in2, cufftDou
 * @param	in2 Evolution operator input
 * @param	out Pass by reference output for multiplcation result
 */
-__global__ void cMultPhi(cufftDoubleComplex* in1, double* in2, cufftDoubleComplex* out);
+__global__ void cMultPhi(double2* in1, double* in2, double2* out);
 
 /**
 * @brief	Kernel for complex multiplication with nonlinear density term
@@ -139,7 +127,11 @@ __global__ void cMultPhi(cufftDoubleComplex* in1, double* in2, cufftDoubleComple
 * @param	gState If performing real (1) or imaginary (0) time evolution
 * @param	N Number of atoms in condensate
 */
-__global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt, double mass,double omegaZ, int gstate, int N);
+__global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt, double mass, int gstate, double gDenConst);
+__global__ void cMultDensity_ast(EqnNode_gpu *eqn, double2* in, double2* out,
+                                 double dx, double dy, double dz, double time,
+                                 int e_num, double dt, double mass, int gstate,
+                                 double gDenConst);
 
 //##############################################################################
 
@@ -150,18 +142,61 @@ __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt
 * @param	in2 Evolution operator input
 * @param	out Pass by reference output for multiplcation result
 */
-__global__ void pinVortex(cufftDoubleComplex* in1, cufftDoubleComplex* in2, cufftDoubleComplex* out);
+__global__ void pinVortex(double2* in1, double2* in2, double2* out);
 
 //##############################################################################
 
 /**
+* @brief        Complex field scaling and renormalisation. Used mainly post-FFT.
+* @ingroup      gpu
+* @param        in Complex field to be scaled (divided, not multiplied)
+* @param        factor Scaling vector to be used
+* @param        out Pass by reference output for result
+*/
+__global__ void vecMult(double2 *in, double *factor, double2 *out);
+
+// performs the l2 normalization of the provided terms
+__global__ void l2_norm(double *in1, double *in2, double *in3, double *out);
+__global__ void l2_norm(double2 *in1, double2 *in2, double2 *in3, double *out);
+__global__ void l2_norm(double *in1, double *in2, double *out);
+__global__ void l2_norm(double2 *in1, double2 *in2, double *out);
+
+/**
 * @brief	Complex field scaling and renormalisation. Used mainly post-FFT.
 * @ingroup	gpu
-* @param	in Complex field to be scaled (multiplied, not divided)
+* @param	in Complex field to be scaled (divided, not multiplied)
 * @param	factor Scaling factor to be used
 * @param	out Pass by reference output for result
 */
 __global__ void scalarDiv(double2* in, double factor, double2* out);
+__global__ void scalarDiv(double* in, double factor, double* out);
+
+/**
+* @brief        Complex field scaling and renormalisation. Used mainly post-FFT.
+* @ingroup      gpu
+* @param        in Complex field to be scaled (multiplied, not divided)
+* @param        factor Scaling factor to be used
+* @param        out Pass by reference output for result
+*/
+__global__ void scalarMult(double2* in, double factor, double2* out);
+
+/**
+* @brief        Complex field raised to a power
+* @ingroup      gpu
+* @param        in Complex field to be scaled (multiplied, not divided)
+* @param        power parameter
+* @param        out Pass by reference output for result
+*/
+__global__ void scalarPow(double2* in, double param, double2* out);
+
+/**
+* @brief        Conjugate of double2*.
+* @ingroup      gpu
+* @param        in Complex field to be conjugated
+* @param        out Pass by reference output for result
+*/
+__global__ void vecConjugate(double2 *in, double2 *out);
+
 /**
 * @brief	Complex field scaling and renormalisation. Not implemented. Use scalarDiv
 * @ingroup	gpu
@@ -179,7 +214,7 @@ __global__ void scalarDiv2D(double2*, double2*);
 * @param	dr Smallest area element of grid (dx*dy)
 * @param	pSum GPU array used to store intermediate results during parallel summation
 */
-__global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2* out);
+__global__ void scalarDiv_wfcNorm(double2* in, double dr, double* pSum, double2* out);
 
 //##############################################################################
 
@@ -191,6 +226,14 @@ __global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2
 */
 __global__ void reduce(double2* in, double* out);
 /**
+* @brief        Performs wavefunction renormalisation using parallel summation and applying scalarDiv_wfcNorm
+* @ingroup      gpu
+* @param        input Wavefunction to be renormalised
+* @param        output Pass by reference return of renormalised wavefunction
+* @param        pass Number of passes performed by routine
+*/
+__global__ void thread_test(double* input, double* output);
+/**
 * @brief	Performs wavefunction renormalisation using parallel summation and applying scalarDiv_wfcNorm
 * @ingroup	gpu
 * @param	input Wavefunction to be renormalised
@@ -198,6 +241,7 @@ __global__ void reduce(double2* in, double* out);
 * @param	pass Number of passes performed by routine
 */
 __global__ void multipass(double2* input, double2* output, int pass);
+__global__ void multipass(double* input, double* output);
 
 //##############################################################################
 
@@ -211,6 +255,41 @@ __global__ void multipass(double2* input, double2* output, int pass);
 * @param	out Output of calculation
 */
 __global__ void angularOp(double omega, double dt, double2* wfc, double* xpyypx, double2* out);
+
+// Kernel to perform 2d transposition
+__global__ void transpose2d(double *indata, double *outdata);
+
+__global__ void naivetranspose2d(int xDim, int yDim, 
+                            const double *indata, double *outdata);
+
+// Kernel to perform 2d transposition
+__global__ void transpose2d2(const double2 *indata, double2 *outdata);
+
+__global__ void naivetranspose2d2(int xDim, int yDim, 
+                            const double2 *indata, double2 *outdata);
+
+__global__ void ast_mult(double *array, double *array_out, EqnNode_gpu *eqn,
+                         double dx, double dy, double dz, double time,
+                         int element_num);
+__global__ void ast_cmult(double2 *array, double2 *array_out, EqnNode_gpu *eqn,
+                          double dx, double dy, double dz, double time,
+                          int element_num);
+__global__ void ast_op_mult(double2 *array, double2 *array_out,
+                            EqnNode_gpu *eqn,
+                            double dx, double dy, double dz, double time,
+                            int element_num, int evolution_type, double dt);
+
+__device__ double2 real_ast(double val, double dt);
+__device__ double2 im_ast(double val, double dt);
+
+// modified from: http://developer.download.nvidia.com/compute/cuda/1.1-Beta/x86_website/projects/reduction/doc/reduction.pdf
+__global__ void reduce(double *input, double *output);
+
+__global__ void zeros(bool *in, bool *out);
+
+__global__ void set_eq(double *in1, double *in2);
+
+__global__ void print_ds(double *vector);
 
 //##############################################################################
 /**
@@ -229,7 +308,7 @@ __global__ void angularOp(double omega, double dt, double2* wfc, double* xpyypx,
 * @param	op_space Check if position space with non-linear term or not.
 * @param	sqrt_omegaz_mass sqrt(omegaZ/mass), part of the nonlin interaction term.
 */
-__global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy, int gnd_state, int op_space, double sqrt_omegaz_mass);
+__global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy, int gnd_state, int op_space, double sqrt_omegaz_mass, double gDenConst);
 /**
 * @brief	Performs bra-ket state multiplication. Not fully implemented.
 * @ingroup	gpu

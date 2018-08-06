@@ -1,35 +1,3 @@
-/*** lattice.cc - GPUE: Split Operator based GPU solver for Nonlinear 
-Schrodinger Equation, Copyright (C) 2011-2015, Lee J. O'Riordan 
-<loriordan@gmail.com>, Tadhg Morgan, Neil Crowley. 
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without 
-modification, are permitted provided that the following conditions are 
-met:
-
-1. Redistributions of source code must retain the above copyright 
-notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright 
-notice, this list of conditions and the following disclaimer in the 
-documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its 
-contributors may be used to endorse or promote products derived from 
-this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 
 //######################################################################################################################
 
@@ -66,7 +34,7 @@ std::shared_ptr<Node> Lattice::getVortexIdx(unsigned int idx){
  * Gets the location of the Node with UID uid.
  */
 unsigned int Lattice::getVortexIdxUid(unsigned int uid){
-	for (int ii=0; ii< getVortices().size(); ++ii){
+	for (size_t ii=0; ii< getVortices().size(); ++ii){
 		if(this->Lattice::getVortexIdx(ii)->getUid()== uid){
 			return ii;
 		}
@@ -87,13 +55,13 @@ std::shared_ptr<Node> Lattice::getVortexUid(unsigned int uid){
 }
 
 double Lattice::getVortexDistance(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2){
-	return sqrt(pow(n1->getData().coords.x - n2->getData().coords.x,2)
-	            +  pow(n1->getData().coords.y - n2->getData().coords.y,2));
+	return sqrt(pow(n1->getData().getCoords().x - n2->getData().getCoords().x,2)
+	            +  pow(n1->getData().getCoords().y - n2->getData().getCoords().y,2));
 }
 
 double Lattice::getVortexDistanceD(std::shared_ptr<Node> n1, std::shared_ptr<Node> n2){
-	return sqrt(pow(n1->getData().coordsD.x - n2->getData().coordsD.x,2)
-	            +  pow(n1->getData().coordsD.y - n2->getData().coordsD.y,2));
+	return sqrt(pow(n1->getData().getCoordsD().x - n2->getData().getCoordsD().x,2)
+	            +  pow(n1->getData().getCoordsD().y - n2->getData().getCoordsD().y,2));
 }
 
 std::shared_ptr<Edge> Lattice::getEdgeIdx(unsigned int idx){
@@ -104,7 +72,7 @@ std::shared_ptr<Edge> Lattice::getEdgeIdx(unsigned int idx){
  * Gets the location of the Edge with UID uid.
  */
 unsigned int Lattice::getEdgeIdxUid(unsigned int uid){
-	for (int ii=0; ii< getEdges().size(); ++ii){
+	for (size_t ii=0; ii< getEdges().size(); ++ii){
 		if(this->Lattice::getEdgeIdx(ii)->getUid()== uid){
 			return ii;
 		}
@@ -148,9 +116,9 @@ void Lattice::setEdge(unsigned int idx, std::shared_ptr<Edge> e){
 void Lattice::createEdges(unsigned int radius){
 	std::shared_ptr<Edge> e;
 	double dist = 0.0;
-	for(int ii=0; ii< this->Lattice::getVortices().size(); ++ii){
+	for(size_t ii=0; ii< this->Lattice::getVortices().size(); ++ii){
 		//std::cout << "Got here ii " << ii << std::endl;
-		for(int jj=ii+1; jj < this->Lattice::getVortices().size(); ++jj){
+		for(size_t jj=ii+1; jj < this->Lattice::getVortices().size(); ++jj){
 			dist = Lattice::getVortexDistance(this->getVortexIdx(ii),this->getVortexIdx(jj));
 			if(dist < radius ) {
 				//std::cout << "Got here jj " << jj << std::endl;
@@ -164,9 +132,9 @@ void Lattice::createEdges(unsigned int radius){
 void Lattice::createEdges(double radius){
 	std::shared_ptr<Edge> e;
 	double dist = 0.0;
-	for(int ii=0; ii< this->Lattice::getVortices().size(); ++ii){
+	for(size_t ii=0; ii< this->Lattice::getVortices().size(); ++ii){
 		//std::cout << "Got here ii " << ii << std::endl;
-		for(int jj=ii+1; jj < this->Lattice::getVortices().size(); ++jj){
+		for(size_t jj=ii+1; jj < this->Lattice::getVortices().size(); ++jj){
 			dist = Lattice::getVortexDistance(this->getVortexIdx(ii),this->getVortexIdx(jj));
 			if( dist < radius ) {
 				//std::cout << "Got here jj " << jj << std::endl;
@@ -328,9 +296,9 @@ void Lattice::genAdjMat(double *mat){
 void Lattice::adjMatMtca(unsigned int *mat){
 	unsigned int size = this->Lattice::getVortices().size();
 	std::cout << "{";
-	for(int ii = 0; ii < size; ++ii){
+	for(size_t ii = 0; ii < size; ++ii){
 		std::cout << "{";
-		for(int jj = 0; jj < size; ++jj){
+		for(size_t jj = 0; jj < size; ++jj){
 			std::cout << mat[ii*size + jj];
 			if(jj<size-1)
 				std::cout <<",";
@@ -346,9 +314,9 @@ void Lattice::adjMatMtca(unsigned int *mat){
 void Lattice::adjMatMtca(double *mat){
 	unsigned int size = this->Lattice::getVortices().size();
 	std::cout << "{";
-	for(int ii = 0; ii < size; ++ii){
+	for(size_t ii = 0; ii < size; ++ii){
 		std::cout << "{";
-		for(int jj = 0; jj < size; ++jj){
+		for(size_t jj = 0; jj < size; ++jj){
 			std::cout << mat[ii*size + jj];
 			if(jj<size-1)
 				std::cout <<",";
