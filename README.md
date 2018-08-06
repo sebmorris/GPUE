@@ -11,7 +11,6 @@
 [gh]: https://github.com/mlxd/gpue "GitHub"
 
 ## 0. Introduction
----
 
 Welcome to GPUE, the [fastest zero temperature BEC routines in the land](http://peterwittek.com/gpe-comparison.html) (the last time we checked).
 
@@ -45,7 +44,6 @@ long time to develop, and I'd appreciate it greatly! A nice email would suffice
 too :)
 
 ## 1. What does this software do?
----
 
 This software is a CUDA-enabled non-linear Schrodinger (Gross-Pitaevskii) 
 equation solver. The primary use of this code was for my research on 
@@ -81,7 +79,6 @@ beta branch lead by the amazing James Schloss (leois). When completed, these
 will be merged into master.
 
 ## 2. Great! How do I make a BEC?
----
 
 Well, first you need to look at the run_params.conf file, and give it some 
 necessary parameters to generate your favourite condensate.
@@ -97,12 +94,10 @@ published (which is only fair). Comments will be added for relevant sections
 too to allow for their use. 
 
 ## 3. What do you see as the future of this?
----
 I would like this tool to be a suite for 1D, 2D and 3D simulations of both 
 Schrodinger and non-linear Schrodinger systems. 
 
 ## 4. I have used your program and/or learned from the source. What now?
----
 A citation would be nice :) Feel free to cite as:
 
 Lee James O'Riordan et al., GPUE: Phasegineering release, Zenodo. (2016)
@@ -118,7 +113,6 @@ There is a lot remaining to be done, but many hands make light work, after all.
 
 
 ## 5. Acknowledgements
----
 We are greatly thankful to the support provided by Okinawa Institute of Science 
 and Technology Graduate University, without whom this research code would be a 
 fraction of what it currently has become. To the various people who have 
