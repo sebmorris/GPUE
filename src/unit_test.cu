@@ -1133,7 +1133,6 @@ void evolve_test(){
     par.store("sepMinEpsilon",0.0);
     par.store("graph", false);
     par.store("unit_test",false);
-    par.store("data_dir", (std::string)"data/");
     par.store("ramp", false);
     par.store("ramp_type", 1);
     par.store("dimnum", 2);
@@ -1143,6 +1142,7 @@ void evolve_test(){
     par.store("found_sobel", false);
     par.store("use_param_file", false);
     par.store("param_file","param.cfg");
+    par.store("data_dir", (std::string)"data/");
     par.store("cyl_coord",false);
     par.Afn = "rotation";
     par.Kfn = "rotation_K";
@@ -1169,12 +1169,13 @@ void evolve_test(){
     par.store("gsteps", gsteps);
     par.store("printSteps", 30000);
     par.store("write_file", true);
-    par.store("write_it", true);
+    par.store("write_it", false);
     par.store("energy_calc", true);
     par.store("box_size", 0.00007);
     par.store("xDim", 64);
     par.store("yDim", 1);
     par.store("zDim", 1);
+
 
 
     // Running through all the dimensions to check the energy
