@@ -220,42 +220,15 @@ void evolve(Grid &par,
                                                          *gridSize);
 
 
-/*
-                        // calling the kernel to find the edges
-                        if (dimnum > 1){
-                            find_edges(par, wfc, edges);
-                            double* edges_gpu = par.dsval("edges_gpu");
+                        find_edges(par, wfc, edges);
+                        double* edges_gpu = par.dsval("edges_gpu");
 
-                            // Now we need to output everything
-                            if (write_it){
-                                FileIO::writeOutDouble(buffer, data_dir+"Edges",
-                                                       edges, gridSize, i);
-                            }
-
-                            // Creating boolean array to work with
-                            double thresh = find_thresh(par,edges_gpu, 
-                                                        thresh_const);
-                            //std::cout << "threshold is: " << thresh << '\n';
-                            bool *threshold_gpu = threshold_wfc(par, edges_gpu, 
-                                                            thresh,
-                                                            xDim, yDim, zDim);
-
-                            bool *threshold_cpu = 
-                                (bool *)malloc(sizeof(bool)*gridSize);
-
-                            cudaMemcpy(threshold_cpu, threshold_gpu, 
-                                       sizeof(bool)*gridSize,
-                                       cudaMemcpyDeviceToHost);
-
-                            if (write_it){
-                                FileIO::writeOutBool(buffer, data_dir+"Thresh",
-                                                     threshold_cpu,gridSize,i);
-                            }
-
-                            cudaFree(threshold_cpu);
-                            free(edges);
+                        // Now we need to output everything
+                        if (write_it){
+                            FileIO::writeOutDouble(buffer, data_dir+"Edges",
+                                                   edges, gridSize, i);
                         }
-*/
+                        free(edges);
 
                     }
                     else if (dimnum == 2){
@@ -880,9 +853,6 @@ void evolve(Grid &par,
         }
     }
 
-    // std::cout << "finished evolution" << '\n';
-    // Storing wavefunctions for later
-    //std::cout << gpuWfc[0].x << '\t' << gpuWfc[0].y << '\n';
     par.store("wfc", wfc);
     par.store("wfc_gpu", gpuWfc);
 }
