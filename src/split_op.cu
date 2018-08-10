@@ -81,7 +81,6 @@ void parSum(double* gpuWfc, double* gpuParSum, Grid &par){
 
     set_eq<<<par.grid, par.threads>>>(gpuWfc, gpuParSum);
 
-    dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
         multipass<<<block,thread_tmp,thread_tmp.x*sizeof(double)>>>(
             &gpuParSum[0],&gpuParSum[0]);
@@ -138,7 +137,6 @@ void parSum(double2* gpuWfc, Grid &par){
               << "grid.x is: " << grid_tmp.x << '\t'
               << "threads.x are: " << threads.x << '\n';
 */
-    dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
         multipass<<<block,threads,threads.x*sizeof(double)>>>(&density[0],
                                                               &density[0]);

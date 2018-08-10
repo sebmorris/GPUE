@@ -78,12 +78,9 @@ int init(Grid &par){
 
     // Let's go ahead and define the gDensConst here
     // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
-    double gDenConst = 0;
-    if (corotating){
-        gDenConst = N*4*HBAR*HBAR*PI*(a_s/mass);
-        if (dimnum == 2){
-            gDenConst*= sqrt(mass*(omegaZ)/(2*PI*HBAR));
-        }
+    double gDenConst = N*4*HBAR*HBAR*PI*(a_s/mass);
+    if (dimnum == 2){
+        gDenConst*= sqrt(mass*(omegaZ)/(2*PI*HBAR));
     }
     par.store("gDenConst", gDenConst);
 

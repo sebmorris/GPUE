@@ -15,7 +15,6 @@ void evolve(Grid &par,
     double dt = par.dval("dt");
     double omegaX = par.dval("omegaX");
     double omegaY = par.dval("omegaY");
-    double omegaZ;
     double mass = par.dval("mass");
     double dx = par.dval("dx");
     double dy = 1;
@@ -26,7 +25,6 @@ void evolve(Grid &par,
     double thresh_const = par.dval("thresh_const");
     double *x = par.dsval("x");
     double *y;
-    double *z;
     double *V = par.dsval("V");
     double *Phi = par.dsval("Phi");
     double2 *gpu1dpAx = par.cufftDoubleComplexval("pAx_gpu");
@@ -59,7 +57,6 @@ void evolve(Grid &par,
     }
     if (dimnum > 2){
         dz = par.dval("dz");
-        z = par.dsval("z");
         gpu1dpAz = par.cufftDoubleComplexval("pAz_gpu");
         zDim = par.ival("zDim");
     }
@@ -147,9 +144,6 @@ void evolve(Grid &par,
     LatticeGraph::Lattice lattice; //Vortex lattice graph.
     double* adjMat;
 
-    double sepAvg = 0.0;
-
-    int num_kick = 0;
     // Assuming triangular lattice at rotatio
 
 
@@ -266,7 +260,7 @@ void evolve(Grid &par,
                              par.store("Vort_angle", vort_angle);
                                  
                             //Determine average lattice spacing.
-                             sepAvg = Tracker::vortSepAvg(vortCoords->
+                             double sepAvg = Tracker::vortSepAvg(vortCoords->
                                      getVortices(), central_vortex);
     
                              par.store("Central_vort_x",
