@@ -41,8 +41,6 @@ void vecConj_test();
 void ast_mult_test();
 void ast_cmult_test();
 void ast_op_mult_test();
-void real_ast_test();
-void im_ast_test();
 
 // Other
 void energyCalc_test();

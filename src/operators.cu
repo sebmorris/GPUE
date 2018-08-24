@@ -422,15 +422,17 @@ void generate_gauge(Grid &par){
         file_A(par.Axfile, Ax, omega);
         cudaMemcpy(Ax_gpu, Ax, sizeof(double)*gSize, cudaMemcpyHostToDevice);
 
-        file_A(par.Ayfile, Ay, omega);
-        cudaMemcpy(Ay_gpu, Ay, sizeof(double)*gSize, cudaMemcpyHostToDevice);
+        if (dimnum > 1){
+            file_A(par.Ayfile, Ay, omega);
+            cudaMemcpy(Ay_gpu,Ay,sizeof(double)*gSize,cudaMemcpyHostToDevice);
+        }
 
         if (dimnum == 3){
             file_A(par.Azfile, Az, omega);
             cudaMemcpy(Az_gpu,Az,sizeof(double)*gSize,cudaMemcpyHostToDevice);
         }
 
-        std::cout << "finished reading Ax / Ay from file" << '\n';
+        std::cout << "finished reading Ax / Ay / Az from file" << '\n';
     }
     else{
         if (par.is_ast_gpu("Ax")){

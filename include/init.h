@@ -37,13 +37,7 @@
 #include "../include/evolution.h"
 #include <string>
 #include <iostream>
-/* Function declarations */
-/*
- * arg1 = Function result code from CUDA CUFFT calls.
- * arg2 = String data for name of function called. Prints value to stdout.
- */
 
-// UPDATE LIST LATER
  /**
  * @brief	Initializes data structures
  * @ingroup	data
