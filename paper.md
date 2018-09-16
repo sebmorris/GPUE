@@ -24,20 +24,18 @@ bibliography: paper.bib
 # Summary
 
 Bose--Eintein Condensates (BECs) are superfluid systems consisting of bosonic atoms that have been cooled and condensed into a single, macroscopic ground state.
-These systems can be created in an expermental laboratory and allow for the the exploration of many interesting physical phenomenon, such as superfluid turbulence.
-Simulations of BECs allow for new discoveries that directly mimic what can be seen in experiments and are thus highly valuable for fundamental research.
+These systems can be created in an expermental laboratory, and allow for the the exploration of many interesting physical phenomenon, such as superfluid turbulence, chaotic dynamics, and as analogs of other quantum systems.
+Numerical simulations of BECs allow for new discoveries that directly mimic what can be seen in experiments and are thus highly valuable for fundamental research.
 In practice, almost all dynamics of BEC systems can be found by solving the non-linear Schr&ouml;dinger equation known as the Gross--Pitaevskii Equation (GPE):
 
-$$
-\frac{\partial\Psi(\mathbf{r},t)}{\partial t} = \left( -\frac{\hbar^2}{2m} \frac{\partial}{\partial\mathbf{r}^2} + V(\mathbf{r}) + g|\Psi(\mathbf{r},t)|^2\right)\Psi(\mathbf{r},t)
+\frac{\partial\Psi(x,t)}{\partial t} = \left( -\frac{\hbar^2}{2m} \frac{\partial}{\partial x^2} + V(\mathbf{r}) + g|\Psi(\mathbf{r},t)|^2\right)\Psi(x,t)
 $$
 
-Where $\Psi(\mathbf{r},t)$ is the many-body wavefunction of the quantum system, $m$ is the atomic mass, $V(\mathbf{r})$ is a potential to trap the atomic system, $g = \frac{4\pi\hbar^2a\_s}{m}$ is a coupling factor, and $a\_s$ is the scattering length of the atomic species.
-Here, the GPE is shown in 1 dimension, but it can easily be extended to 2 or 3 dimensions, if necessary.
-Though there are many methods to solve the GPE, one of the most straightforward is the split-operator method, which has previously been accelerated with GPU devices [@Ruf2009]; however, there are no general software packages available using this method.
-Even so, there are several software packages designed to simulate BECs with other methods, including GPELab [@Antoine2014] and the Massively Parallel Trotter-Suzuki Solver [@Wittek2013].
+Where $\Psi(x,t)$ is the one-dimensional many-body wavefunction of the quantum system, $m$ is the atomic mass, $V(\mathbf{r})$ is a potential to trap the atomic system, $g = \frac{4\pi\hbar^2a\_s}{m}$ is a coupling factor, and $a\_s$ is the scattering length of the atomic species.
+Here, the GPE is shown in one dimension, but it can easily be extended to two or three dimensions, if necessary.
+Though there are many methods to solve the GPE, one of the most straightforward is the split-operator method, which has previously been accelerated with GPU devices [@Ruf2009,@Bauke2011]; however, there are no generalized software packages available using this method that allow for user-configurable simulations and a variety of different system types. Even so, there are several software packages designed to simulate BECs with other methods, including GPELab [@Antoine2014] and the Massively Parallel Trotter-Suzuki Solver [@Wittek2013].
 
-GPUE is a GPU-based Gross-Pitaevskii Equation solver via the split-operator method for superfluid simulations of Bose--Einstein Condensates with an emphasis on vortex dynamics in 2 and 3 dimensions.
+GPUE is a GPU-based Gross-Pitaevskii Equation solver via the split-operator method for superfluid simulations of both linear and non-linear Schr&ouml;dinger equations, with an emphasis on Bose--Einstein Condensates with vortex dynamics in 2 and 3 dimensions.
 For this purpose, GPUE provides a number of unique features:
 1. Dynamic field generation for trapping potentials and other variables on the GPU device
 2. Vortex tracking in 2D and vortex highlighting in 3D
