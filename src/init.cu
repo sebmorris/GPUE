@@ -1,8 +1,29 @@
 #include "../include/init.h"
 #include "../include/dynamic.h"
 
+void check_memory(Grid &par){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int gSize = xDim*yDim*zDim;
+    size_t free = 0;
+    size_t total = 0;
+
+    cudaMemGetInfo(&free, &total);
+
+    // Note that this check is specifically for the case where we need to keep
+    // 8 double2* values on the GPU. This is not the case for dynamic fields
+    // and the test should be updated accordingly as these are used more.
+    if (free < 16*8*gSize){
+        std::cout << "Not enough GPU memory for gridsize!\n";
+        exit(1);
+    }
+}
+
 int init(Grid &par){
 
+    check_memory(par);
     set_fns(par);
 
     // Re-establishing variables from parsed Grid class

@@ -39,6 +39,14 @@
 #include <iostream>
 
  /**
+ * @brief       check to make sure we have enough memory for computation
+ * @ingroup     data
+ * @param       Grid class
+ */
+
+void check_memory(Grid &par);
+
+ /**
  * @brief	Initializes data structures
  * @ingroup	data
  * @param	Grid class

@@ -74,6 +74,9 @@ void bessel_test();
 // Test for the vortex tracking functions in vortex_3d
 void vortex3d_test();
 
+// Test for available amount of GPU memory
+void check_memory_test();
+
 // Kernel testing will be added later
 __device__ bool close(double a, double b, double threshold){
     return (abs(a-b) < threshold);
@@ -108,6 +111,8 @@ void test_all(){
     make_complex_test();
     cMultPhi_test();
     evolve_test();
+
+    check_memory_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
 }
@@ -1345,3 +1350,14 @@ void cMultPhi_test(){
 
 }
 
+// Test for available amount of GPU memory
+void check_memory_test(){
+    Grid par;
+    par.store("xDim",100);
+    par.store("yDim",100);
+    par.store("zDim",100);
+
+    check_memory(par);
+
+    std::cout << "CUDA memory check passed!\n";
+}
