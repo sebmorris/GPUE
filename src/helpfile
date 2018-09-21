@@ -70,6 +70,6 @@ Notes:
 - We use real units with an Rb87 condensate
 
 - You may generate a simple vortex lattice in 2d with the following command:
-  ./gpue -x 512 -y 512 -g 50000 -e 1 -p 5000 -W -w 0.5 -n 1e5 -s -l -Z 10
+  ./gpue -x 512 -y 512 -g 50000 -e 1 -p 5000 -W -w 0.6 -n 1e5 -s -l -Z 100
 
 - Thanks for using GPUE!

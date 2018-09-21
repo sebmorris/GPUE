@@ -79,8 +79,10 @@ def plot_wfc(xDim, yDim, data_dir, pltval, start, end, incr):
         print(i)
         data_real = data_dir + "/wfc_0_const_%s" % i
         data_im = data_dir + "/wfc_0_consti_%s" % i
-        #data_real = data_dir + "/wfc_ev_%s" % i
-        #data_im = data_dir + "/wfc_evi_%s" % i
+        if pltval == "wfc_ev":
+            data_real = data_dir + "/wfc_ev_%s" % i
+            data_im = data_dir + "/wfc_evi_%s" % i
+
         #data_x = data_dir + "x_0" % i
         #data_y = data_dir + "y_0" % i
         
@@ -102,6 +104,7 @@ def plot_wfc(xDim, yDim, data_dir, pltval, start, end, incr):
         plt.imshow(wfc, extent=(-6.9804018707623236e-04,6.9804018707623236e-04,-6.9804018707623236e-04,6.9804018707623236e-04), interpolation='nearest',
                    cmap = cm.jet)
         plt.colorbar()
+        #plt.clim(0,1)
         plt.show()
         #fig = plt.figure()
         #fig.savefig('wfc.png')
@@ -138,8 +141,9 @@ def plot_wfc_k(xDim, yDim, data_dir, pltval, start, end, incr):
         print(i)
         data_real = data_dir + "/wfc_0_const_%s" % i
         data_im = data_dir + "/wfc_0_consti_%s" % i
-        #data_real = data_dir + "/wfc_ev_%s" % i
-        #data_im = data_dir + "/wfc_0_evi_%s" % i
+        if pltval == "wfc_k_ev":
+            data_real = data_dir + "/wfc_ev_%s" % i
+            data_im = data_dir + "/wfc_0_evi_%s" % i
 
         lines_real = np.loadtxt(data_real)
         lines_im = np.loadtxt(data_im)
@@ -167,8 +171,9 @@ def plot_wfc_phase(xDim, yDim, data_dir, pltval, start, end, incr):
         print(i)
         data_real = data_dir + "/wfc_0_const_%s" % i
         data_im = data_dir + "/wfc_0_consti_%s" % i
-        #data_real = data_dir + "/wfc_ev_%s" % i
-        #data_im = data_dir + "/wfc_evi_%s" % i
+        if pltval == "wfc_phase_ev":
+            data_real = data_dir + "/wfc_ev_%s" % i
+            data_im = data_dir + "/wfc_evi_%s" % i
 
         lines_real = np.loadtxt(data_real)
         lines_im = np.loadtxt(data_im)
@@ -216,13 +221,13 @@ def parse_args(string_list):
     return par
 
 def plot(par):
-    if (par.item == "wfc"):
+    if (par.item == "wfc" or par.item == "wfc_ev"):
         plot_wfc(par.xDim, par.yDim, par.data_dir, par.item, 
                  par.start, par.end, par.incr)
-    elif (par.item == "wfc_k"):
+    elif (par.item == "wfc_k" or par.item == "wfc_k_ev"):
         plot_wfc_k(par.xDim, par.yDim, par.data_dir, par.item,
                    par.start, par.end, par.incr)
-    elif (par.item == "wfc_phase"):
+    elif (par.item == "wfc_phase" or par.item == "wfc_phase_ev"):
         plot_wfc_phase(par.xDim, par.yDim, par.data_dir, par.item,
                        par.start, par.end, par.incr)
     elif (par.item == "GK" or par.item == "GV"):
