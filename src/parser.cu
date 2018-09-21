@@ -12,8 +12,8 @@ Grid parseArgs(int argc, char** argv){
 
     // Setting default values
     par.store("xDim", 256);
-    par.store("yDim", 256);
-    par.store("zDim", 256);
+    par.store("yDim", 1);
+    par.store("zDim", 1);
     par.store("omega", 0.0);
     par.store("gammaY", 1.0);
     par.store("gsteps", 1);
@@ -393,9 +393,15 @@ Grid parseArgs(int argc, char** argv){
                         par.Azfile = filecheck("src/Azgauge");
                     }
                     par.store("box_size", 2.5e-5);
+                    if (par.ival("yDim") == 1){
+                        par.store("yDim",256);
+                    }
+                    if (par.ival("zDim") == 1){
+                        par.store("zDim",256);
+                    }
                 }
-                if (dimnum == 2){
-                    par.store("zDim", 1);
+                if (dimnum == 2 && par.ival("yDim") == 1){
+                    par.store("yDim",256);
                 }
                 par.store("dimnum",(int)dimnum);
                 break;

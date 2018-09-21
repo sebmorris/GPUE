@@ -15,8 +15,15 @@ void check_memory(Grid &par){
     // Note that this check is specifically for the case where we need to keep
     // 8 double2* values on the GPU. This is not the case for dynamic fields
     // and the test should be updated accordingly as these are used more.
-    if (free < 16*8*gSize){
+    size_t req_memory = 16*8*(size_t)gSize;
+    if (free < req_memory){
         std::cout << "Not enough GPU memory for gridsize!\n";
+        std::cout << "Free memory is: " << free << '\n';
+        std::cout << "Required memory memory is: " << req_memory << '\n';
+        std::cout << "xDim is: " << xDim << '\n';
+        std::cout << "yDim is: " << yDim << '\n';
+        std::cout << "zDim is: " << zDim << '\n';
+        std::cout << "gSize is: " << gSize << '\n';
         exit(1);
     }
 }
