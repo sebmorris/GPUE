@@ -47,5 +47,6 @@ GPUE provides a fast, robust, and accessible method to simulate superfluid physi
 
 # Acknowledgements
 This work has been supported by the Okinawa Institute of Science and Technology Graduate University and by JSPS KAKENHI Grant Number JP17J01488.
+We would also like to thank Thomas Busch, Rashi Sachdeva, Tiantian Zhang, and Angela White for discussions on useful physical systems to simulate with the GPUE codebase, along with Peter Wittek and Tadhg Morgan for contributions to the code, itself.
 
 # References
