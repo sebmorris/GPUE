@@ -40,35 +40,19 @@
 #include "vortex_3d.h"
 
 
-/* Function declarations */
-/*
- * arg1 = Function result code from CUDA CUFFT calls.
- * arg2 = String data for name of function called. Prints value to stdout.
- */
-
-// UPDATE LIST LATER
- /**
- * @brief	performs real or imaginary time evolution
- * @ingroup	data
- * @param	result Function result code of CUDA operation
- * @param	c Descriptor of CUDA operation
- * @return	0 for success. See CUDA failure codes in cuda.h for other values.
- */
-void evolve_2d(Grid &par,
-            cufftDoubleComplex *gpuParSum, int numSteps,
-            unsigned int gstate,
-            std::string buffer);
 
 // UPDATE LIST LATER
  /**
  * @brief       performs real or imaginary time evolution
  * @ingroup     data
- * @param       result Function result code of CUDA operation
- * @param       c Descriptor of CUDA operation
+ * @param       Parameter set
+ * @param       Total number of steps
+ * @param       Real (1) or imaginary (1) time evolution
+ * @param       String buffer for writing files
  * @return      0 for success. See CUDA failure codes in cuda.h for other values
  */
 void evolve(Grid &par,
-            cufftDoubleComplex *gpuParSum, int numSteps,
+            int numSteps,
             unsigned int gstate,
             std::string buffer);
 

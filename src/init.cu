@@ -1,8 +1,36 @@
 #include "../include/init.h"
 #include "../include/dynamic.h"
 
+void check_memory(Grid &par){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int gSize = xDim*yDim*zDim;
+    size_t free = 0;
+    size_t total = 0;
+
+    cudaMemGetInfo(&free, &total);
+
+    // Note that this check is specifically for the case where we need to keep
+    // 8 double2* values on the GPU. This is not the case for dynamic fields
+    // and the test should be updated accordingly as these are used more.
+    size_t req_memory = 16*8*(size_t)gSize;
+    if (free < req_memory){
+        std::cout << "Not enough GPU memory for gridsize!\n";
+        std::cout << "Free memory is: " << free << '\n';
+        std::cout << "Required memory memory is: " << req_memory << '\n';
+        std::cout << "xDim is: " << xDim << '\n';
+        std::cout << "yDim is: " << yDim << '\n';
+        std::cout << "zDim is: " << zDim << '\n';
+        std::cout << "gSize is: " << gSize << '\n';
+        exit(1);
+    }
+}
+
 int init(Grid &par){
 
+    check_memory(par);
     set_fns(par);
 
     // Re-establishing variables from parsed Grid class
@@ -14,6 +42,8 @@ int init(Grid &par){
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
     bool write_file = par.bval("write_file");
+    bool cyl_coord = par.bval("cyl_coord");
+    bool corotating = par.bval("corotating");
     dim3 threads;
     unsigned int gSize = xDim;
     if (dimnum > 1){
@@ -34,9 +64,6 @@ int init(Grid &par){
     double *Energy;
     double *r;
     double *V_opt;
-    double *Bz;
-    double *Bx;
-    double *By;
     double *Energy_gpu;
     cufftDoubleComplex *wfc;
     if (par.bval("read_wfc") == true){
@@ -45,8 +72,6 @@ int init(Grid &par){
     cufftDoubleComplex *EV_opt;
     cufftDoubleComplex *wfc_backup;
     cufftDoubleComplex *EappliedField;
-    cufftDoubleComplex *par_sum;
-    cudaMalloc((void**) &par_sum, sizeof(double2)*gSize);
 
     std::cout << "gSize is: " << gSize << '\n';
     cufftResult result;
@@ -147,9 +172,6 @@ int init(Grid &par){
     r = (double *) malloc(sizeof(double) * gSize);
     V_opt = (double *) malloc(sizeof(double) * gSize);
     EV_opt = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) * gSize);
-    Bz = (double *) malloc(sizeof(double) * gSize);
-    Bx = (double *) malloc(sizeof(double) * gSize);
-    By = (double *) malloc(sizeof(double) * gSize);
     EappliedField = (cufftDoubleComplex *) malloc(sizeof(cufftDoubleComplex) *
                                                          gSize);
 
@@ -207,6 +229,9 @@ int init(Grid &par){
     }
 
     if (write_file){
+        double *Bz;
+        double *Bx;
+        double *By;
         if (dimnum == 2){
             Bz = curl2d(par, Ax, Ay);
         }
@@ -221,6 +246,33 @@ int init(Grid &par){
         //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%//
         //hdfWriteDouble(xDim, V, 0, "V_0"); //HDF COMING SOON!
         //hdfWriteComplex(xDim, wfc, 0, "wfc_0");
+        if (cyl_coord && dimnum > 2){
+            double *Br = curl3d_r(par, Bx, By);
+            double *Bphi = curl3d_phi(par, Bx, By);
+
+            FileIO::writeOutDouble(buffer, data_dir + "Br",Br,gSize,0);
+            FileIO::writeOutDouble(buffer, data_dir + "Bphi",Bphi,gSize,0);
+            FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+
+            free(Br);
+            free(Bx);
+            free(By);
+            free(Bz);
+            free(Bphi);
+        }
+        else{
+            if (dimnum > 1){
+                FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
+                free(Bz);
+            }
+            if (dimnum > 2){
+                FileIO::writeOutDouble(buffer, data_dir + "Bx",Bx,gSize,0);
+                FileIO::writeOutDouble(buffer, data_dir + "By",By,gSize,0);
+                free(Bx);
+                free(By);
+            }
+        }
+
         FileIO::writeOutDouble(buffer, data_dir + "V",V,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "K",K,gSize,0);
         FileIO::writeOutDouble(buffer, data_dir + "pAy",pAy,gSize,0);
@@ -231,13 +283,6 @@ int init(Grid &par){
         FileIO::writeOutDouble(buffer, data_dir + "x",x,xDim,0);
         FileIO::writeOutDouble(buffer, data_dir + "y",y,yDim,0);
         FileIO::writeOutDouble(buffer, data_dir + "z",z,zDim,0);
-        if (dimnum > 1){
-            FileIO::writeOutDouble(buffer, data_dir + "Bz",Bz,gSize,0);
-        }
-        if (dimnum == 2){
-            FileIO::writeOutDouble(buffer, data_dir + "Bx",Bx,gSize,0);
-            FileIO::writeOutDouble(buffer, data_dir + "By",By,gSize,0);
-        }
         FileIO::writeOut(buffer, data_dir + "WFC",wfc,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAz",EpAz,gSize,0);
         FileIO::writeOut(buffer, data_dir + "EpAy",EpAy,gSize,0);
@@ -296,7 +341,6 @@ int init(Grid &par){
     par.store("V_opt", V_opt);
     par.store("wfc_backup", wfc_backup);
     par.store("EappliedField", EappliedField);
-    par.store("par_sum", par_sum);
 
     par.store("result", result);
     par.store("plan_1d", plan_1d);
@@ -319,58 +363,12 @@ int init(Grid &par){
     return 0;
 }
 
-int main(int argc, char **argv){
-
-    Grid par = parseArgs(argc,argv);
-    //Grid par2 = parseArgs(argc,argv);
-
-    int device = par.ival("device");
-    int dimnum = par.ival("dimnum");
-    cudaSetDevice(device);
-
-    std::string buffer;
-    time_t start,fin;
-    time(&start);
-    printf("Start: %s\n", ctime(&start));
-
-    //************************************************************//
-    /*
-    * Initialise the Params data structure to track params and variables
-    */
-    //************************************************************//
-
-    // If we want to read in a wfc, we may also need to imprint a phase. This
-    // will be done in the init_2d and init_3d functions
-    // We need a number of parameters for now
-    int xDim = par.ival("xDim");
-    int yDim = par.ival("yDim");
-    int zDim = par.ival("zDim");
-    if(par.bval("read_wfc") == true){
-
-        // Initializing the wfc
-        int gSize = xDim * yDim * zDim;
-        cufftDoubleComplex *wfc;
-
-        std::string infile = par.sval("infile");
-        std::string infilei = par.sval("infilei");
-        printf("Loading wavefunction...");
-        wfc=FileIO::readIn(infile,infilei,gSize);
-        par.store("wfc",wfc);
-        printf("Wavefunction loaded.\n");
-        //std::string data_dir = par.sval("data_dir");
-        //FileIO::writeOut(buffer, data_dir + "WFC_CHECK",wfc,gSize,0);
-    }
-
-    init(par);
-
+void set_variables(Grid &par, bool ev_type){
     // Re-establishing variables from parsed Grid class
     // Note that 3d variables are set to nullptr's unless needed
     //      This might need to be fixed later
-    std::string data_dir = par.sval("data_dir");
     double dx = par.dval("dx");
     double dy = par.dval("dy");
-    double *x = par.dsval("x");
-    double *y = par.dsval("y");
     double *V_opt = par.dsval("V_opt");
     double *pAy = par.dsval("pAy");
     double *pAx = par.dsval("pAx");
@@ -379,22 +377,13 @@ int main(int argc, char **argv){
     double2 *pAz_gpu;
     double2 *V_gpu;
     double2 *K_gpu;
-    int gsteps = par.ival("gsteps");
-    int esteps = par.ival("esteps");
     cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
-    cufftDoubleComplex *GK = par.cufftDoubleComplexval("GK");
-    cufftDoubleComplex *GV = par.cufftDoubleComplexval("GV");
-    cufftDoubleComplex *GpAx = par.cufftDoubleComplexval("GpAx");
-    cufftDoubleComplex *GpAy = nullptr;
-    cufftDoubleComplex *GpAz = nullptr;
-    cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
-    cufftDoubleComplex *EK = par.cufftDoubleComplexval("EK");
-    cufftDoubleComplex *EpAx = par.cufftDoubleComplexval("EpAx");
-    cufftDoubleComplex *EpAy = nullptr;
-    cufftDoubleComplex *EpAz = nullptr;
     cufftDoubleComplex *wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
-    cufftDoubleComplex *par_sum = par.cufftDoubleComplexval("par_sum");
     cudaError_t err;
+    int dimnum = par.ival("dimnum");
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
     int gsize = xDim;
 
     // Special variables for the 3d case
@@ -420,19 +409,13 @@ int main(int argc, char **argv){
         cudaMalloc((void**) &pAz_gpu, sizeof(double2)*gsize);
     }
 
-    std::cout << "variables re-established" << '\n';
-    //std::cout << read_wfc << '\n';
+    if (ev_type == 0){
+        cufftDoubleComplex *GK = par.cufftDoubleComplexval("GK");
+        cufftDoubleComplex *GV = par.cufftDoubleComplexval("GV");
+        cufftDoubleComplex *GpAx = par.cufftDoubleComplexval("GpAx");
+        cufftDoubleComplex *GpAy = nullptr;
+        cufftDoubleComplex *GpAz = nullptr;
 
-    //************************************************************//
-    /*
-    * Groundstate finder section
-    */
-    //************************************************************//
-    if (par.bval("write_file")){
-        FileIO::writeOutParam(buffer, par, data_dir + "Params.dat");
-    }
-
-    if(gsteps > 0){
         if(!par.bval("K_time")){
             err=cudaMemcpy(K_gpu, GK, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
@@ -494,34 +477,15 @@ int main(int argc, char **argv){
             par.store("pAz_gpu", pAz_gpu);
 
         }
-        evolve(par, par_sum, gsteps, 0, buffer);
-        wfc = par.cufftDoubleComplexval("wfc");
-        wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
-        cudaMemcpy(wfc, wfc_gpu, sizeof(cufftDoubleComplex)*gsize,
-                   cudaMemcpyDeviceToHost);
+        free(GV); free(GK); free(GpAy); free(GpAx); free(GpAz);
     }
+    else if (ev_type == 1){
 
-    std::cout << GV[0].x << '\t' << GK[0].x << '\t'
-              << pAy[0] << '\t' << pAx[0] << '\n';
-
-    std::cout << "evolution started..." << '\n';
-    std::cout << "esteps: " << esteps << '\n';
-
-    //************************************************************//
-    /*
-    * Evolution
-    */
-    //************************************************************//
-    if(esteps > 0){
-        if(!par.bval("Ax_time")){
-            err=cudaMemcpy(pAx_gpu, EpAx, sizeof(cufftDoubleComplex)*gsize,
-                           cudaMemcpyHostToDevice);
-            if(err!=cudaSuccess){
-                std::cout << "ERROR: Could not copy pAx_gpu to device" << '\n';
-                exit(1);
-            }
-            par.store("pAx_gpu", pAx_gpu);
-        }
+        cufftDoubleComplex *EV = par.cufftDoubleComplexval("EV");
+        cufftDoubleComplex *EK = par.cufftDoubleComplexval("EK");
+        cufftDoubleComplex *EpAx = par.cufftDoubleComplexval("EpAx");
+        cufftDoubleComplex *EpAy = nullptr;
+        cufftDoubleComplex *EpAz = nullptr;
         if (!par.bval("K_time")){
             err=cudaMemcpy(K_gpu, EK, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
@@ -531,6 +495,17 @@ int main(int argc, char **argv){
             }
             par.store("K_gpu", K_gpu);
         }
+        if(!par.bval("Ax_time")){
+            err=cudaMemcpy(pAx_gpu, EpAx, sizeof(cufftDoubleComplex)*gsize,
+                           cudaMemcpyHostToDevice);
+            if(err!=cudaSuccess){
+                std::cout << "ERROR: Could not copy pAx_gpu to device" << '\n';
+                std::cout << err << '\n';
+                exit(1);
+            }
+            par.store("pAx_gpu", pAx_gpu);
+        }
+
         if (!par.bval("V_time")){
             err=cudaMemcpy(V_gpu, EV, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
@@ -573,16 +548,79 @@ int main(int argc, char **argv){
             }
             par.store("pAz_gpu", pAz_gpu);
         }
-        evolve(par, par_sum, esteps, 1, buffer);
-        wfc = par.cufftDoubleComplexval("wfc");
-        wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
+
+        free(EV); free(EK); free(EpAy); free(EpAx); free(EpAz);
+    }
+
+}
+
+int main(int argc, char **argv){
+
+    Grid par = parseArgs(argc,argv);
+    //Grid par2 = parseArgs(argc,argv);
+
+    int device = par.ival("device");
+    int dimnum = par.ival("dimnum");
+    cudaSetDevice(device);
+
+    std::string buffer;
+    time_t start,fin;
+    time(&start);
+    printf("Start: %s\n", ctime(&start));
+
+    //************************************************************//
+    /*
+    * Initialise the Params data structure to track params and variables
+    */
+    //************************************************************//
+
+    // If we want to read in a wfc, we may also need to imprint a phase. This
+    // will be done in the init_2d and init_3d functions
+    // We need a number of parameters for now
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+    if(par.bval("read_wfc") == true){
+
+        // Initializing the wfc
+        int gSize = xDim * yDim * zDim;
+        cufftDoubleComplex *wfc;
+
+        std::string infile = par.sval("infile");
+        std::string infilei = par.sval("infilei");
+        printf("Loading wavefunction...");
+        wfc=FileIO::readIn(infile,infilei,gSize);
+        par.store("wfc",wfc);
+        printf("Wavefunction loaded.\n");
+        //std::string data_dir = par.sval("data_dir");
+        //FileIO::writeOut(buffer, data_dir + "WFC_CHECK",wfc,gSize,0);
+    }
+
+    init(par);
+
+    int gsteps = par.ival("gsteps");
+    int esteps = par.ival("esteps");
+    std::string data_dir = par.sval("data_dir");
+    std::cout << "variables re-established" << '\n';
+
+    if (par.bval("write_file")){
+        FileIO::writeOutParam(buffer, par, data_dir + "Params.dat");
+    }
+
+    if(gsteps > 0){
+        std::cout << "Imaginary-time evolution started..." << '\n';
+        set_variables(par, 0);
+
+        evolve(par, gsteps, 0, buffer);
+    }
+
+    if(esteps > 0){
+        std::cout << "real-time evolution started..." << '\n';
+        set_variables(par, 1);
+        evolve(par, esteps, 1, buffer);
     }
 
     std::cout << "done evolving" << '\n';
-    free(EV); free(EK); free(EpAy); free(EpAx);
-    free(x);free(y);
-    cudaFree(wfc_gpu); cudaFree(K_gpu); cudaFree(V_gpu); cudaFree(pAx_gpu);
-    cudaFree(pAy_gpu); cudaFree(par_sum);
     time(&fin);
     printf("Finish: %s\n", ctime(&fin));
     printf("Total time: %ld seconds\n ",(long)fin-start);

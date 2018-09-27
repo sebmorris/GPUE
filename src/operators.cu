@@ -39,6 +39,39 @@ double *curl2d(Grid &par, double *Ax, double *Ay){
     return curl;
 }
 
+double *curl3d_r(Grid &par, double *Bx, double *By){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int size = sizeof(double) * xDim * yDim * zDim;
+    double *curl;
+    curl = (double *)malloc(size);
+
+    for (int i = 0; i < xDim*yDim*zDim; ++i){
+        curl[i] = sqrt(Bx[i]*Bx[i] + By[i] * By[i]);
+    }
+
+    return curl;
+}
+
+double *curl3d_phi(Grid &par, double *Bx, double *By){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int size = sizeof(double) * xDim * yDim * zDim;
+    double *curl;
+    curl = (double *)malloc(size);
+
+    for (int i = 0; i < xDim*yDim*zDim; ++i){
+        curl[i] = atan2(By[i], Bx[i]);
+    }
+
+    return curl;
+}
+
+
 // Function to take the curl of Ax and Ay in 2d
 // note: This is on the cpu, there should be a GPU version too.
 // Not complete yet!
@@ -60,7 +93,7 @@ double *curl3d_x(Grid &par, double *Ax, double *Ay, double *Az){
             for (int k = 0; k < zDim - 1; k++){
                 index = k + zDim * j + zDim * yDim * i;
                 curl[index] = (Az[index] - Az[index + xDim])
-                              -(Ay[index] - Ay[index + 1]);
+                              -(Ay[index] - Ay[index + xDim*yDim]);
             }
         }
     }
@@ -88,8 +121,8 @@ double *curl3d_y(Grid &par, double *Ax, double *Ay, double *Az){
         for (int j = 0; j < yDim; j++){
             for (int k = 0; k < zDim - 1; k++){
                 index = k + zDim * j + zDim * yDim * i;
-                curl[index] = -(Az[index] - Az[index + xDim*yDim])
-                              +(Ax[index] - Ax[index + 1]);
+                curl[index] = -(Az[index] - Az[index + 1])
+                              -(Ax[index] - Ax[index + xDim*yDim]);
             }
         }
     }
@@ -117,7 +150,7 @@ double *curl3d_z(Grid &par, double *Ax, double *Ay, double *Az){
         for (int j = 0; j < yDim-1; j++){
             for (int k = 0; k < zDim; k++){
                 index = k + zDim * j + zDim * yDim * i;
-                curl[index] = (Ay[index] - Ay[index + xDim*yDim])
+                curl[index] = (Ay[index] - Ay[index + 1])
                               -(Ax[index] - Ax[index + xDim]);
             }
         }
@@ -165,25 +198,40 @@ void generate_p_space(Grid &par){
     int yDim = par.ival("yDim");
     int zDim = par.ival("zDim");
     double xMax = par.dval("xMax");
-    double yMax = par.dval("yMax");
+    double yMax = 0;
+    if (dimnum > 1){
+        yMax = par.dval("yMax");
+    }
     double zMax = 0;
     if (dimnum == 3){
         zMax = par.dval("zMax");
     }
+
     double pxMax = par.dval("pxMax");
-    double pyMax = par.dval("pyMax");
+    double pyMax = 0;
+    if (dimnum > 1){
+        pyMax = par.dval("pyMax");
+    }
     double pzMax = 0;
     if (dimnum == 3){
         pzMax = par.dval("pzMax");
     }
+
     double dx = par.dval("dx");
-    double dy = par.dval("dy");
+    double dy = 0;
+    if (dimnum > 1){
+        dy = par.dval("dy");
+    }
     double dz = 0;
     if (dimnum == 3){
         dz = par.dval("dz");
     }
+
     double dpx = par.dval("dpx");
-    double dpy = par.dval("dpy");
+    double dpy = 0;
+    if (dimnum > 1){
+        dpy = par.dval("dpy");
+    }
     double dpz = 0;
     if (dimnum == 3){
         dpz = par.dval("dpz");
@@ -249,6 +297,24 @@ void generate_p_space(Grid &par){
             pz[i] = i*dpz;
             pz[i + (zDim/2)] = -pzMax + i*dpz;
 
+        }
+
+    }
+    else if (dimnum == 1){
+        for(int i=0; i<xDim/2; ++i){
+            x[i] = -xMax + i*dx;
+            x[i + (xDim/2)] = i*dx;
+
+            px[i] = i*dpx;
+            px[i + (xDim/2)] = -pxMax + i*dpx;
+
+        }
+
+        for(int i = 0; i < zDim; ++i){
+            z[i] = 0;
+            pz[i] = 0;
+            y[i] = 0;
+            py[i] = 0;
         }
 
     }
@@ -327,22 +393,19 @@ void generate_gauge(Grid &par){
     double *Ax, *Ay, *Az, *Ax_gpu, *Ay_gpu, *Az_gpu;
     double *x_gpu = par.dsval("x_gpu");
     double *y_gpu = par.dsval("y_gpu");
-    double *z_gpu;
-    if (dimnum == 3){
-        double *z_gpu = par.dsval("z_gpu");
-    }
+    double *z_gpu = par.dsval("z_gpu");
 
     double xMax = par.dval("xMax");
     double yMax = par.dval("yMax");
-    double zMax;
+    double zMax = 1;
     if (dimnum == 3){
-        double zMax = par.dval("zMax");
+        zMax = par.dval("zMax");
     }
     double omegaX = par.dval("omegaX");
     double omegaY = par.dval("omegaY");
     double omegaZ;
     if (dimnum == 3){
-        double omegaZ = par.dval("omegaZ");
+        omegaZ = par.dval("omegaZ");
     }
     double omega = par.dval("omega");
     double fudge = par.dval("fudge");
@@ -359,24 +422,34 @@ void generate_gauge(Grid &par){
         file_A(par.Axfile, Ax, omega);
         cudaMemcpy(Ax_gpu, Ax, sizeof(double)*gSize, cudaMemcpyHostToDevice);
 
-        file_A(par.Ayfile, Ay, omega);
-        cudaMemcpy(Ay_gpu, Ay, sizeof(double)*gSize, cudaMemcpyHostToDevice);
+        if (dimnum > 1){
+            file_A(par.Ayfile, Ay, omega);
+            cudaMemcpy(Ay_gpu,Ay,sizeof(double)*gSize,cudaMemcpyHostToDevice);
+        }
 
         if (dimnum == 3){
             file_A(par.Azfile, Az, omega);
             cudaMemcpy(Az_gpu,Az,sizeof(double)*gSize,cudaMemcpyHostToDevice);
         }
 
-        std::cout << "finished reading Ax / Ay from file" << '\n';
+        std::cout << "finished reading Ax / Ay / Az from file" << '\n';
     }
     else{
         if (par.is_ast_gpu("Ax")){
             double dx = par.dval("dx");
             double dy = par.dval("dy");
             double dz = par.dval("dz");
+            double xMax = par.dval("xMax");
+            double yMax = par.dval("yMax");
+            double zMax = 0;
+            if (dimnum == 3){ 
+                zMax = par.dval("zMax");
+            }
+
             EqnNode_gpu *eqn = par.astval("Ax");
 
-            find_field<<<par.grid, par.threads>>>(Ax_gpu, dx, dy, dz, 0, eqn);
+            find_field<<<par.grid, par.threads>>>(Ax_gpu, dx, dy, dz, 
+                                                  xMax, yMax, zMax, 0, eqn);
         }
         else{
             par.Ax_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
@@ -388,9 +461,17 @@ void generate_gauge(Grid &par){
             double dx = par.dval("dx");
             double dy = par.dval("dy");
             double dz = par.dval("dz");
+            double xMax = par.dval("xMax");
+            double yMax = par.dval("yMax");
+            double zMax = 0;
+            if (dimnum == 3){
+                zMax = par.dval("zMax");
+            }
+
             EqnNode_gpu *eqn = par.astval("Ay");
 
-            find_field<<<par.grid, par.threads>>>(Ay_gpu, dx, dy, dz, 0, eqn);
+            find_field<<<par.grid, par.threads>>>(Ay_gpu, dx, dy, dz,
+                                                  xMax, yMax, zMax , 0, eqn);
         }
         else{
             par.Ay_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, 
@@ -403,9 +484,18 @@ void generate_gauge(Grid &par){
                 double dx = par.dval("dx");
                 double dy = par.dval("dy");
                 double dz = par.dval("dz");
+
+                double xMax = par.dval("xMax");
+                double yMax = par.dval("yMax");
+                double zMax = 0;
+                if (dimnum == 3){
+                    zMax = par.dval("zMax");
+                }
+
                 EqnNode_gpu *eqn = par.astval("Az");
 
-                find_field<<<par.grid, par.threads>>>(Az_gpu, dx, dy, dz, 
+                find_field<<<par.grid, par.threads>>>(Az_gpu, dx, dy, dz,
+                                                      xMax, yMax, zMax,  
                                                       0, eqn);
             }
             else{
@@ -465,6 +555,45 @@ __global__ void krotation_Ay(double *x, double *y, double *z,
     A[gid] = x[xid] * omega * omegaY;
 }
 
+// Kernel for simple rotational case, Ax
+__global__ void kring_rotation_Ax(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    int zid = blockDim.z*blockIdx.z + threadIdx.z;
+    double theta = atan2(y[yid],x[xid]);
+    A[gid] = (z[zid]+zMax)*cos(theta)*omega*omegaX;
+}
+
+// Kernel for simple rotational case, Ay
+__global__ void kring_rotation_Ay(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    int zid = blockDim.z*blockIdx.z + threadIdx.z;
+    double theta = atan2(y[yid],x[xid]);
+    A[gid] = (z[zid]+zMax)*sin(theta)*omega*omegaX;
+}
+
+// Kernel for simple rotational case, Az
+__global__ void kring_rotation_Az(double *x, double *y, double *z,
+                                  double xMax, double yMax, double zMax,
+                                  double omegaX, double omegaY, double omegaZ,
+                                  double omega, double fudge, double *A){
+    int gid = getGid3d3d();
+    int xid = blockDim.x*blockIdx.x + threadIdx.x;
+    int yid = blockDim.y*blockIdx.y + threadIdx.y;
+    double r = sqrt(x[xid]*x[xid] + y[yid]*y[yid]);
+    A[gid] = r*omega*omegaX;
+}
+
+
 // kernel for a simple vortex ring
 __global__ void kring_Az(double *x, double *y, double *z,
                          double xMax, double yMax, double zMax,
@@ -508,6 +637,8 @@ void generate_fields(Grid &par){
     int gSize = par.ival("gSize");
     int dimnum = par.ival("dimnum");
     int winding = par.dval("winding");
+
+    bool energy_calc = par.bval("energy_calc");
 
     double dt = par.dval("dt");
     double gdt = par.dval("gdt");
@@ -588,8 +719,16 @@ void generate_fields(Grid &par){
         double dy = par.dval("dy");
         double dz = par.dval("dz");
 
+        double xMax = par.dval("xMax");
+        double yMax = par.dval("yMax");
+        double zMax = 0;
+        if (dimnum == 3){ 
+            zMax = par.dval("zMax");
+        }
+
         EqnNode_gpu *eqn = par.astval("V");
-        find_field<<<par.grid, par.threads>>>(V_gpu, dx, dy, dz, 0, eqn);
+        find_field<<<par.grid, par.threads>>>(V_gpu, dx, dy, dz, 
+                                              xMax, yMax, zMax, 0, eqn);
     }
     else{
         par.V_fn<<<par.grid, par.threads>>>(x_gpu, y_gpu, z_gpu, items_gpu,
@@ -717,11 +856,15 @@ void generate_fields(Grid &par){
     cudaFree(py_gpu);
     cudaFree(pz_gpu);
 
-    cudaFree(K_gpu);
-    cudaFree(V_gpu);
+    if (!energy_calc){
+        cudaFree(K_gpu);
+        cudaFree(V_gpu);
+    }
+    else{
+        par.store("V_gpu",V_gpu);
+    }
 
     par.store("V",V);
-    //par.store("V_gpu",V_gpu);
     par.store("items", items);
     //par.store("items_gpu", items_gpu);
     par.store("wfc", wfc);
@@ -762,7 +905,6 @@ __global__ void kharmonic_V(double *x, double *y, double *z, double* items,
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
 
-    double xOffset = items[6];
     double V_x = items[3]*(x[xid]+items[6]);
     double V_y = items[10]*items[4]*(y[yid]+items[7]);
     double V_z = items[11]*items[5]*(z[zid]+items[8]);
@@ -782,10 +924,10 @@ __global__ void ktorus_V(double *x, double *y, double *z, double* items,
 
     double rad = sqrt((x[xid] - items[6]) * (x[xid] - items[6])
                       + (y[yid] - items[7]) * (y[yid] - items[7])) 
-                      - 0.5*items[0]*items[12];
+                      - 0.4*items[0];
     double omegaR = (items[3]*items[3] + items[4]*items[4]);
     double V_tot = (2*items[5]*items[5]*(z[zid] - items[8])*(z[zid] - items[8])
-                    + omegaR*rad*rad);
+                    + omegaR*(rad*rad + items[12]*rad*z[zid]));
     V[gid] = 0.5*items[9]*(V_tot
                            + Ax[gid]*Ax[gid]
                            + Ay[gid]*Ay[gid]

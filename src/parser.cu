@@ -12,8 +12,8 @@ Grid parseArgs(int argc, char** argv){
 
     // Setting default values
     par.store("xDim", 256);
-    par.store("yDim", 256);
-    par.store("zDim", 256);
+    par.store("yDim", 1);
+    par.store("zDim", 1);
     par.store("omega", 0.0);
     par.store("gammaY", 1.0);
     par.store("gsteps", 1);
@@ -46,15 +46,15 @@ Grid parseArgs(int argc, char** argv){
     par.store("ramp_type", 1);
     par.store("dimnum", 2);
     par.store("write_file", true);
-    par.store("fudge", 1.0);
+    par.store("fudge", 0.0);
     par.store("kill_idx", -1);
-    par.store("DX",0.0);
     par.store("mask_2d", 1.5e-4);
     par.store("box_size", -0.01);
     par.store("found_sobel", false);
     par.store("energy_calc", false);
     par.store("use_param_file", false);
     par.store("param_file","param.cfg");
+    par.store("cyl_coord",false);
     par.Afn = "rotation";
     par.Kfn = "rotation_K";
     par.Vfn = "2d";
@@ -67,7 +67,7 @@ Grid parseArgs(int argc, char** argv){
     optind = 1;
 
     while ((opt = getopt (argc, argv, 
-           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:I:j:;")) !=-1)
+           "b:d:D:C:x:y:w:m:G:g:e:T:t:n:p:rQ:L:Elsi:P:X:Y:O:k:WU:V:S:ahz:H:uA:v:Z:fc:F:K:R:q:I:j:J;")) !=-1)
     {
         switch (opt)
         {
@@ -238,6 +238,12 @@ Grid parseArgs(int argc, char** argv){
                 par.store("write_file", false);
                 break;
             }
+            case 'J':
+            {
+                printf("Using cylindrical coordinates for B field\n");
+                par.store("cyl_coord", true);
+                break;
+            }
             case 'q':
             {
                 int q = atoi(optarg);
@@ -387,9 +393,15 @@ Grid parseArgs(int argc, char** argv){
                         par.Azfile = filecheck("src/Azgauge");
                     }
                     par.store("box_size", 2.5e-5);
+                    if (par.ival("yDim") == 1){
+                        par.store("yDim",256);
+                    }
+                    if (par.ival("zDim") == 1){
+                        par.store("zDim",256);
+                    }
                 }
-                if (dimnum == 2){
-                    par.store("zDim", 1);
+                if (dimnum == 2 && par.ival("yDim") == 1){
+                    par.store("yDim",256);
                 }
                 par.store("dimnum",(int)dimnum);
                 break;
@@ -432,13 +444,6 @@ Grid parseArgs(int argc, char** argv){
                 int kill_idx = atoi(optarg);
                 printf("Argument for kill_idx is %d\n",kill_idx);
                 par.store("kill_idx",kill_idx);
-                break;
-            }
-            case 'D':
-            {
-                double DX = atof(optarg);
-                printf("Argument for DX is %lf\n",DX);
-                par.store("DX",DX);
                 break;
             }
 

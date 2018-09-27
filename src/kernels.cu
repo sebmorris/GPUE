@@ -159,6 +159,15 @@ __device__ double2 realCompMult(double scalar, double2 comp){
 __device__ double complexMagnitude(double2 in){
     return sqrt(in.x*in.x + in.y*in.y);
 }
+
+__global__ void complexAbsSum(double2 *in1, double2 *in2, double *out){
+    int gid = getGid3d3d();
+    double2 temp;
+    temp.x = in1[gid].x + in2[gid].x;
+    temp.y = in1[gid].y + in2[gid].y;
+    out[gid] = sqrt(temp.x*temp.x + temp.y*temp.y);
+}
+
 __global__ void complexMagnitude(double2 *in, double *out){
     int gid = getGid3d3d();
     out[gid] = sqrt(in[gid].x*in[gid].x + in[gid].y*in[gid].y);
@@ -173,12 +182,24 @@ __global__ void complexMagnitudeSquared(double2 *in, double *out){
     out[gid] = in[gid].x*in[gid].x + in[gid].y*in[gid].y;
 }
 
+__global__ void complexMagnitudeSquared(double2 *in, double2 *out){
+    int gid = getGid3d3d();
+    out[gid].x = in[gid].x*in[gid].x + in[gid].y*in[gid].y;
+    out[gid].y = 0;
+}
+
 __host__ __device__ double2 complexMultiply(double2 in1, double2 in2){
     double2 result;
     result.x = (in1.x*in2.x - in1.y*in2.y);
     result.y = (in1.x*in2.y + in1.y*in2.x);
     return result;
 }
+
+__global__ void complexMultiply(double2 *in1, double2 *in2, double2 *out){
+    int gid = getGid3d3d();
+    out[gid] = complexMultiply(in1[gid], in2[gid]);
+}
+
 
 /*
 * Used to perform conj(in1)*in2; == < in1 | in2 >
@@ -214,8 +235,8 @@ __global__ void cMultPhi(double2* in1, double* in2, double2* out){
 __global__ void vecMult(double2 *in, double *factor, double2 *out){
     double2 result;
     unsigned int gid = getGid3d3d();
-    result.x = (in[gid].x * factor[gid]);
-    result.y = (in[gid].y * factor[gid]);
+    result.x = in[gid].x * factor[gid];
+    result.y = in[gid].y * factor[gid];
     out[gid] = result;
 }
 
@@ -267,6 +288,7 @@ __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt
         double2 tmp;
         tmp.x = tin1.x*cos(-gDensity) - tin1.y*sin(-gDensity);
         tmp.y = tin1.y*cos(-gDensity) + tin1.x*sin(-gDensity);
+        //printf("%d\t%f\t%f\t%f\t%f\t%f\n", gid, tin1.x, tin1.y, tmp.x, tmp.y, gDensity);
         
         result.x = (tmp.x)*tin2.x - (tmp.y)*tin2.y;
         result.y = (tmp.x)*tin2.y + (tmp.y)*tin2.x;
@@ -348,10 +370,10 @@ __global__ void scalarMult(double2* in, double factor, double2* out){
 /**
  * As above, but normalises for wfc
  */
-__global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2* out){
+__global__ void scalarDiv_wfcNorm(double2* in, double dr, double* pSum, double2* out){
     unsigned int gid = getGid3d3d();
     double2 result;
-    double norm = sqrt((pSum[0].x + pSum[0].y)*dr);
+    double norm = sqrt((pSum[0])*dr);
     result.x = (in[gid].x/norm);
     result.y = (in[gid].y/norm);
     out[gid] = result;
@@ -374,6 +396,7 @@ __global__ void scalarPow(double2* in, double param, double2* out){
 __global__ void vecConjugate(double2 *in, double2 *out){
     double2 result;
     unsigned int gid = getGid3d3d(); 
+    result.x = in[gid].x;
     result.y = -in[gid].y;
     out[gid] = result;
 }
@@ -416,10 +439,6 @@ __global__ void multipass(double2* input, double2* output, int pass){
     unsigned int gid = getGid3d3d();
     extern __shared__ double2 sdata[];
     sdata[tid] = input[gid];
-    if(pass == 0){
-        sdata[tid].x *= sdata[tid].x;
-        sdata[tid].y *= sdata[tid].y;    
-    }
     __syncthreads();
     for(int i = blockDim.x>>1; i > 0; i>>=1){
         if(tid < i){
@@ -436,7 +455,7 @@ __global__ void multipass(double2* input, double2* output, int pass){
 /**
  * Routine for parallel summation. Can be looped over from host.
  */
-__global__ void multipass(double* input, double* output, int pass){
+__global__ void multipass(double* input, double* output){
     unsigned int tid = threadIdx.x + threadIdx.y*blockDim.x
                        + threadIdx.z * blockDim.x * blockDim.y;
     unsigned int bid = blockIdx.x + blockIdx.y * gridDim.x
@@ -450,6 +469,7 @@ __global__ void multipass(double* input, double* output, int pass){
     extern __shared__ double sdatad[];
     sdatad[tid] = input[gid];
     __syncthreads();
+
     for(int i = blockDim.x>>1; i > 0; i>>=1){
         if(tid < i){
             sdatad[tid] += sdatad[tid + i];
@@ -461,113 +481,31 @@ __global__ void multipass(double* input, double* output, int pass){
     }
 }
 
-
 /*
 * Calculates all of the energy of the current state. sqrt_omegaz_mass = sqrt(omegaZ/mass), part of the nonlin interaction term
 */
 __global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy, int gnd_state, int op_space, double sqrt_omegaz_mass, double gDenConst){
     unsigned int gid = getGid3d3d();
-    double hbar_dt = HBAR/dt;
-    double g_local = 0.0;
+    //double hbar_dt = HBAR/dt;
     double2 result;
-    double opLocal;
-    if(op_space)
-        g_local = gDenConst*sqrt_omegaz_mass*complexMagnitudeSquared(wfc[gid]);
-    if(!gnd_state){
-        opLocal = -log(op[gid].x + g_local)*hbar_dt;
+    if(op_space == 0){
+        double g_local = gDenConst*sqrt_omegaz_mass*complexMagnitudeSquared(wfc[gid]);
+        op[gid].x += g_local;
+    }
+
+    if (op_space < 2){
+        result = braKetMult(wfc[gid], energy[gid]);
+        energy[gid].x += result.x;
+        energy[gid].y += result.y;
     }
     else{
-        opLocal = cos(op[gid].x + g_local)*hbar_dt;
+        result = complexMultiply(op[gid],wfc[gid]);
     }
-    result = braKetMult(wfc[gid], realCompMult(opLocal,wfc[gid]));
-    //printf("oplocal=%e    Resx=%e    Resy=%e\n",opLocal,result.x,result.y);
+    result = braKetMult(wfc[gid], complexMultiply(op[gid],wfc[gid]));
     energy[gid].x += result.x;
     energy[gid].y += result.y;
+
 }
-
-// Kernel for 2d transpose, note global for now...
-__global__ void transpose2d(double *indata, double *outdata){
-    unsigned int gid1 = getGid3d3d();
-
-    // Note that this should always be 102 for 2d transpose if we ignore z
-    unsigned int gid2 = permuteGid(1,0,2);
-
-    outdata[gid2] = indata[gid1];
-}
-
-// Kernel for 2d transpose, note global for now...
-__global__ void naivetranspose2d(int xDim, int yDim, 
-                            const double *indata, double *outdata){
-    const double* tmp = indata;
-    int index = 0;
-    int index2 = 0;
-    for (int i = 0; i < xDim; i++){
-        for (int j = 0; j < yDim; j++){
-            index = j + i*yDim;
-            index2 = i + j*xDim;
-            outdata[index] = tmp[index2];
-        }
-    }
-}
-
-__global__ void transpose2d2(const double2 *indata, double2 *outdata){
-    unsigned int gid1 = getGid3d3d();
-
-    // Note that this should always be 102 for 2d transpose if we ignore z
-    unsigned int gid2 = permuteGid(0,1,2);
-
-    outdata[gid1] = indata[gid2];
-}
-
-__global__ void naivetranspose2d2(int xDim, int yDim, 
-                             const double2 *indata, double2 *outdata){
-    const double2 *tmp = indata;
-    int index = 0;
-    int index2 = 0;
-    for (int i = 0; i < xDim; i++){
-        for (int j = 0; j < yDim; j++){
-            index = j + i*yDim;
-            index2 = i + j*xDim;
-            outdata[index] = tmp[index2];
-        }
-    }
-}
-
-/*
- * Calculates the trapezoidalm integration of a provided double* vector
- * Note: -This is a variation on figure 9.7 on page 209 of Programming Massively
- *        Parallel Processors, Second Edition.
- *       -We do not complete the entire prefix sum because we only need the 
- *        final sum in the end. 
- *       -Further modifications have been made for the trapezoidal rule...
- */
-/*
-__global__ void trapz(double *array, const int dimension, double dx, 
-                      double out){
-
-    // src material uses global variable SECTION_SIZE. dunno...
-    double *element = array;
-
-    int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-    // src material uses InputSize here. Not sure what it all means
-    if (i < dimension){
-        element[threadIdx.x] = array[i];
-    }
-
-    for (unsigned int stride = 1; stride < blockIdx.x; stride *= 2){
-        __syncthreads();
-        int index = (threadIdx.x+1) * 2 * stride - 1;
-        if (index < blockDim.x){
-            element[index + stride] += element[index]; 
-        }
-    }
-
-    __syncthreads();
-
-    out = element[dimension];
-}
-*/
 
 // Function to multiply a double* with an astval
 __global__ void ast_mult(double *array, double *array_out, EqnNode_gpu *eqn,
@@ -642,7 +580,6 @@ __global__ void set_eq(double *in1, double *in2){
     int gid = getGid3d3d();
     in2[gid] = in1[gid];
 }
-
 
 //##############################################################################
 //##############################################################################

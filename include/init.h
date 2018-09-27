@@ -37,21 +37,29 @@
 #include "../include/evolution.h"
 #include <string>
 #include <iostream>
-/* Function declarations */
-/*
- * arg1 = Function result code from CUDA CUFFT calls.
- * arg2 = String data for name of function called. Prints value to stdout.
+
+ /**
+ * @brief       check to make sure we have enough memory for computation
+ * @ingroup     data
+ * @param       Grid class
  */
 
-// UPDATE LIST LATER
+void check_memory(Grid &par);
+
  /**
  * @brief	Initializes data structures
  * @ingroup	data
- * @param	Operator class
- * @param	Cuda class
  * @param	Grid class
- * @param	Wave class
  */
 int init(Grid &par);
+
+ /**
+ * @brief	Sets variables for either real or imaginary time evolution
+ * @ingroup	data
+ * @param	Grid class
+ * @param	ev_type boolean (0 for imaginary-time, 1 for real-time)
+ */
+void set_variables(Grid &par, bool ev_type);
+
 
 #endif

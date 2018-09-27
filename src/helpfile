@@ -22,6 +22,7 @@ Options:
 -I "param.cfg"  Set Input parameter file
 -i 1            Set interaction strength between particles
 -j 1            Set threshold multiplier for easier vortex detection 
+-J              Set cylindrical coordinate output for B-field (no letters)
 -K 0            Selects vortex with specified ID to be 
                     killed/flipped/mutliply-charged
 -k 0            Set kick_it, kicking for Moire lattice simulations
@@ -69,6 +70,6 @@ Notes:
 - We use real units with an Rb87 condensate
 
 - You may generate a simple vortex lattice in 2d with the following command:
-  ./gpue -x 512 -y 512 -g 50000 -e 1 -p 5000 -W -w 0.5 -n 1e5 -s -l -Z 10
+  ./gpue -x 512 -y 512 -g 50000 -e 1 -p 5000 -W -w 0.6 -n 1e5 -s -l -Z 100
 
 - Thanks for using GPUE!

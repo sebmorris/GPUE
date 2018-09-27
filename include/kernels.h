@@ -17,13 +17,42 @@
 #define KERNELS_H
 #include<stdio.h>
 
+/**
+* @brief	subtraction operation for 2 double2 values
+* @ingroup	gpu
+*/
 __device__ double2 subtract(double2 a, double2 b);
+
+/**
+* @brief	addition operation for 2 double2 values
+* @ingroup	gpu
+*/
 __device__ double2 add(double2 a, double2 b);
+
+/**
+* @brief	power operation for a double2
+* @param        base number
+* @param        power
+* @ingroup	gpu
+*/
 __device__ double2 pow(double2 a, int b);
+
+/**
+* @brief	multiplication operation for double2 and double values
+* @ingroup	gpu
+*/
 __device__ double2 mult(double2 a, double b);
+
+/**
+* @brief	multiplication operation for 2 double2 values
+* @ingroup	gpu
+*/
 __device__ double2 mult(double2 a, double2 b);
 
-// Function to convert a double* to double2*
+/**
+* @brief	transforms an array of doubles into double2's
+* @ingroup	gpu
+*/
 __global__ void make_cufftDoubleComplex(double *in, double2 *out);
 
 /**
@@ -44,6 +73,10 @@ __device__ unsigned int getBid3d3d();
 */
 __device__ unsigned int getTid3d3d();
 
+/**
+* @brief	checks to arrays to see if they are equal
+* @ingroup	gpu
+*/
 __global__ void is_eq(bool *a, bool *b, bool *ans);
 
 //##############################################################################
@@ -60,9 +93,48 @@ __global__ void is_eq(bool *a, bool *b, bool *ans);
 */
 __device__ double complexMagnitude(double2 in);
 
+/**
+* @brief	Complex multiplication of two input arrays
+* @ingroup	gpu
+* @param	Input 1
+* @param	Input 2
+* @param	Output
+*/
+__global__ void complexMultiply(double2 *in1, double2 *in2, double2 *out);
+
+/**
+* @brief	Complex multiplication of two input values
+* @ingroup	gpu
+* @param	Input 1
+* @param	Input 2
+* @return	Output
+*/
+__host__ __device__ double2 complexMultiply(double2 in1, double2 in2);
+
+/**
+* @brief        Transforms field value into operator
+* @ingroup      gpu
+* @param        Input value
+* @param        Evolution type (0 for imaginary, 1 for real)
+* @return       complex output
+*/
 __device__ double2 make_complex(double in, int evolution_type);
 
+/**
+* @brief        Sums the absolute value of two complex arrays
+* @ingroup      gpu
+* @param        Array 1
+* @param        Array 2
+* @param        Output
+*/
+__global__ void complexAbsSum(double2 *in1, double2 *in2, double *out);
+
+/**
+* @brief        Complex magnitude of a double2 array
+* @ingroup      gpu
+*/
 __global__ void complexMagnitude(double2 *in, double *out);
+
 /**
 * @brief	Return the squared magnitude of a complex number. $|(a+\textrm{i}b)*(a-\textrm{i}b)|$
 * @ingroup	gpu
@@ -70,7 +142,19 @@ __global__ void complexMagnitude(double2 *in, double *out);
 * @return	Absolute-squared complex number
 */
 __device__ double complexMagnitudeSquared(double2 in);
+
+/**
+* @brief        Complex magnitude of a double2 array
+* @ingroup      gpu
+*/
 __global__ void complexMagnitudeSquared(double2 *in, double *out);
+
+/**
+* @brief        Complex magnitude of a double2 array
+* @ingroup      gpu
+*/
+__global__ void complexMagnitudeSquared(double2 *in, double2 *out);
+
 /**
 * @brief	Returns conjugate of the a complex number
 * @ingroup	gpu
@@ -78,6 +162,7 @@ __global__ void complexMagnitudeSquared(double2 *in, double *out);
 * @return	Conjugated complex number
 */
 __device__ double2 conjugate(double2 in);
+
 /**
 * @brief	Multiply real scalar by a complex number
 * @ingroup	gpu
@@ -116,20 +201,36 @@ __global__ void cMultPhi(double2* in1, double* in2, double2* out);
 * @ingroup	gpu
 * @param	in1 Wavefunction input
 * @param	in2 Evolution operator input
-* @param	out Pass by reference output for multiplcation result
+* @param	out Pass by reference output for multiplication result
 * @param	dt Timestep for evolution
 * @param	mass Atomic species mass
-* @param	omegaZ Trapping frequency along z-dimension
 * @param	gState If performing real (1) or imaginary (0) time evolution
-* @param	N Number of atoms in condensate
+* @param	gDenConst a constant for evolution
 */
 __global__ void cMultDensity(double2* in1, double2* in2, double2* out, double dt, double mass, int gstate, double gDenConst);
+
+/**
+* @brief        Kernel for complex multiplication with nonlinear density term
+* @ingroup      gpu
+* @param        GPU AST
+* @param        in Wavefunction input
+* @param        out Wavefunction output
+* @param        dx
+* @param        dy
+* @param        dz
+* @param        time
+* @param        element number in AST
+* @param        dt Timestep for evolution
+* @param        mass Atomic species mass
+* @param        gState If performing real (1) or imaginary (0) time evolution
+* @param        gDenConst a constant for evolution
+*/
+
 __global__ void cMultDensity_ast(EqnNode_gpu *eqn, double2* in, double2* out,
                                  double dx, double dy, double dz, double time,
                                  int e_num, double dt, double mass, int gstate,
                                  double gDenConst);
 
-//##############################################################################
 
 /**
 * @brief	Hold vortex at specified position. Not implemented. cMultPhi should implement required functionality.
@@ -140,7 +241,6 @@ __global__ void cMultDensity_ast(EqnNode_gpu *eqn, double2* in, double2* out,
 */
 __global__ void pinVortex(double2* in1, double2* in2, double2* out);
 
-//##############################################################################
 
 /**
 * @brief        Complex field scaling and renormalisation. Used mainly post-FFT.
@@ -151,10 +251,28 @@ __global__ void pinVortex(double2* in1, double2* in2, double2* out);
 */
 __global__ void vecMult(double2 *in, double *factor, double2 *out);
 
-// performs the l2 normalization of the provided terms
+/**
+* @brief        performs the l2 normalization of the provided terms
+* @ingroup      gpu
+*/
 __global__ void l2_norm(double *in1, double *in2, double *in3, double *out);
+
+/**
+* @brief        performs the l2 normalization of the provided terms
+* @ingroup      gpu
+*/
 __global__ void l2_norm(double2 *in1, double2 *in2, double2 *in3, double *out);
+
+/**
+* @brief        performs the l2 normalization of the provided terms
+* @ingroup      gpu
+*/
 __global__ void l2_norm(double *in1, double *in2, double *out);
+
+/**
+* @brief        performs the l2 normalization of the provided terms
+* @ingroup      gpu
+*/
 __global__ void l2_norm(double2 *in1, double2 *in2, double *out);
 
 /**
@@ -165,6 +283,14 @@ __global__ void l2_norm(double2 *in1, double2 *in2, double *out);
 * @param	out Pass by reference output for result
 */
 __global__ void scalarDiv(double2* in, double factor, double2* out);
+
+/**
+* @brief        Real field scaling and renormalisation. Used mainly post-FFT.
+* @ingroup      gpu
+* @param        in Real field to be scaled (divided, not multiplied)
+* @param        factor Scaling factor to be used
+* @param        out Pass by reference output for result
+*/
 __global__ void scalarDiv(double* in, double factor, double* out);
 
 /**
@@ -198,11 +324,13 @@ __global__ void vecConjugate(double2 *in, double2 *out);
 * @ingroup	gpu
 */
 __global__ void scalarDiv1D(double2*, double2*);
+
 /**
 * @brief	Complex field scaling and renormalisation. Not implemented. Use scalarDiv
 * @ingroup	gpu
 */
 __global__ void scalarDiv2D(double2*, double2*);
+
 /**
 * @brief	Used as part of multipass to renormalise the wavefucntion
 * @ingroup	gpu
@@ -210,7 +338,7 @@ __global__ void scalarDiv2D(double2*, double2*);
 * @param	dr Smallest area element of grid (dx*dy)
 * @param	pSum GPU array used to store intermediate results during parallel summation
 */
-__global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2* out);
+__global__ void scalarDiv_wfcNorm(double2* in, double dr, double* pSum, double2* out);
 
 //##############################################################################
 
@@ -221,6 +349,7 @@ __global__ void scalarDiv_wfcNorm(double2* in, double dr, double2* pSum, double2
 * @param	out Output values
 */
 __global__ void reduce(double2* in, double* out);
+
 /**
 * @brief        Performs wavefunction renormalisation using parallel summation and applying scalarDiv_wfcNorm
 * @ingroup      gpu
@@ -229,6 +358,7 @@ __global__ void reduce(double2* in, double* out);
 * @param        pass Number of passes performed by routine
 */
 __global__ void thread_test(double* input, double* output);
+
 /**
 * @brief	Performs wavefunction renormalisation using parallel summation and applying scalarDiv_wfcNorm
 * @ingroup	gpu
@@ -237,7 +367,14 @@ __global__ void thread_test(double* input, double* output);
 * @param	pass Number of passes performed by routine
 */
 __global__ void multipass(double2* input, double2* output, int pass);
-__global__ void multipass(double* input, double* output, int pass);
+
+/**
+* @brief        Performs parallel summation of double arrays
+* @ingroup      gpu
+* @param        input double array
+* @param        input double array after summation
+*/
+__global__ void multipass(double* input, double* output);
 
 //##############################################################################
 
@@ -252,44 +389,52 @@ __global__ void multipass(double* input, double* output, int pass);
 */
 __global__ void angularOp(double omega, double dt, double2* wfc, double* xpyypx, double2* out);
 
-// Kernel to perform 2d transposition
-__global__ void transpose2d(double *indata, double *outdata);
-
-__global__ void naivetranspose2d(int xDim, int yDim, 
-                            const double *indata, double *outdata);
-
-// Kernel to perform 2d transposition
-__global__ void transpose2d2(const double2 *indata, double2 *outdata);
-
-__global__ void naivetranspose2d2(int xDim, int yDim, 
-                            const double2 *indata, double2 *outdata);
-
+/**
+* @brief        Multiplication of array with AST
+* @ingroup      gpu
+*/
 __global__ void ast_mult(double *array, double *array_out, EqnNode_gpu *eqn,
                          double dx, double dy, double dz, double time,
                          int element_num);
+/**
+* @brief        Complex multiplication of array with AST
+* @ingroup      gpu
+*/
 __global__ void ast_cmult(double2 *array, double2 *array_out, EqnNode_gpu *eqn,
                           double dx, double dy, double dz, double time,
                           int element_num);
+/**
+* @brief        Multiplication of array with AST Operator
+* @ingroup      gpu
+*/
 __global__ void ast_op_mult(double2 *array, double2 *array_out,
                             EqnNode_gpu *eqn,
                             double dx, double dy, double dz, double time,
                             int element_num, int evolution_type, double dt);
 
+/**
+* @brief        Function to find AST operator in real-time
+* @ingroup      gpu
+*/
 __device__ double2 real_ast(double val, double dt);
+
+/**
+* @brief        Function to find AST operator in imaginary-time
+* @ingroup      gpu
+*/
 __device__ double2 im_ast(double val, double dt);
 
-// modified from: http://developer.download.nvidia.com/compute/cuda/1.1-Beta/x86_website/projects/reduction/doc/reduction.pdf
-__global__ void reduce(double *input, double *output);
-
+/**
+* @brief        Sets boolean array to 0
+* @ingroup      gpu
+*/
 __global__ void zeros(bool *in, bool *out);
 
-__global__ void set_eq(double *in1, double *in2);
-
-//##############################################################################
 /**
- * Non-implemented functions.
- */
- //##############################################################################
+* @brief        Sets in2 to be equal to in1
+* @ingroup      gpu
+*/
+__global__ void set_eq(double *in1, double *in2);
 
 /**
 * @brief	Calculates energy of the current state during evolution. Not implemented.
@@ -303,6 +448,7 @@ __global__ void set_eq(double *in1, double *in2);
 * @param	sqrt_omegaz_mass sqrt(omegaZ/mass), part of the nonlin interaction term.
 */
 __global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy, int gnd_state, int op_space, double sqrt_omegaz_mass, double gDenConst);
+
 /**
 * @brief	Performs bra-ket state multiplication. Not fully implemented.
 * @ingroup	gpu
@@ -312,7 +458,6 @@ __global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy
 */
 inline __device__ double2 braKetMult(double2 in1, double2 in2);
 
-//template<typename T> __global__ void pSumT(T* in1, T* output, int pass);
 
 /**
 * @brief	Performs parallel sum. Not verified. I use multipass instead.
@@ -323,6 +468,5 @@ inline __device__ double2 braKetMult(double2 in1, double2 in2);
 */
 __global__ void pSum(double* in1, double* output, int pass);
 
-//template<double> __global__ void pSumT(double* in1, double* output, int pass);
 
 #endif
