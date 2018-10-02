@@ -55,7 +55,7 @@ Previous versions of this code/works are citable as follows:
 
 - Lee James O'Riordan et al., GPUE: Phasegineering release, Zenodo. (2016), \url{https://github.com/mlxd/GPUE} DOI:10.5281/zenodo.57968
 
-More recent versions will be citable under the [GPUE Group](https://github.com/gpue-group/GPUE repository). 
+More recent versions will be citable under the [GPUE Group](https://github.com/gpue-group/GPUE) repository. 
 Works which have used GPUE include (to-date):
 - [Moiré superlattice structures in kicked Bose-Einstein condensates](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.93.023609)
 - [Topological defect dynamics of vortex lattices in Bose-Einstein condensates](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.94.053603)
@@ -64,5 +64,5 @@ Works which have used GPUE include (to-date):
 ## 5. Acknowledgements
 We are greatly thankful to the support provided by Okinawa Institute of Science 
 and Technology Graduate University, without whom this research code would be a 
-fraction of what it currently has become. A list of acknowledgements is given in acknowledgements.md
+fraction of what it currently has become. A list of acknowledgements is given in [acknowledgements.md](https://github.com/GPUE-group/GPUE/blob/master/acknowledgements.md).
  
