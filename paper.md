@@ -43,7 +43,7 @@ For this purpose, GPUE provides a number of unique features:
 4. Vortex manipulation via direct control of the wavefunction phase
 
 All of these features are essential for usability and performance, and have all been adequately described in the documentation [@documentation].
-GPUE provides a fast, robust, and accessible method to simulate superfluid physics for fundamental research in the area and has been used to simulate and manipulate large vortex lattices in two dimensions [@Oriordan2016, @Oriordan2016b] and spatial adiabatic passage in atom chips [@Oriordan2013], along with ongoing studies on vortex turbulence in two dimensions and vortex structures in three dimensions.
+GPUE provides a fast, robust, and accessible method to simulate superfluid physics for fundamental research in the area and has been used to simulate and manipulate large vortex lattices in two dimensions [@Oriordan2016, @Oriordan2016b], along with ongoing studies on vortex turbulence in two dimensions and vortex structures in three dimensions.
 
 # Acknowledgements
 This work has been supported by the Okinawa Institute of Science and Technology Graduate University and by JSPS KAKENHI Grant Number JP17J01488.
