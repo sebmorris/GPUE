@@ -1,4 +1,3 @@
-[![Code Climate](https://codeclimate.com/github/gpue-group/GPUE/badges/gpa.svg)](https://codeclimate.com/github/mlxd/GPUE)
 --- 
 [logo]: https://github.com/gpue-group/GPUE/blob/master/logo.png "GPUE"
 ![GPUE - GPU Gross-Pitaevskii Equation solver][logo]
