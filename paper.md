@@ -24,7 +24,7 @@ bibliography: paper.bib
 # Summary
 
 Bose--Eintein Condensates (BECs) are superfluid systems consisting of bosonic atoms that have been cooled and condensed into a single, macroscopic ground state.
-These systems can be created in an expermental laboratory, and allow for the the exploration of many interesting physical phenomenon, such as superfluid turbulence, chaotic dynamics, and as analogs of other quantum systems.
+These systems can be created in an experimental laboratory, and allow for the the exploration of many interesting physical phenomenon, such as superfluid turbulence, chaotic dynamics, and as analogs of other quantum systems.
 Numerical simulations of BECs allow for new discoveries that directly mimic what can be seen in experiments and are thus highly valuable for fundamental research.
 In practice, almost all dynamics of BEC systems can be found by solving the non-linear Schr&ouml;dinger equation known as the Gross--Pitaevskii Equation (GPE):
 
@@ -47,6 +47,7 @@ GPUE provides a fast, robust, and accessible method to simulate superfluid physi
 
 # Acknowledgements
 This work has been supported by the Okinawa Institute of Science and Technology Graduate University and by JSPS KAKENHI Grant Number JP17J01488.
-We would also like to thank Thomas Busch, Rashi Sachdeva, Tiantian Zhang, and Angela White for discussions on useful physical systems to simulate with the GPUE codebase, along with Peter Wittek and Tadhg Morgan for contributions to the code, itself.
+We would also like to thank Thomas Busch, Rashi Sachdeva, Tiantian Zhang, Albert Benseney, and Angela White for discussions on useful physical systems to simulate with the GPUE codebase, along with Peter Wittek and Tadhg Morgan for contributions to the code, itself.
+These acknowledgements can be found in `acknowledgements.md`.
 
 # References
