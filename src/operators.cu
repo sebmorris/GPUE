@@ -422,15 +422,17 @@ void generate_gauge(Grid &par){
         file_A(par.Axfile, Ax, omega);
         cudaMemcpy(Ax_gpu, Ax, sizeof(double)*gSize, cudaMemcpyHostToDevice);
 
-        file_A(par.Ayfile, Ay, omega);
-        cudaMemcpy(Ay_gpu, Ay, sizeof(double)*gSize, cudaMemcpyHostToDevice);
+        if (dimnum > 1){
+            file_A(par.Ayfile, Ay, omega);
+            cudaMemcpy(Ay_gpu,Ay,sizeof(double)*gSize,cudaMemcpyHostToDevice);
+        }
 
         if (dimnum == 3){
             file_A(par.Azfile, Az, omega);
             cudaMemcpy(Az_gpu,Az,sizeof(double)*gSize,cudaMemcpyHostToDevice);
         }
 
-        std::cout << "finished reading Ax / Ay from file" << '\n';
+        std::cout << "finished reading Ax / Ay / Az from file" << '\n';
     }
     else{
         if (par.is_ast_gpu("Ax")){
@@ -903,7 +905,6 @@ __global__ void kharmonic_V(double *x, double *y, double *z, double* items,
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
 
-    double xOffset = items[6];
     double V_x = items[3]*(x[xid]+items[6]);
     double V_y = items[10]*items[4]*(y[yid]+items[7]);
     double V_z = items[11]*items[5]*(z[zid]+items[8]);

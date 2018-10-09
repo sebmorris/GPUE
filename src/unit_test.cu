@@ -31,7 +31,6 @@ __global__ void make_complex_kernel(double *in, int *evolution_type,
                                     double2 *out);
 void make_complex_test();
 void cMultPhi_test();
-void cMultDens_test();
 
 // Tests for complex mathematical operations
 void vecMult_test();
@@ -42,8 +41,6 @@ void vecConj_test();
 void ast_mult_test();
 void ast_cmult_test();
 void ast_op_mult_test();
-void real_ast_test();
-void im_ast_test();
 
 // Other
 void energyCalc_test();
@@ -76,6 +73,9 @@ void bessel_test();
 
 // Test for the vortex tracking functions in vortex_3d
 void vortex3d_test();
+
+// Test for available amount of GPU memory
+void check_memory_test();
 
 // Kernel testing will be added later
 __device__ bool close(double a, double b, double threshold){
@@ -111,7 +111,8 @@ void test_all(){
     make_complex_test();
     cMultPhi_test();
     evolve_test();
-    //cMultDens_test();
+
+    check_memory_test();
 
     std::cout << "All tests completed. GPUE passed." << '\n';
 }
@@ -1224,105 +1225,6 @@ void evolve_test(){
     
 }
 
-void vortex3d_test(){
-
-    std::cout << "Testing functions in vortex_3d..." << '\n';
-
-    // setting up array for scan_2d() thresholding test
-    // We are creating 
-    double *array, *darray;
-    bool *barray, *dbarray;
-    bool *dcheck, *check, *sum, *dsum;
-    int dim = 8;
-    double threshold = 0.5;
-
-    array = (double *)malloc(sizeof(double)*dim*dim*dim);
-    barray = (bool *)malloc(sizeof(bool)*dim*dim*dim);
-    sum = (bool *)malloc(sizeof(bool)*dim*dim*dim);
-    check = (bool *)malloc(sizeof(bool)*dim*dim*dim);
-
-    cudaMalloc((void **) &darray, sizeof(double)*dim*dim*dim);
-    cudaMalloc((void **) &dbarray, sizeof(bool)*dim*dim*dim);
-    cudaMalloc((void **) &dcheck, sizeof(bool)*dim*dim*dim);
-    cudaMalloc((void **) &dsum, sizeof(bool)*dim*dim*dim);
-
-    for (int i = 0; i < dim; ++i){
-        for (int j = 0; j < dim; ++j){
-            for (int k = 0; k < dim; ++k){
-                int index = k + j * dim + i * dim * dim;
-                if (k == dim / 2){
-                    array[index] = 1;
-                }
-                else{
-                    array[index] = 0;
-                }
-                if (k > dim / 2){
-                    barray[index] = 1;
-                }
-                else{
-                    barray[index] = 0;
-                }
-                sum[index] = 0;
-            }
-        }
-    }
-
-    cudaMemcpy(darray, array, sizeof(double)*dim*dim*dim, 
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(dbarray, barray, sizeof(bool)*dim*dim*dim, 
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(dsum, sum, sizeof(bool)*dim*dim*dim, 
-               cudaMemcpyHostToDevice);
-
-    dim3 grid = {1, dim, dim};
-    dim3 threads = {dim, 1, 1};
-
-    std::cout << "All arrays initialized\n";
-
-    // Now to create the grid and threads
-    std::cout << "summing along x\n";
-    dim3 temp_grid = {1, dim, 1};
-    dim3 temp_threads = {dim, 1, 1};
-    scan_2d<<<temp_grid, temp_threads>>>(darray, dcheck, threshold, 0, dim); 
-
-    threshold_sum<<<grid, threads>>>(dsum, dcheck, dsum);
-    
-    std::cout << "summing along y\n";
-    scan_2d<<<temp_grid, temp_threads>>>(darray, dcheck, threshold, 1, dim); 
-
-    threshold_sum<<<grid, threads>>>(dsum, dcheck, dsum);
-
-    std::cout << "summing along z\n";
-    scan_2d<<<temp_grid, temp_threads>>>(darray, dcheck, threshold, 2, dim); 
-
-    threshold_sum<<<grid, threads>>>(dsum, dcheck, dsum);
-
-    bool *ans, *dans;
-    ans = (bool *)malloc(sizeof(bool));
-    ans[0] = 0;
-    cudaMalloc((void **) &dans, sizeof(bool));
-
-    is_eq<<<grid, threads>>>(dsum, dbarray, dans);
-
-    cudaMemcpy(ans, dans, sizeof(bool), cudaMemcpyDeviceToHost);
-/*
-    cudaMemcpy(sum, dsum, sizeof(bool)*dim*dim*dim, cudaMemcpyDeviceToHost);
-
-    for (int i = 0; i < dim*dim*dim; ++i){
-        std::cout << sum[i] << '\t' << barray[i] << '\n';
-    }
-*/
-
-    if (ans[0]){
-        std::cout << "scan_2d function for vortex tracking succeeded!" << '\n';
-    }
-    else{
-        std::cout << "scan_2d function for vortex tracking failed!" << '\n';
-        exit(1);
-    }
-    
-}
-
 __global__ void make_complex_kernel(double *in, int *evolution_type, 
                                     double2 *out){
 
@@ -1449,92 +1351,14 @@ void cMultPhi_test(){
 
 }
 
-void cMultDens_test(){
-    // first, we are creating a double2 array to work with
-    double thresh = 0.001;
-    int n = 32;
-    double2 *in1, *in2, *out;
-    double2 *din1, *din2, *dout;
+// Test for available amount of GPU memory
+void check_memory_test(){
+    Grid par;
+    par.store("xDim",100);
+    par.store("yDim",100);
+    par.store("zDim",100);
 
-    in1 = (double2 *)malloc(sizeof(double2)*n);
-    in2 = (double2 *)malloc(sizeof(double2)*n);
-    out = (double2 *)malloc(sizeof(double2)*n);
+    check_memory(par);
 
-    cudaMalloc((void **)&din1, sizeof(double2)*n);
-    cudaMalloc((void **)&din2, sizeof(double2)*n);
-    cudaMalloc((void **)&dout, sizeof(double2)*n);
-
-    for (int i = 0; i < n; ++i){
-        in1[i].x = i;
-        in1[i].y = n-i;
-        in2[i].x = n-i;
-        in2[i].y = i;
-    }
-
-    cudaMemcpy(din1, in1, sizeof(double2)*n, cudaMemcpyHostToDevice);
-    cudaMemcpy(din2, in2, sizeof(double2)*n, cudaMemcpyHostToDevice);
-
-    // Testing imaginary-time evolution
-    cMultDensity<<<1, n>>>(din1, din2, dout, 1, 1, 0, 1);
-    cudaDeviceSynchronize();
-
-    cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
-
-    bool result = true;
-    for (int i = 0; i < n; ++i){
-        double gDensity = (in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
-        if (abs(out[i].x-(in1[i].x*exp(-gDensity)*in2[i].x
-                                      -in1[i].y*in2[i].y)) > thresh ||
-            abs(out[i].y-(in1[i].x*exp(-gDensity)*in2[i].y
-                                      +in1[i].y*in2[i].x)) > thresh){
-            result = false;
-        }
-    }
-
-    if (result){
-        std::cout << "cMultDens imaginary time test passed!\n";
-    }
-    else{
-        std::cout << "cMultDens imaginary time test failed!\n";
-        exit(1);
-    }
-
-    // Testing real-time evolution
-    cMultDensity<<<1, n>>>(din1, din2, dout, 1, 1, 1, 1);
-    cudaDeviceSynchronize();
-
-    cudaMemcpy(out, dout, sizeof(double2)*n, cudaMemcpyDeviceToHost);
-
-    result = true;
-    for (int i = 0; i < n; ++i){
-        double2 tmp;
-        double gDensity = (in2[i].x*in2[i].x + in2[i].y*in2[i].y)/HBAR;
-        tmp.x = in1[i].x*cos(-gDensity) - in1[i].y*sin(-gDensity);
-        tmp.y = in1[i].y*cos(-gDensity) + in1[i].x*sin(-gDensity);
-
-/*
-        std::cout << in1[i].x << '\t' << in1[i].y << '\t' << tmp.x << '\t' << tmp.y << '\t' << gDensity << '\n';
-        std::cout << out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y) << '\t'
-                  << out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x) << '\n';
-*/
-
-        if (abs(out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y)) > thresh ||
-            abs(out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x)) > thresh){
-                std::cout << in1[i].x << '\t' << in1[i].y << '\t' << tmp.x << '\t' << tmp.y << '\t' << gDensity << '\n';
-                std::cout << out[i].x - (tmp.x*in2[i].x - tmp.y*in2[i].y) << '\t'
-                          << out[i].y - (tmp.x*in2[i].y + tmp.y*in2[i].x) << '\n';
-
-            result = false;
-        }
-    }
-
-    if (result){
-        std::cout << "cMultDens real-time test passed!\n";
-    }
-    else{
-        std::cout << "cMultDens real-time test failed!\n";
-        exit(1);
-    }
-
+    std::cout << "CUDA memory check passed!\n";
 }
-

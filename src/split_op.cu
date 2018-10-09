@@ -81,7 +81,6 @@ void parSum(double* gpuWfc, double* gpuParSum, Grid &par){
 
     set_eq<<<par.grid, par.threads>>>(gpuWfc, gpuParSum);
 
-    dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
         multipass<<<block,thread_tmp,thread_tmp.x*sizeof(double)>>>(
             &gpuParSum[0],&gpuParSum[0]);
@@ -138,7 +137,6 @@ void parSum(double2* gpuWfc, Grid &par){
               << "grid.x is: " << grid_tmp.x << '\t'
               << "threads.x are: " << threads.x << '\n';
 */
-    dim3 grid = par.grid;
     while((double)grid_tmp.x/threads.x > 1.0){
         multipass<<<block,threads,threads.x*sizeof(double)>>>(&density[0],
                                                               &density[0]);
@@ -323,138 +321,3 @@ double energy_calc(Grid &par, double2* wfc){
 
     return sum;
 }
-
-/**
-** Calculates energy and angular momentum of current state.
-** Implementation not fully finished.
-**/
-double energy_angmom(double2 *gpuWfc, int gState, Grid &par){
-    bool corotating = par.bval("corotating");
-    int xDim = par.ival("xDim");
-    int yDim = par.ival("yDim");
-    int zDim = par.ival("zDim");
-    double dx = par.dval("dx");
-    double dy = par.dval("dy");
-    double dz = par.dval("dz");
-
-    std::cout << dx << '\t' << dy << '\t' << dz << '\t' << xDim << '\t' 
-              << yDim << '\t' << zDim << '\n';
-
-    int gSize = xDim * yDim * zDim;
-    double dt = par.dval("dt");
-    double gDenConst = par.dval("gDenConst");
-
-    double mass = par.dval("mass");
-    double omegaX = par.dval("omegaX");
-    double omegaY = par.dval("omegaY");
-    double omegaZ = par.dval("omegaZ");
-
-    dim3 threads = par.threads;
-    dim3 grid = par.grid;
-
-    // Creating the 2d plan and defining other cuda variables
-    cufftHandle plan;
-    cufftResult result;
-    cudaError_t err;
-
-    if (par.ival("dimnum") == 1){
-        plan = par.ival("plan_1d");
-    }
-    if (par.ival("dimnum") == 2){
-        plan = par.ival("plan_2d");
-    }
-    if (par.ival("dimnum") == 3){
-        plan = par.ival("plan_3d");
-    }
-
-    double renorm_factor=1.0/pow(gSize,0.5);
-    double out;
-
-    // now allocating space on CPU and GPU for energy
-    double2 *energy, *energy_gpu, *tmp_wfc, *op;
-
-    energy = (double2*)malloc(sizeof(double2)*gSize);
-
-    cudaMalloc((void**) &energy_gpu, sizeof(double2)*gSize);
-    cudaMalloc((void**) &tmp_wfc, sizeof(double2)*gSize);
-
-
-    for (int i=0; i < gSize; ++i){
-        energy[i].x = 0.0; 
-        energy[i].y = 0.0; 
-    }
-
-    // Now to memcpy the values over
-    cudaMemcpy(energy_gpu, energy, sizeof(double2)*gSize,
-               cudaMemcpyHostToDevice);
-
-    int op_space = 2;
-
-    result = cufftExecZ2Z( plan, gpuWfc, tmp_wfc, CUFFT_FORWARD );
-
-    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor, tmp_wfc);//Normalise
-
-    op = par.cufftDoubleComplexval("K_gpu");
-
-    energyCalc<<<grid,threads>>>(tmp_wfc, op, dt, energy_gpu, gState,op_space,
-                                 0.5*sqrt(omegaZ/mass), gDenConst);
-    result = cufftExecZ2Z( plan, energy_gpu, energy_gpu, CUFFT_INVERSE );
-    result = cufftExecZ2Z( plan, tmp_wfc, tmp_wfc, CUFFT_INVERSE );
-
-    scalarMult<<<grid,threads>>>(energy_gpu, renorm_factor, energy_gpu);
-    scalarMult<<<grid,threads>>>(tmp_wfc, renorm_factor, tmp_wfc);
-
-    if (corotating){
-        op_space = 0;
-    }
-    else{
-        op_space = 1;
-    }
-
-    op = par.cufftDoubleComplexval("V_gpu");
-
-    energyCalc<<<grid,threads>>>(tmp_wfc, op, dt, energy_gpu, gState,op_space,
-                                 0.5*sqrt(omegaZ/mass), gDenConst);
-
-    err=cudaMemcpy(energy, energy_gpu, 
-                   sizeof(cufftDoubleComplex)*gSize, 
-                   cudaMemcpyDeviceToHost);
-    if(err!=cudaSuccess){
-        std::cout << "ERROR: Could not copy energy to host!" << '\n';
-        exit(1);
-    }
-    
-    for(int i=0; i < gSize; i++){
-        out += energy[i].x + energy[i].y;
-    }
-
-    cudaFree(energy_gpu);
-    cudaFree(tmp_wfc);
-    free(energy);
-    return out*dx*dy*dz;
-
-}
-/*
-
-// Creates narrow Gaussian "delta" peaks for vortex kicking
-void delta_define(double *x, double *y, double x0, double y0, double *delta,
-                  Grid &par){
-    int xDim = par.ival("xDim");
-    int yDim = par.ival("yDim");
-    cufftDoubleComplex *EV_opt = par.cufftDoubleComplexval("EV_opt");
-    double *V = par.dsval("V");
-    double dx = par.dval("dx");
-    double dt = par.dval("dt");
-
-    for (int i=0; i<xDim; ++i){
-        for (int j=0; j<yDim; ++j){
-            delta[j*xDim + i] = 1e6*HBAR*exp( -( pow( x[i] - x0, 2) +
-                                pow( y[j] - y0, 2) )/(5*dx*dx) );
-            EV_opt[(j*xDim + i)].x = cos( -(V[(j*xDim + i)] +
-                                     delta[j*xDim + i])*(dt/(2*HBAR)));
-            EV_opt[(j*xDim + i)].y = sin( -(V[(j*xDim + i)] +
-                                     delta[j*xDim + i])*(dt/(2*HBAR)));
-        }
-    }
-}
-*/

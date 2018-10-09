@@ -1,8 +1,36 @@
 #include "../include/init.h"
 #include "../include/dynamic.h"
 
+void check_memory(Grid &par){
+    int xDim = par.ival("xDim");
+    int yDim = par.ival("yDim");
+    int zDim = par.ival("zDim");
+
+    int gSize = xDim*yDim*zDim;
+    size_t free = 0;
+    size_t total = 0;
+
+    cudaMemGetInfo(&free, &total);
+
+    // Note that this check is specifically for the case where we need to keep
+    // 8 double2* values on the GPU. This is not the case for dynamic fields
+    // and the test should be updated accordingly as these are used more.
+    size_t req_memory = 16*8*(size_t)gSize;
+    if (free < req_memory){
+        std::cout << "Not enough GPU memory for gridsize!\n";
+        std::cout << "Free memory is: " << free << '\n';
+        std::cout << "Required memory memory is: " << req_memory << '\n';
+        std::cout << "xDim is: " << xDim << '\n';
+        std::cout << "yDim is: " << yDim << '\n';
+        std::cout << "zDim is: " << zDim << '\n';
+        std::cout << "gSize is: " << gSize << '\n';
+        exit(1);
+    }
+}
+
 int init(Grid &par){
 
+    check_memory(par);
     set_fns(par);
 
     // Re-establishing variables from parsed Grid class
@@ -78,12 +106,9 @@ int init(Grid &par){
 
     // Let's go ahead and define the gDensConst here
     // N*4*HBAR*HBAR*PI*(4.67e-9/mass)*sqrt(mass*(omegaZ)/(2*PI*HBAR)
-    double gDenConst = 0;
-    if (corotating){
-        gDenConst = N*4*HBAR*HBAR*PI*(a_s/mass);
-        if (dimnum == 2){
-            gDenConst*= sqrt(mass*(omegaZ)/(2*PI*HBAR));
-        }
+    double gDenConst = N*4*HBAR*HBAR*PI*(a_s/mass);
+    if (dimnum == 2){
+        gDenConst*= sqrt(mass*(omegaZ)/(2*PI*HBAR));
     }
     par.store("gDenConst", gDenConst);
 

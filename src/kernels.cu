@@ -507,90 +507,6 @@ __global__ void energyCalc(double2 *wfc, double2 *op, double dt, double2 *energy
 
 }
 
-// Kernel for 2d transpose, note global for now...
-__global__ void transpose2d(double *indata, double *outdata){
-    unsigned int gid1 = getGid3d3d();
-
-    // Note that this should always be 102 for 2d transpose if we ignore z
-    unsigned int gid2 = permuteGid(1,0,2);
-
-    outdata[gid2] = indata[gid1];
-}
-
-// Kernel for 2d transpose, note global for now...
-__global__ void naivetranspose2d(int xDim, int yDim, 
-                            const double *indata, double *outdata){
-    const double* tmp = indata;
-    int index = 0;
-    int index2 = 0;
-    for (int i = 0; i < xDim; i++){
-        for (int j = 0; j < yDim; j++){
-            index = j + i*yDim;
-            index2 = i + j*xDim;
-            outdata[index] = tmp[index2];
-        }
-    }
-}
-
-__global__ void transpose2d2(const double2 *indata, double2 *outdata){
-    unsigned int gid1 = getGid3d3d();
-
-    // Note that this should always be 102 for 2d transpose if we ignore z
-    unsigned int gid2 = permuteGid(0,1,2);
-
-    outdata[gid1] = indata[gid2];
-}
-
-__global__ void naivetranspose2d2(int xDim, int yDim, 
-                             const double2 *indata, double2 *outdata){
-    const double2 *tmp = indata;
-    int index = 0;
-    int index2 = 0;
-    for (int i = 0; i < xDim; i++){
-        for (int j = 0; j < yDim; j++){
-            index = j + i*yDim;
-            index2 = i + j*xDim;
-            outdata[index] = tmp[index2];
-        }
-    }
-}
-
-/*
- * Calculates the trapezoidalm integration of a provided double* vector
- * Note: -This is a variation on figure 9.7 on page 209 of Programming Massively
- *        Parallel Processors, Second Edition.
- *       -We do not complete the entire prefix sum because we only need the 
- *        final sum in the end. 
- *       -Further modifications have been made for the trapezoidal rule...
- */
-/*
-__global__ void trapz(double *array, const int dimension, double dx, 
-                      double out){
-
-    // src material uses global variable SECTION_SIZE. dunno...
-    double *element = array;
-
-    int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-    // src material uses InputSize here. Not sure what it all means
-    if (i < dimension){
-        element[threadIdx.x] = array[i];
-    }
-
-    for (unsigned int stride = 1; stride < blockIdx.x; stride *= 2){
-        __syncthreads();
-        int index = (threadIdx.x+1) * 2 * stride - 1;
-        if (index < blockDim.x){
-            element[index + stride] += element[index]; 
-        }
-    }
-
-    __syncthreads();
-
-    out = element[dimension];
-}
-*/
-
 // Function to multiply a double* with an astval
 __global__ void ast_mult(double *array, double *array_out, EqnNode_gpu *eqn,
                          double dx, double dy, double dz, double time,
@@ -663,12 +579,6 @@ __global__ void zeros(bool *in, bool *out){
 __global__ void set_eq(double *in1, double *in2){
     int gid = getGid3d3d();
     in2[gid] = in1[gid];
-}
-
-__global__ void print_ds(double *vector){
-    int gid = getGid3d3d();
-    printf("%d\t%e\n",gid,vector[gid]);
-
 }
 
 //##############################################################################
