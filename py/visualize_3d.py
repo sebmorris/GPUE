@@ -47,7 +47,7 @@ def create_new_material (passedName,passedcolor):
         tempMat.specular_shader = 'COOKTORR'
         tempMat.specular_intensity = 0.5
         tempMat.use_transparency=False
-        tempMat.alpha = 0.5
+        tempMat.alpha = 0.01
         tempMat.ambient = 0.2
         tempMat.emit = 0.9
         tempMat.keyframe_insert(data_path="diffuse_color", frame=1, index=-1)
@@ -176,7 +176,7 @@ def add_fiber():
     ob.scale[2] = 5
     ob.name = "fiber"
     me = ob.data
-    color = (1, 1, 1)
+    color = (0.7, 0.7, 0.7)
     mat = create_new_material(ob.name, color)
     me.materials.append(mat)
 
