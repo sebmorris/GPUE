@@ -1169,7 +1169,7 @@ void evolve_test(){
     par.store("esteps", esteps);
     par.store("gsteps", gsteps);
     par.store("printSteps", 30000);
-    par.store("write_file", true);
+    par.store("write_file", false);
     par.store("write_it", false);
     par.store("energy_calc", true);
     par.store("box_size", 0.00007);

@@ -297,14 +297,16 @@ void evolve(Grid &par,
                             }
                             // Write out the newly specified potential
                             // and exp potential to files
-                            FileIO::writeOutDouble(buffer, data_dir + "V_opt_1",
-                                                   V_opt, xDim * yDim, 0);
-                            FileIO::writeOut(buffer, data_dir + "EV_opt_1", EV_opt,
-                                             xDim * yDim, 0);
+                            if(write_it){
+                                FileIO::writeOutDouble(buffer, data_dir + "V_opt_1",
+                                                       V_opt, xDim * yDim, 0);
+                                FileIO::writeOut(buffer, data_dir + "EV_opt_1", EV_opt,
+                                                 xDim * yDim, 0);
     
-                            //Store necessary parameters to Params.dat file.
-                            FileIO::writeOutParam(buffer, par,
-                                                  data_dir + "Params.dat");
+                                //Store necessary parameters to Params.dat file.
+                                FileIO::writeOutParam(buffer, par,
+                                                      data_dir + "Params.dat");
+                            }
                         }
                         //If i!=0 and the number of vortices changes
                         // if num_vortices[1] < num_vortices[0] ... Fewer vortices
@@ -316,8 +318,10 @@ void evolve(Grid &par,
                                                    wfc, xDim);
                         	    Tracker::vortArrange(vortCoords->getVortices(),
                                                         vortCoordsP->getVortices());
-                    		    FileIO::writeOutInt(buffer, data_dir + "vLoc_",
-                                                   vortexLocation, xDim * yDim, i);
+                                    if(write_it){
+                    		        FileIO::writeOutInt(buffer, data_dir + "vLoc_",
+                                                       vortexLocation, xDim * yDim, i);
+                                    }
                              }
                         }
     
@@ -408,9 +412,11 @@ void evolve(Grid &par,
                                                       lattice.getVortices().size(),
                                                        sizeof(double));
                             lattice.genAdjMat(adjMat);
-                            FileIO::writeOutAdjMat(buffer, data_dir + "graph",
-                                                   adjMat, uids,
-                                                   lattice.getVortices().size(), i);
+                            if (write_it){
+                                FileIO::writeOutAdjMat(buffer, data_dir + "graph",
+                                                       adjMat, uids,
+                                                       lattice.getVortices().size(), i);
+                           }
     
                             //Free and clear all memory blocks
                             free(adjMat);
@@ -421,8 +427,10 @@ void evolve(Grid &par,
                         }
 
                         //Write out the vortex locations
-                        FileIO::writeOutVortex(buffer, data_dir + "vort_arr",
-                                               vortCoords->getVortices(), i);
+                        if(write_it){
+                            FileIO::writeOutVortex(buffer, data_dir + "vort_arr",
+                                                   vortCoords->getVortices(), i);
+                        }
                         printf("Located %d vortices\n", 
                                vortCoords->getVortices().size());
     
