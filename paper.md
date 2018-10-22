@@ -32,7 +32,7 @@ $$
 \frac{\partial\Psi(x,t)}{\partial t} = \left( -\frac{\hbar^2}{2m} \frac{\partial}{\partial x^2} + V(x) + g|\Psi(x,t)|^2\right)\Psi(x,t),
 $$
 
-where $\Psi(x,t)$ is the one-dimensional many-body wavefunction of the quantum system, $m$ is the atomic mass, $V(\mathbf{r})$ is a potential to trap the atomic system, $g = \frac{4\pi\hbar^2a_s}{m}$ is a coupling factor, and $a_s$ is the scattering length of the atomic species.
+where $\Psi(x,t)$ is the one-dimensional many-body wavefunction of the quantum system, $m$ is the atomic mass, $V(x)$ is a potential to trap the atomic system, $g = \frac{4\pi\hbar^2a_s}{m}$ is a coupling factor, and $a_s$ is the scattering length of the atomic species.
 Here, the GPE is shown in one dimension, but it can easily be extended to two or three dimensions.
 Though there are many methods to solve the GPE, one of the most straightforward is the split-operator method, which has previously been accelerated with GPU devices [@Ruf2009,@Bauke2011]; however, there are no generalized software packages available using this method on GPU devices that allow for user-configurable simulations and a variety of different system types.
 Even so, there are several software packages designed to simulate BECs with other methods, including GPELab [@Antoine2014] the Massively Parallel Trotter-Suzuki Solver [@Wittek2013], and XMDS [@xmds].
