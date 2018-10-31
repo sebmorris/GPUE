@@ -10,6 +10,7 @@
 #include <cufft.h>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 // Adding tests for mathematical operator kernels
 void math_operator_test();
@@ -380,8 +381,17 @@ void dynamic_test(){
     }
 
     // Now testing simple parsing of example "example.cfg"
+#ifdef _CFG_FILE_PATH
+    std::stringstream ss;
+    ss << _CFG_FILE_PATH;
+    std::string cfg_path;
+    ss >> cfg_path;
+#else
+    std::string cfg_path = "src/example.cfg";
+#endif
+
     std::cout << "Testing simple parameter parsing." << '\n';
-    par.store("param_file", (std::string)"src/example.cfg");
+    par.store("param_file", cfg_path);
     parse_param_file(par);
     EqnNode_gpu *eqn = par.astval("V");
     find_field<<<grid, threads>>>(array_gpu, 0.1, 0.1, 0.1, 1, 1, 1, 0, eqn);

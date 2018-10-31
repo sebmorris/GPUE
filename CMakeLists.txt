@@ -8,6 +8,13 @@ set(
     -O3 -gencode arch=compute_37,code=sm_37 -lcufft -fopenmp
 )
 
+find_file( EXAMPLE_CFG example.cfg src/ )
+add_library(unitTest OBJECT src/unit_test.cu include/unit_test.h include/kernels.h)
+set( CFG_FILE_PATH _CFG_FILE_PATH="${EXAMPLE_CFG}" )
+target_compile_options(
+   unitTest PRIVATE -D${CFG_FILE_PATH} -dc
+)
+
 add_executable(
     gpue
     src/dynamic.cu
@@ -54,8 +61,7 @@ add_executable(
     src/tracker.cu
     include/tracker.h
 
-    src/unit_test.cu
-    include/unit_test.h
+    $<TARGET_OBJECTS:unitTest>
 
     src/vort.cu
     include/vort.h
