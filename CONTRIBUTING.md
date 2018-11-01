@@ -1,8 +1,34 @@
 # Contributing to GPUE
 
-TBD
+GPUE is primarly developed for scientific applications on high-performance computing systems.
+As such, all submissions will be expected to run on various Linux-based hardware with a focus on performance and usability.
 
+If there are any questions related to the current status of GPUE, please refer to the [documentation](https://gpue-group.github.io/).
 
+## Bug reports and issues
+
+If any problem arises while using GPUE code, please open an issue in the [primary fork of GPUE](https://github.com/GPUE-group/GPUE).
+There are four general issue labels to use:
+
+1. Physical inaccuracies -- These are considered breaking bugs and will be addressed immediately.
+2. Usability issues -- These are problems running GPUE, ranging from compilation errors to problems with equation parsing. These are also considered breaking bugs and will be addressed according to the severity of the problem.
+3. General problem -- any issue that is not related to physical inaccuracies or usability. These will be addressed depending on severity and submission date.
+4. Feature request -- These are for anything we are missing in GPUE and will be addressed based on novelty and utility.
+
+## Pull requests
+
+If you wish to submit code via Pull Request (PR) directly to GPUE, please first create an issue, as outlined above.
+All four previously defined labels apply to PRs.
+Please refer to the corresponding issues in PRs.
+
+All PRs will be tested with the `gpue -u` command and if the PR intends to create a new feature, this feature must be tested with a function in the `src/unit_test.cu` file.
+
+In addition, if the PR is sufficiently advanced (as indicated by previous contributors) please update the [documentation](https://gpue-group.github.io/) accordingly with the contents of the PR.
+
+### Style guide
+
+There is no formal style guide for GPUE, but it follows standard conventions for CUDA programming, favoring C-style syntax when possible.
+Each PR should have the appropriate Doxygen formatting and each feature PR will be reviewed on overall performance and usability.
 
 
 # Code Of Conduct
