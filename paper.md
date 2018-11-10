@@ -29,7 +29,7 @@ Numerical simulations of BECs allow for new discoveries that directly mimic what
 In practice, the dynamics of BEC systems can often be found by solving the non-linear Schr&ouml;dinger equation known as the Gross--Pitaevskii Equation (GPE),
 
 $$
-\frac{\partial\Psi(x,t)}{\partial t} = \left( -\frac{\hbar^2}{2m} \frac{\partial}{\partial x^2} + V(x) + g|\Psi(x,t)|^2\right)\Psi(x,t),
+i\hbar \frac{\partial\Psi(x,t)}{\partial t} = \left( -\frac{\hbar^2}{2m} \frac{\partial}{\partial x^2} + V(x) + g|\Psi(x,t)|^2\right)\Psi(x,t),
 $$
 
 where $\Psi(x,t)$ is the one-dimensional many-body wavefunction of the quantum system, $m$ is the atomic mass, $V(x)$ is a potential to trap the atomic system, $g = \frac{4\pi\hbar^2a_s}{m}$ is a coupling factor, and $a_s$ is the scattering length of the atomic species.
