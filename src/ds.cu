@@ -91,8 +91,9 @@ void generate_plan_other3d(cufftHandle *plan_fft1d, Grid &par, int axis){
 
     if(result != CUFFT_SUCCESS){
         printf("Result:=%d\n",result);
-        printf("Error: Could not execute cufftPlan3d(%s ,%d ,%d ).\n", 
-               "plan_1d", (unsigned int)xDim, (unsigned int)yDim);
+        printf("Error: Could not execute cufftPlan3d(%s, %d, %d, %d).\n", 
+               "plan_3d", (unsigned int)xDim, (unsigned int)yDim,
+                (unsigned int)zDim);
         exit(1);
     }
 
