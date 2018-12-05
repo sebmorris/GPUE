@@ -312,11 +312,11 @@ int init(Grid &par){
 
     generate_plan_other3d(&plan_1d, par, 0);
     if (dimnum == 2){
-        generate_plan_other3d(&plan_dim2, par, 1);
+        generate_plan_other2d(&plan_other2d, par);
     }
     if (dimnum == 3){
         generate_plan_other3d(&plan_dim3, par, 2);
-        generate_plan_other2d(&plan_other2d, par);
+        generate_plan_other3d(&plan_dim2, par, 1);
     }
     result = cufftPlan3d(&plan_3d, xDim, yDim, zDim, CUFFT_Z2Z);
     if(result != CUFFT_SUCCESS){
