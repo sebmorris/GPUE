@@ -190,6 +190,48 @@ def plot_wfc_phase(xDim, yDim, data_dir, pltval, start, end, incr):
         #fig = plt.figure()
         #fig.savefig('wfc.png')
 
+# Function to plot wfc cut
+def plot_wfc_cut(xDim, yDim, data_dir, pltval, start, end, incr):
+    if data_dir[0] != "/":
+        data_dir = "../" + data_dir
+    for i in range(start,end,incr):
+        print(i)
+        data_real = data_dir + "/wfc_0_const_%s" % i
+        data_im = data_dir + "/wfc_0_consti_%s" % i
+        if pltval == "wfc_cut_ev":
+            data_real = data_dir + "/wfc_ev_%s" % i
+            data_im = data_dir + "/wfc_evi_%s" % i
+
+        lines_real = np.loadtxt(data_real)
+        lines_im = np.loadtxt(data_im)
+        wfc_real = np.reshape(lines_real, (xDim,yDim));
+        wfc_im = np.reshape(lines_im, (xDim,yDim));
+
+        wfc = abs(wfc_real + 1j * wfc_im)
+        wfc = wfc*wfc
+
+        max = 0
+        for j in range(xDim):
+            for k in range(yDim):
+                if (wfc[j][k] > max):
+                    max = wfc[j][k]
+
+        print("Max value is: ",max)
+        for j in range(xDim):
+            for k in range(yDim):
+                if (wfc[j][k] > max*0.4):
+                    wfc[j][k] = 1.0
+                else:
+                    wfc[j][k] = 0.0
+
+        plt.imshow(wfc, extent=(-6.9804018707623236e-04,6.9804018707623236e-04,-6.9804018707623236e-04,6.9804018707623236e-04), interpolation='nearest',
+                   cmap = cm.jet)
+        plt.colorbar()
+        plt.show()
+        #fig = plt.figure()
+        #fig.savefig('wfc.png')
+
+
 
 # Function to parse arguments for plotting
 # Note: We assume that the parameters come in sets
@@ -232,6 +274,9 @@ def plot(par):
                        par.start, par.end, par.incr)
     elif (par.item == "GK" or par.item == "GV"):
         plot_complex(par.xDim, par.yDim, par.data_dir, par.item,
+                     par.start, par.end, par.incr)
+    elif (par.item == "wfc_cut" or par.item == "wfc_cut_ev"):
+        plot_wfc_cut(par.xDim, par.yDim, par.data_dir, par.item, 
                      par.start, par.end, par.incr)
     elif (par.end != 1):
         plot_var_range(par.xDim, par.yDim, par.data_dir, par.item,
