@@ -245,13 +245,13 @@ def run(start,fin,incr): #Performs the tracking
             v0c = vorts_c.element(index_r[0]).sign #Get the sign of the smallest distance vortex
             v0p = vorts_p.element(i3).sign # Get the sign of the current vortex at index i3
             v1c = vorts_c.element(index_r[0]).uid #Get uid of current vortex
-                        #Check if distance is less than 7 grid points, and that the sign is matched between previous and current vortices, and that the current vortex has a negative uid, indicating that a pair has not yet been found. If true, then update the current vortex index to that of the previous vortex index, and turn vortex on --- may be dangerous
-			if (index_r[1] < 30) and (vorts_c.element(index_r[0]).sign == vorts_p.element(i3).sign) and (vorts_c.element(index_r[0]).uid < 0) and (vorts_p.element(i3).isOn == True):
-				vorts_c.element(index_r[0]).update_uid(vorts_p.element(i3).uid)
-				vorts_c.element(index_r[0]).update_on(True)
-			else:
-			    print "Failed to find any matching vortex. Entering interactive mode. Exit with Ctrl+D"
-        	    from IPython import embed; embed()
+            #Check if distance is less than 7 grid points, and that the sign is matched between previous and current vortices, and that the current vortex has a negative uid, indicating that a pair has not yet been found. If true, then update the current vortex index to that of the previous vortex index, and turn vortex on --- may be dangerous
+	    if (index_r[1] < 30) and (vorts_c.element(index_r[0]).sign == vorts_p.element(i3).sign) and (vorts_c.element(index_r[0]).uid < 0) and (vorts_p.element(i3).isOn == True):
+		vorts_c.element(index_r[0]).update_uid(vorts_p.element(i3).uid)
+		vorts_c.element(index_r[0]).update_on(True)
+	    else:
+	        print "Failed to find any matching vortex. Entering interactive mode. Exit with Ctrl+D"
+       	        from IPython import embed; embed()
 				
 
         #You will never remember why this works
