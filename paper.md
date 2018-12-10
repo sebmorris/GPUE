@@ -17,16 +17,16 @@ authors:
 affiliations:
  - name: Okinawa Institute of Science and Technology Graduate University, Onna-son, Okinawa 904-0495, Japan.
    index: 1
-date: 21 September 2018
+date: 10 December 2018
 bibliography: paper.bib
 ---
 
 # Summary
 
 Bose--Einstein Condensates (BECs) are superfluid systems consisting of bosonic atoms that have been cooled and condensed into a single, macroscopic ground state [@PethickSmith2008; @FetterRMP2009].
-These systems can be created in an experimental laboratory and allow for the the exploration of many interesting physical phenomenon, such as superfluid turbulence [@Roche2008; @White2014; @Navon2016], chaotic dynamics [@Gardiner2002; @Kyriakopoulos2014; @Zhang2017], and analogues of other quantum systems [@DalibardRMP2011].
-Numerical simulations of BECs allow for new discoveries that directly mimic what can be seen in experiments and are thus highly valuable for fundamental research.
-In practice, the dynamics of BEC systems can often be found by solving the non-linear Schr&ouml;dinger equation known as the Gross--Pitaevskii Equation (GPE),
+These systems can be created in an experimental laboratory and allow for the the exploration of physical phenomenon such as superfluid turbulence [@Roche2008; @White2014; @Navon2016], chaotic dynamics [@Gardiner2002; @Kyriakopoulos2014; @Zhang2017], and analogues of other quantum systems [@DalibardRMP2011].
+Numerical simulations of BECs that directly mimic experiments are valuable to fundamental research in these areas and allow for theoretical advances before experimental validation.
+The dynamics of BEC systems can be found by solving the non-linear Schr&ouml;dinger equation known as the Gross--Pitaevskii Equation (GPE),
 
 $$
 i\hbar \frac{\partial\Psi(\mathbf{r},t)}{\partial t} = \left( -\frac{\hbar^2}{2m} {\nabla^2} + V(\mathbf{r}) + g|\Psi(\mathbf{r},t)|^2\right)\Psi(\mathbf{r},t),
@@ -34,10 +34,11 @@ $$
 
 where $\Psi(\mathbf{r},t)$ is the three-dimensional many-body wavefunction of the quantum system, $\mathbf{r} = (x,y,z)$, $m$ is the atomic mass, $V(\mathbf{r})$ is an external potential, $g = \frac{4\pi\hbar^2a_s}{m}$ is a coupling factor, and $a_s$ is the scattering length of the atomic species.
 Here, the GPE is shown in three dimensions, but it can easily be modified to one or two dimensions [@PethickSmith2008].
-Though there are many methods to solve the GPE, one of the most straightforward is the split-operator method, which has previously been accelerated with GPU devices [@Ruf2009; @Bauke2011]; however, there are no generalized software packages available using this method on GPU devices that allow for user-configurable simulations and a variety of different system types.
-Even so, there are several software packages designed to simulate BECs with other methods and on different architectures, including GPELab [@Antoine2014] the Massively Parallel Trotter-Suzuki Solver [@Wittek2013], and XMDS [@xmds].
+One of the most straightforward methods for solving the GPE is the split-operator method, which has previously been accelerated with GPU devices [@Ruf2009; @Bauke2011].
+No generalized software packages are vailable using this method on GPU devices that allow for user-configurable simulations and a variety of different system types; however,
+several software packages exist to simulate BECs with other methods and on different architectures, including GPELab [@Antoine2014] the Massively Parallel Trotter-Suzuki Solver [@Wittek2013], and XMDS [@xmds].
 
-GPUE is a GPU-based Gross--Pitaevskii Equation solver via the split-operator method for superfluid simulations of both linear and non-linear Schr&ouml;dinger equations, with an emphasis on superfluid vortex dynamics in 2 and 3 dimensions. GPUE is a fast, robust, and accessible software suite to simulate physics for fundamental research in the area of quantum systems and has been used to manipulate large vortex lattices in two dimensions [@ORiordan2016; @ORiordan2016b] along with ongoing studies on vortex turbulence in two dimensions and vortex structures in three dimensions.
+GPUE is a GPU-based Gross--Pitaevskii Equation solver via the split-operator method for superfluid simulations of both linear and non-linear Schr&ouml;dinger equations, emphasizing superfluid vortex dynamics in two and three dimensions. GPUE is a fast, robust, and accessible software suite to simulate physics for fundamental research in the area of quantum systems and has been used to manipulate large vortex lattices in two dimensions [@ORiordan2016; @ORiordan2016b] along with ongoing studies of vortex dynamics.
 
 For these purposes, GPUE provides a number of unique features:
 1. Dynamic field generation for trapping potentials and other variables on the GPU device.
