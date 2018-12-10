@@ -309,11 +309,15 @@ int init(Grid &par){
                 (unsigned int)xDim, (unsigned int)yDim);
         exit(1);
     }
-    generate_plan_other2d(&plan_other2d, par);
 
     generate_plan_other3d(&plan_1d, par, 0);
-    generate_plan_other3d(&plan_dim2, par, 1);
-    generate_plan_other3d(&plan_dim3, par, 2);
+    if (dimnum == 2){
+        generate_plan_other2d(&plan_other2d, par);
+    }
+    if (dimnum == 3){
+        generate_plan_other3d(&plan_dim3, par, 2);
+        generate_plan_other3d(&plan_dim2, par, 1);
+    }
     result = cufftPlan3d(&plan_3d, xDim, yDim, zDim, CUFFT_Z2Z);
     if(result != CUFFT_SUCCESS){
         printf("Result:=%d\n",result);
@@ -526,7 +530,6 @@ void set_variables(Grid &par, bool ev_type){
 
         // Special variables / instructions for 2/3d case
         if (dimnum > 1 && !par.bval("Ay_time")){
-            pAy_gpu = par.cufftDoubleComplexval("pAy_gpu");
             EpAy = par.cufftDoubleComplexval("EpAy");
             err=cudaMemcpy(pAy_gpu, EpAy, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
@@ -538,7 +541,6 @@ void set_variables(Grid &par, bool ev_type){
         }
 
         if (dimnum > 2 && !par.bval("Az_time")){
-            pAz_gpu = par.cufftDoubleComplexval("pAz_gpu");
             EpAz = par.cufftDoubleComplexval("EpAz");
             err=cudaMemcpy(pAz_gpu, EpAz, sizeof(cufftDoubleComplex)*gsize,
                            cudaMemcpyHostToDevice);
