@@ -35,7 +35,7 @@ $$
 where $\Psi(\mathbf{r},t)$ is the three-dimensional many-body wavefunction of the quantum system, $\mathbf{r} = (x,y,z)$, $m$ is the atomic mass, $V(\mathbf{r})$ is an external potential, $g = \frac{4\pi\hbar^2a_s}{m}$ is a coupling factor, and $a_s$ is the scattering length of the atomic species.
 Here, the GPE is shown in three dimensions, but it can easily be modified to one or two dimensions [@PethickSmith2008].
 One of the most straightforward methods for solving the GPE is the split-operator method, which has previously been accelerated with GPU devices [@Ruf2009; @Bauke2011].
-No generalized software packages are vailable using this method on GPU devices that allow for user-configurable simulations and a variety of different system types; however,
+No software packages are available using this method on GPU devices that allow for user-configurable simulations and a variety of different system types; however,
 several software packages exist to simulate BECs with other methods and on different architectures, including GPELab [@Antoine2014] the Massively Parallel Trotter-Suzuki Solver [@Wittek2013], and XMDS [@xmds].
 
 GPUE is a GPU-based Gross--Pitaevskii Equation solver via the split-operator method for superfluid simulations of both linear and non-linear Schr&ouml;dinger equations, emphasizing superfluid vortex dynamics in two and three dimensions. GPUE is a fast, robust, and accessible software suite to simulate physics for fundamental research in the area of quantum systems and has been used to manipulate large vortex lattices in two dimensions [@ORiordan2016; @ORiordan2016b] along with ongoing studies of vortex dynamics.
@@ -46,7 +46,9 @@ For these purposes, GPUE provides a number of unique features:
 3. Configurable gauge fields for the generation of artificial magnetic fields and corresponding vortex distributions [@DalibardRMP2011; @Ghosh2014].
 4. Vortex manipulation via direct control of the wavefunction phase [@Dobrek1999].
 
-All of these features enable GPUE to simulate a wide variety of linear and non-linear dynamics of quantum systems. GPUE additionally features a numerical solver with improvements over other suites [@WittekGPE2016; @ORiordan2017]. All of GPUE's features and functionality have been described in further detail in the documentation [@documentation].
+All of these features enable GPUE to simulate a wide variety of linear and non-linear dynamics of quantum systems.
+GPUE additionally features a numerical solver that improves on other available suites [@WittekGPE2016; @ORiordan2017].
+All of GPUE's features and functionality have been described in further detail in the documentation [@documentation].
 
 # Acknowledgements
 This work has been supported by the Okinawa Institute of Science and Technology Graduate University and by JSPS KAKENHI Grant Number JP17J01488.
