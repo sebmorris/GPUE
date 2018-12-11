@@ -5,6 +5,7 @@
 ***
 
 [gh]: https://github.com/gpue-group/gpue "GitHub"
+[![DOI](https://zenodo.org/badge/79505596.svg)](https://zenodo.org/badge/latestdoi/79505596)
 
 Welcome to GPUE, the [fastest zero temperature BEC routines in the land](http://peterwittek.com/gpe-comparison.html) (the last time we checked).
 All documentation is available at [https://gpue-group.github.io](https://gpue-group.github.io).
