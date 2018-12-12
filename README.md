@@ -5,7 +5,7 @@
 ***
 
 [gh]: https://github.com/gpue-group/gpue "GitHub"
-[![DOI](https://zenodo.org/badge/79505596.svg)](https://zenodo.org/badge/latestdoi/79505596)
+[![DOI](http://joss.theoj.org/papers/10.21105/joss.01037/status.svg)](https://doi.org/10.21105/joss.01037)
 
 Welcome to GPUE, the [fastest zero temperature BEC routines in the land](http://peterwittek.com/gpe-comparison.html) (the last time we checked).
 All documentation is available at [https://gpue-group.github.io](https://gpue-group.github.io).
@@ -51,7 +51,10 @@ We would like this tool to be a suite for 1D, 2D and 3D simulations of both
 Schrodinger and non-linear Schrodinger (Gross--Pitaevskii) systems. 
 
 ## 4. Works using GPUE
-If you have used GPUE, or any of the works using GPUE, please consider giving us a citation. 
+If you have used GPUE, or any of the works using GPUE, please consider giving us a citation as:
+
+- James Schloss and Lee James O'Riordan, GPUE: Graphics Processing Unit Gross--Pitaevskii Equation solver. Journal of Open Source Software, 3(32), 1037 (2018), https://doi.org/10.21105/joss.01037
+
 Previous versions of this code/works are citable as follows:
 
 - Lee James O'Riordan et al., GPUE: Phasegineering release, Zenodo. (2016), \url{https://github.com/mlxd/GPUE} DOI:10.5281/zenodo.57968
