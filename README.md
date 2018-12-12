@@ -44,7 +44,8 @@ See the [Building GPUE](https://gpue-group.github.io/build/) and [GPUE functiona
 sections of the documentation.
 
 As an example, here are some simulations performed with the code:
-https://www.youtube.com/playlist?list=PLiRboSbbz10s6cXxvYLFOn3QbmQpdtQVd
+- https://www.youtube.com/playlist?list=PLiRboSbbz10s6cXxvYLFOn3QbmQpdtQVd
+- https://youtu.be/68SU_ndFzak
 
 ## 3. Specific use-cases
 We would like this tool to be a suite for 1D, 2D and 3D simulations of both 
@@ -57,7 +58,7 @@ If you have used GPUE, or any of the works using GPUE, please consider giving us
 
 Previous versions of this code/works are citable as follows:
 
-- Lee James O'Riordan et al., GPUE: Phasegineering release, Zenodo. (2016), \url{https://github.com/mlxd/GPUE} DOI:10.5281/zenodo.57968
+- Lee James O'Riordan et al., GPUE: Phasegineering release, Zenodo. (2016), https://github.com/mlxd/GPUE DOI:10.5281/zenodo.57968
 
 More recent versions will be citable under the [GPUE Group](https://github.com/gpue-group/GPUE) repository. 
 Works which have used GPUE include (to-date):
