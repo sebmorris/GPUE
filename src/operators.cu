@@ -2,6 +2,71 @@
 #include "../include/kernels.h"
 #include "../include/dynamic.h"
 
+void laplacian(Grid &par, double2 *data, double2* out, int xDim, int yDim,
+               int zDim, double dx, double dy, double dz){
+
+    dim3 grid = par.grid;
+    dim3 threads = par.threads;
+    int gsize = xDim * yDim * zDim;
+
+    double2 *temp_derivative;
+    cudaMalloc((void **) &temp_derivative, sizeof(double2)*gsize);
+    derive<<<grid, threads>>>(data, temp_derivative, 1, gsize, dx);
+    derive<<<grid, threads>>>(temp_derivative, temp_derivative, 1, gsize, dx);
+
+    copy<<<grid, threads>>>(temp_derivative, out);
+
+    derive<<<grid, threads>>>(data, temp_derivative, xDim, gsize, dy);
+    derive<<<grid, threads>>>(temp_derivative, temp_derivative,
+                              xDim, gsize, dy);
+
+    sum<<<grid, threads>>>(temp_derivative, out, out);
+
+    derive<<<grid, threads>>>(data, temp_derivative, xDim*yDim, gsize, dz);
+    derive<<<grid, threads>>>(temp_derivative, temp_derivative,
+                              xDim*yDim, gsize, dz);
+
+    sum<<<grid, threads>>>(temp_derivative, out, out);
+
+    cudaFree(temp_derivative);
+
+}
+
+void laplacian(Grid &par, double2 *data, double2* out, int xDim, int yDim,
+               double dx, double dy){
+
+
+    dim3 grid = par.grid;
+    dim3 threads = par.threads;
+    int gsize = xDim * yDim;
+
+    double2 *temp_derivative;
+    cudaMalloc((void **) &temp_derivative, sizeof(double2)*gsize);
+    derive<<<grid, threads>>>(data, temp_derivative, 1, gsize, dx);
+    derive<<<grid, threads>>>(temp_derivative, temp_derivative, 1, gsize, dx);
+
+    copy<<<grid, threads>>>(temp_derivative, out);
+
+    derive<<<grid, threads>>>(data, temp_derivative, xDim, gsize, dy);
+    derive<<<grid, threads>>>(temp_derivative, temp_derivative,
+                              xDim, gsize, dy);
+
+    sum<<<grid, threads>>>(temp_derivative, out, out);
+
+    cudaFree(temp_derivative);
+}
+
+void laplacian(Grid &par, double2 *data, double2* out, int xDim, double dx){
+
+    dim3 grid = par.grid;
+    dim3 threads = par.threads;
+    int gsize = xDim;
+
+    derive<<<grid, threads>>>(data, out, 1, gsize, dx);
+    derive<<<grid, threads>>>(out, out, 1, gsize, dx);
+
+}
+
 double sign(double x){
     if (x < 0){
         return -1.0;
@@ -542,7 +607,7 @@ __global__ void krotation_Ax(double *x, double *y, double *z,
                              double omega, double fudge, double *A){
     int gid = getGid3d3d();
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
-    A[gid] = -y[yid] * omega * omegaX;
+    A[gid] = y[yid] * omega * omegaX;
 }
 
 // Kernel for simple rotational case, Ay
@@ -552,7 +617,7 @@ __global__ void krotation_Ay(double *x, double *y, double *z,
                              double omega, double fudge, double *A){
     int gid = getGid3d3d();
     int xid = blockDim.x*blockIdx.x + threadIdx.x;
-    A[gid] = x[xid] * omega * omegaY;
+    A[gid] = -x[xid] * omega * omegaY;
 }
 
 // Kernel for simple rotational case, Ax
@@ -844,10 +909,6 @@ void generate_fields(Grid &par){
     cudaFree(EpAy_gpu);
     cudaFree(EpAz_gpu);
 
-    cudaFree(Ax_gpu);
-    cudaFree(Ay_gpu);
-    cudaFree(Az_gpu);
-
     cudaFree(x_gpu);
     cudaFree(y_gpu);
     cudaFree(z_gpu);
@@ -859,6 +920,9 @@ void generate_fields(Grid &par){
     if (!energy_calc){
         cudaFree(K_gpu);
         cudaFree(V_gpu);
+        cudaFree(Ax_gpu);
+        cudaFree(Ay_gpu);
+        cudaFree(Az_gpu);
     }
     else{
         par.store("V_gpu",V_gpu);
@@ -942,7 +1006,7 @@ __global__ void kstd_wfc(double *x, double *y, double *z, double *items,
     int yid = blockDim.y*blockIdx.y + threadIdx.y;
     int zid = blockDim.z*blockIdx.z + threadIdx.z;
 
-    phi[gid] = fmod(winding*atan2(y[yid], x[xid]),2*PI);
+    phi[gid] = -fmod(winding*atan2(y[yid], x[xid]),2*PI);
 
     wfc[gid].x = exp(-(x[xid]*x[xid]/(items[14]*items[14]*items[15]*items[15]) 
                      + y[yid]*y[yid]/(items[14]*items[14]*items[16]*items[16]) 
