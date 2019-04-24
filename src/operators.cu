@@ -988,7 +988,7 @@ __global__ void ktorus_V(double *x, double *y, double *z, double* items,
 
     double rad = sqrt((x[xid] - items[6]) * (x[xid] - items[6])
                       + (y[yid] - items[7]) * (y[yid] - items[7])) 
-                      - 0.4*items[0];
+                      - 0.5*items[0];
     double omegaR = (items[3]*items[3] + items[4]*items[4]);
     double V_tot = (2*items[5]*items[5]*(z[zid] - items[8])*(z[zid] - items[8])
                     + omegaR*(rad*rad + items[12]*rad*z[zid]));
@@ -1029,7 +1029,7 @@ __global__ void ktorus_wfc(double *x, double *y, double *z, double *items,
 
     double rad = sqrt((x[xid] - items[6]) * (x[xid] - items[6])
                       + (y[yid] - items[7]) * (y[yid] - items[7])) 
-                      - 0.4*items[0];
+                      - 0.5*items[0];
 
     wfc[gid].x = exp(-( pow((rad)/(items[14]*items[15]*0.5),2) +
                    pow((z[zid])/(items[14]*items[17]*0.5),2) ) );
