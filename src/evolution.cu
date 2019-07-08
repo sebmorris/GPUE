@@ -427,6 +427,8 @@ void evolve(Grid &par,
             }
         }
 
+        cudaHandleError( cudaMemcpy(wfc, gpuWfc, sizeof(cufftDoubleComplex)*xDim*yDim*zDim, cudaMemcpyDeviceToHost) );
+
         // Print-out at pre-determined rate.
         // Vortex & wfc analysis performed here also.
         if(i % printSteps == 0) {
@@ -900,8 +902,6 @@ void evolve(Grid &par,
             }
         }
     }
-
-    cudaHandleError( cudaMemcpy(wfc, gpuWfc, sizeof(cufftDoubleComplex)*xDim*yDim*zDim, cudaMemcpyDeviceToHost) );
 
     par.store("wfc", wfc);
     par.store("wfc_gpu", gpuWfc);
