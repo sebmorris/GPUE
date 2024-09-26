@@ -271,6 +271,7 @@ void evolve(Grid &par,
     double dt = par.dval("dt");
     double omegaX = par.dval("omegaX");
     double omegaY = par.dval("omegaY");
+    double omegaZ = par.dval("omegaZ");
     double mass = par.dval("mass");
     double dx = par.dval("dx");
     double dy = 1;

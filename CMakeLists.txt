@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
-project(gpue_build LANGUAGES CXX CUDA)
-find_package(CUDA QUIET REQUIRED)
-
-set(
-    CUDA_NVCC_FLAGS
-    ${CUDA_NVCC_FLAGS};
-    -O3 -gencode arch=compute_37,code=sm_37 -lcufft -fopenmp
-)
+project(gpue_build LANGUAGES C CXX CUDA)
+set(CMAKE_CUDA_ARCHITECTURES 75)
 
 find_file( EXAMPLE_CFG example.cfg src/ )
 add_library(unitTest OBJECT src/unit_test.cu include/unit_test.h include/kernels.h)
@@ -71,8 +65,12 @@ add_executable(
 
     src/init.cu
     include/init.h
+
+    src/XGetopt.cpp
+    include/XGetopt.h
 )
 
 target_compile_features(gpue PUBLIC cxx_std_11)
-target_link_libraries(gpue ${CUDA_LIBRARIES} ${CUDA_CUFFT_LIBRARIES})
+find_package(CUDAToolkit)
+target_link_libraries(gpue CUDA::cufft)
 set_target_properties(gpue PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

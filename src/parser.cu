@@ -425,17 +425,7 @@ Grid parseArgs(int argc, char** argv){
 
             case '?':
             {
-                if (optopt == 'c') {
-                    fprintf (stderr, 
-                             "Option -%c requires an argument.\n", optopt);
-                } 
-                else if (isprint (optopt)) {
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-                } 
-                else {
-                    fprintf (stderr,
-                             "Unknown option character `\\x%x'.\n",optopt);
-                }
+                fprintf(stderr, "Not implemented\n");
                 return par;
             default:
                 abort ();
@@ -448,7 +438,7 @@ Grid parseArgs(int argc, char** argv){
 
     // Setting variables
     if (stat(data_dir.c_str(), &st) == -1) {
-        mkdir(data_dir.c_str(), 0700);
+        _mkdir(data_dir.c_str());
     }
 
     if (dimnum < 3){

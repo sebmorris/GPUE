@@ -487,7 +487,7 @@ void generate_gauge(Grid &par){
     }
     double omegaX = par.dval("omegaX");
     double omegaY = par.dval("omegaY");
-    double omegaZ;
+    double omegaZ = 0;
     if (dimnum == 3){
         omegaZ = par.dval("omegaZ");
     }

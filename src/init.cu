@@ -80,12 +80,12 @@ int init(Grid &par){
     cufftDoubleComplex *EappliedField;
 
     std::cout << "gSize is: " << gSize << '\n';
-    cufftHandle plan_1d;
-    cufftHandle plan_2d;
-    cufftHandle plan_3d;
-    cufftHandle plan_other2d;
-    cufftHandle plan_dim2;
-    cufftHandle plan_dim3;
+    cufftHandle plan_1d = 0;
+    cufftHandle plan_2d = 0;
+    cufftHandle plan_3d = 0;
+    cufftHandle plan_other2d = 0;
+    cufftHandle plan_dim2 = 0;
+    cufftHandle plan_dim3 = 0;
 
     std::string buffer;
     double Rxy; //Condensate scaling factor.
@@ -364,11 +364,11 @@ void set_variables(Grid &par, bool ev_type){
     double *V_opt = par.dsval("V_opt");
     double *pAy = par.dsval("pAy");
     double *pAx = par.dsval("pAx");
-    double2 *pAy_gpu;
-    double2 *pAx_gpu;
-    double2 *pAz_gpu;
-    double2 *V_gpu;
-    double2 *K_gpu;
+    double2 *pAy_gpu = nullptr;
+    double2 *pAx_gpu = nullptr;
+    double2 *pAz_gpu = nullptr;
+    double2 *V_gpu = nullptr;
+    double2 *K_gpu = nullptr;
     cufftDoubleComplex *wfc = par.cufftDoubleComplexval("wfc");
     cufftDoubleComplex *wfc_gpu = par.cufftDoubleComplexval("wfc_gpu");
     int dimnum = par.ival("dimnum");

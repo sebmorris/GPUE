@@ -2,3 +2,5 @@
 gpue
 *.bvox
 *.png
+.vscode
+build

@@ -1408,6 +1408,7 @@ void cMultPhi_test(){
 
 // Test for available amount of GPU memory
 void check_memory_test(){
+    std::cout << "Testing memory...\n";
     Grid par;
     par.store("xDim",10);
     par.store("yDim",10);

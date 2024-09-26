@@ -27,7 +27,7 @@
 #include <cuda_runtime.h>
 #include <cufft.h>
 #include <ctype.h>
-#include <getopt.h>
+#include "XGetopt.h"
 #include "tracker.h"
 #include "ds.h"
 #include "constants.h"

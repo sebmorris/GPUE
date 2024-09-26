@@ -17,6 +17,8 @@
 #define DYNAMIC_H
 
 #include <string>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include "../include/ds.h"
 
 /**
